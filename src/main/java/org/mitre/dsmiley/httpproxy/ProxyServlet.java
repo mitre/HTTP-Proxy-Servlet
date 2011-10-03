@@ -77,6 +77,11 @@ public class ProxyServlet extends HttpServlet
    */
   private static final File FILE_UPLOAD_TEMP_DIRECTORY = new File(System.getProperty("java.io.tmpdir"));
 
+  public static final String P_PROXY_HOST = "proxyHost";
+  public static final String P_PROXY_PORT = "proxyPort";
+  public static final String P_PROXY_PATH = "proxyPath";
+  public static final String P_MAX_FILE_UPLOAD_SIZE = "maxFileUploadSize";
+
   // Proxy host params
   /**
    * The host to which we are proxying requests
@@ -102,23 +107,23 @@ public class ProxyServlet extends HttpServlet
    */
   public void init(ServletConfig servletConfig) {
     // Get the proxy host
-    String stringProxyHostNew = servletConfig.getInitParameter("proxyHost");
+    String stringProxyHostNew = servletConfig.getInitParameter(P_PROXY_HOST);
     if (stringProxyHostNew == null || stringProxyHostNew.length() == 0) {
       throw new IllegalArgumentException("Proxy host not set, please set init-param 'proxyHost' in web.xml");
     }
     this.setProxyHost(stringProxyHostNew);
     // Get the proxy port if specified
-    String stringProxyPortNew = servletConfig.getInitParameter("proxyPort");
+    String stringProxyPortNew = servletConfig.getInitParameter(P_PROXY_PORT);
     if (stringProxyPortNew != null && stringProxyPortNew.length() > 0) {
       this.setProxyPort(Integer.parseInt(stringProxyPortNew));
     }
     // Get the proxy path if specified
-    String stringProxyPathNew = servletConfig.getInitParameter("proxyPath");
+    String stringProxyPathNew = servletConfig.getInitParameter(P_PROXY_PATH);
     if (stringProxyPathNew != null && stringProxyPathNew.length() > 0) {
       this.setProxyPath(stringProxyPathNew);
     }
     // Get the maximum file upload size if specified
-    String stringMaxFileUploadSize = servletConfig.getInitParameter("maxFileUploadSize");
+    String stringMaxFileUploadSize = servletConfig.getInitParameter(P_MAX_FILE_UPLOAD_SIZE);
     if (stringMaxFileUploadSize != null && stringMaxFileUploadSize.length() > 0) {
       this.setMaxFileUploadSize(Integer.parseInt(stringMaxFileUploadSize));
     }
