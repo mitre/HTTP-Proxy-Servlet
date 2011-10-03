@@ -16,6 +16,8 @@
     <orderEntry type="library" name="Maven: commons-logging:commons-logging:1.0.4" level="project" />
     <orderEntry type="library" name="Maven: commons-codec:commons-codec:1.2" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: junit:junit:4.8.2" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.apache.httpcomponents:httpclient:tests:4.1.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.apache.httpcomponents:httpcore:4.1" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: httpunit:httpunit:1.7" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: jtidy:jtidy:4aug2000r7-dev" level="project" />
   </component>

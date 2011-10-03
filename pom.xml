@@ -37,6 +37,14 @@
       <version>4.8.2</version>
       <scope>test</scope>
     </dependency>
+    
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+      <version>4.1.1</version>
+      <classifier>tests</classifier>
+      <scope>test</scope>
+    </dependency>
 
     <dependency>
       <groupId>httpunit</groupId>
