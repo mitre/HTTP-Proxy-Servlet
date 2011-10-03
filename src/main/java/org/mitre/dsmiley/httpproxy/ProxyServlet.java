@@ -390,7 +390,9 @@ public class ProxyServlet extends HttpServlet
       stringProxyURL += this.getProxyPath();
     }
     // Handle the path given to the servlet
-    stringProxyURL += httpServletRequest.getPathInfo();
+    if (httpServletRequest.getPathInfo() != null) {
+      stringProxyURL += httpServletRequest.getPathInfo();
+    }
     // Handle the query string
     if (httpServletRequest.getQueryString() != null) {
       stringProxyURL += "?" + httpServletRequest.getQueryString();
