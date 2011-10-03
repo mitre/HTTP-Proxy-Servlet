@@ -1,0 +1,976 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AnalysisProjectProfileManager">
+    <option name="PROJECT_PROFILE" value="Project Default" />
+    <option name="USE_PROJECT_LEVEL_SETTINGS" value="false" />
+    <scopes />
+    <profiles>
+      <profile version="1.0" is_locked="false">
+        <option name="myName" value="Project Default" />
+        <option name="myLocal" value="false" />
+        <coding_rule class="AM_CREATES_EMPTY_JAR_FILE_ENTRY" level="WARNING" enabled="true" />
+        <coding_rule class="AM_CREATES_EMPTY_ZIP_FILE_ENTRY" level="WARNING" enabled="true" />
+        <coding_rule class="AndroidRulesCallSuperFirst" level="WARNING" enabled="false" />
+        <coding_rule class="AndroidRulesCallSuperLast" level="WARNING" enabled="false" />
+        <coding_rule class="AndroidRulesProtectLogD" level="WARNING" enabled="false" />
+        <coding_rule class="AndroidRulesProtectLogV" level="WARNING" enabled="false" />
+        <coding_rule class="BAC_BAD_APPLET_CONSTRUCTOR" level="WARNING" enabled="false" />
+        <coding_rule class="BC_BAD_CAST_TO_ABSTRACT_COLLECTION" level="WARNING" enabled="true" />
+        <coding_rule class="BC_BAD_CAST_TO_CONCRETE_COLLECTION" level="ERROR" enabled="true" />
+        <coding_rule class="BC_EQUALS_METHOD_SHOULD_WORK_FOR_ALL_OBJECTS" level="ERROR" enabled="true" />
+        <coding_rule class="BC_IMPOSSIBLE_CAST" level="ERROR" enabled="true" />
+        <coding_rule class="BC_IMPOSSIBLE_DOWNCAST" level="WARNING" enabled="false" />
+        <coding_rule class="BC_IMPOSSIBLE_DOWNCAST_OF_TOARRAY" level="WARNING" enabled="false" />
+        <coding_rule class="BC_IMPOSSIBLE_INSTANCEOF" level="ERROR" enabled="true" />
+        <coding_rule class="BC_UNCONFIRMED_CAST" level="ERROR" enabled="true" />
+        <coding_rule class="BC_VACUOUS_INSTANCEOF" level="ERROR" enabled="true" />
+        <coding_rule class="BIT_ADD_OF_SIGNED_BYTE" level="ERROR" enabled="true" />
+        <coding_rule class="BIT_AND" level="ERROR" enabled="true" />
+        <coding_rule class="BIT_AND_ZZ" level="ERROR" enabled="true" />
+        <coding_rule class="BIT_IOR" level="ERROR" enabled="true" />
+        <coding_rule class="BIT_IOR_OF_SIGNED_BYTE" level="ERROR" enabled="true" />
+        <coding_rule class="BIT_SIGNED_CHECK" level="ERROR" enabled="true" />
+        <coding_rule class="BIT_SIGNED_CHECK_HIGH_BIT" level="ERROR" enabled="true" />
+        <coding_rule class="BOA_BADLY_OVERRIDDEN_ADAPTER" level="ERROR" enabled="true" />
+        <coding_rule class="BX_BOXING_IMMEDIATELY_UNBOXED" level="WARNING" enabled="true" />
+        <coding_rule class="BX_BOXING_IMMEDIATELY_UNBOXED_TO_PERFORM_COERCION" level="WARNING" enabled="true" />
+        <coding_rule class="BX_UNBOXED_AND_COERCED_FOR_TERNARY_OPERATOR" level="WARNING" enabled="true" />
+        <coding_rule class="BasicRulesAvoidDecimalLiteralsInBigDecimalConstructor" level="WARNING" enabled="true" />
+        <coding_rule class="BasicRulesAvoidMultipleUnaryOperators" level="WARNING" enabled="false" />
+        <coding_rule class="BasicRulesAvoidThreadGroup" level="ERROR" enabled="false" />
+        <coding_rule class="BasicRulesAvoidUsingHardCodedIP" level="WARNING" enabled="false" />
+        <coding_rule class="BasicRulesAvoidUsingOctalValues" level="WARNING" enabled="false" />
+        <coding_rule class="BasicRulesBigIntegerInstantiation" level="WARNING" enabled="true" />
+        <coding_rule class="BasicRulesBooleanInstantiation" level="WARNING" enabled="true" />
+        <coding_rule class="BasicRulesBrokenNullCheck" level="ERROR" enabled="true" />
+        <coding_rule class="BasicRulesCheckResultSet" level="WARNING" enabled="false" />
+        <coding_rule class="BasicRulesClassCastExceptionWithToArray" level="WARNING" enabled="true" />
+        <coding_rule class="BasicRulesCollapsibleIfStatements" level="INFO" enabled="true" />
+        <coding_rule class="BasicRulesDoubleCheckedLocking" level="WARNING" enabled="false" />
+        <coding_rule class="BasicRulesEmptyCatchBlock" level="ERROR" enabled="false" />
+        <coding_rule class="BasicRulesEmptyFinallyBlock" level="ERROR" enabled="true" />
+        <coding_rule class="BasicRulesEmptyIfStmt" level="ERROR" enabled="true" />
+        <coding_rule class="BasicRulesEmptyInitializer" level="WARNING" enabled="false" />
+        <coding_rule class="BasicRulesEmptyStatementNotInLoop" level="WARNING" enabled="false" />
+        <coding_rule class="BasicRulesEmptyStaticInitializer" level="WARNING" enabled="true" />
+        <coding_rule class="BasicRulesEmptySwitchStatements" level="WARNING" enabled="true" />
+        <coding_rule class="BasicRulesEmptySynchronizedBlock" level="ERROR" enabled="true" />
+        <coding_rule class="BasicRulesEmptyTryBlock" level="WARNING" enabled="true" />
+        <coding_rule class="BasicRulesEmptyWhileStmt" level="ERROR" enabled="true" />
+        <coding_rule class="BasicRulesForLoopShouldBeWhileLoop" level="INFO" enabled="false" />
+        <coding_rule class="BasicRulesJumbledIncrementer" level="WARNING" enabled="false" />
+        <coding_rule class="BasicRulesMisplacedNullCheck" level="ERROR" enabled="false" />
+        <coding_rule class="BasicRulesOverrideBothEqualsAndHashcode" level="ERROR" enabled="false" />
+        <coding_rule class="BasicRulesReturnFromFinallyBlock" level="WARNING" enabled="false" />
+        <coding_rule class="BasicRulesUnconditionalIfStatement" level="ERROR" enabled="true" />
+        <coding_rule class="BasicRulesUnnecessaryConversionTemporary" level="WARNING" enabled="false" />
+        <coding_rule class="BasicRulesUnnecessaryFinalModifier" level="INFO" enabled="false" />
+        <coding_rule class="BasicRulesUnnecessaryReturn" level="INFO" enabled="false" />
+        <coding_rule class="BasicRulesUnusedNullCheckInEquals" level="WARNING" enabled="true" />
+        <coding_rule class="BasicRulesUselessOperationOnImmutable" level="ERROR" enabled="true" />
+        <coding_rule class="BasicRulesUselessOverridingMethod" level="WARNING" enabled="true" />
+        <coding_rule class="BracesRulesForLoopsMustUseBraces" level="WARNING" enabled="true" />
+        <coding_rule class="BracesRulesIfElseStmtsMustUseBraces" level="WARNING" enabled="true" />
+        <coding_rule class="BracesRulesIfStmtsMustUseBraces" level="WARNING" enabled="true" />
+        <coding_rule class="BracesRulesWhileLoopsMustUseBraces" level="WARNING" enabled="true" />
+        <coding_rule class="CD_CIRCULAR_DEPENDENCY" level="WARNING" enabled="false" />
+        <coding_rule class="CI_CONFUSED_INHERITANCE" level="INFO" enabled="true" />
+        <coding_rule class="CN_IDIOM" level="WARNING" enabled="true" />
+        <coding_rule class="CN_IDIOM_NO_SUPER_CALL" level="WARNING" enabled="true" />
+        <coding_rule class="CN_IMPLEMENTS_CLONE_BUT_NOT_CLONEABLE" level="WARNING" enabled="true" />
+        <coding_rule class="CO_ABSTRACT_SELF" level="WARNING" enabled="true" />
+        <coding_rule class="CO_SELF_NO_OBJECT" level="WARNING" enabled="true" />
+        <coding_rule class="CloneImplementationRulesCloneMethodMustImplementCloneable" level="WARNING" enabled="false" />
+        <coding_rule class="CloneImplementationRulesCloneThrowsCloneNotSupportedException" level="WARNING" enabled="true" />
+        <coding_rule class="CloneImplementationRulesProperCloneImplementation" level="ERROR" enabled="false" />
+        <coding_rule class="CodeSizeRulesCyclomaticComplexity" level="WARNING" enabled="false" />
+        <coding_rule class="CodeSizeRulesExcessiveClassLength" level="WARNING" enabled="false" />
+        <coding_rule class="CodeSizeRulesExcessiveMethodLength" level="WARNING" enabled="false" />
+        <coding_rule class="CodeSizeRulesExcessiveParameterList" level="WARNING" enabled="false" />
+        <coding_rule class="CodeSizeRulesExcessivePublicCount" level="WARNING" enabled="false" />
+        <coding_rule class="CodeSizeRulesNPathComplexity" level="WARNING" enabled="false" />
+        <coding_rule class="CodeSizeRulesNcssConstructorCount" level="WARNING" enabled="false" />
+        <coding_rule class="CodeSizeRulesNcssMethodCount" level="WARNING" enabled="true" />
+        <coding_rule class="CodeSizeRulesNcssTypeCount" level="WARNING" enabled="true" />
+        <coding_rule class="CodeSizeRulesTooManyFields" level="WARNING" enabled="false" />
+        <coding_rule class="CodeSizeRulesTooManyMethods" level="WARNING" enabled="false" />
+        <coding_rule class="ControversialRulesAssignmentInOperand" level="WARNING" enabled="false" />
+        <coding_rule class="ControversialRulesAtLeastOneConstructor" level="WARNING" enabled="false" />
+        <coding_rule class="ControversialRulesAvoidAccessibilityAlteration" level="WARNING" enabled="false" />
+        <coding_rule class="ControversialRulesAvoidFinalLocalVariable" level="WARNING" enabled="false" />
+        <coding_rule class="ControversialRulesAvoidUsingNativeCode" level="WARNING" enabled="false" />
+        <coding_rule class="ControversialRulesAvoidUsingShortType" level="WARNING" enabled="false" />
+        <coding_rule class="ControversialRulesAvoidUsingVolatile" level="WARNING" enabled="false" />
+        <coding_rule class="ControversialRulesBooleanInversion" level="WARNING" enabled="false" />
+        <coding_rule class="ControversialRulesCallSuperInConstructor" level="INFO" enabled="false" />
+        <coding_rule class="ControversialRulesDataflowAnomalyAnalysis" level="WARNING" enabled="false" />
+        <coding_rule class="ControversialRulesDefaultPackage" level="INFO" enabled="false" />
+        <coding_rule class="ControversialRulesDoNotCallGarbageCollectionExplicitly" level="ERROR" enabled="false" />
+        <coding_rule class="ControversialRulesDontImportSun" level="INFO" enabled="true" />
+        <coding_rule class="ControversialRulesNullAssignment" level="WARNING" enabled="false" />
+        <coding_rule class="ControversialRulesOnlyOneReturn" level="INFO" enabled="false" />
+        <coding_rule class="ControversialRulesSuspiciousOctalEscape" level="WARNING" enabled="false" />
+        <coding_rule class="ControversialRulesUnnecessaryConstructor" level="WARNING" enabled="false" />
+        <coding_rule class="ControversialRulesUnnecessaryParentheses" level="INFO" enabled="false" />
+        <coding_rule class="ControversialRulesUnusedModifier" level="INFO" enabled="true" />
+        <coding_rule class="CouplingRulesCouplingBetweenObjects" level="WARNING" enabled="false" />
+        <coding_rule class="CouplingRulesExcessiveImports" level="WARNING" enabled="false" />
+        <coding_rule class="CouplingRulesLooseCoupling" level="WARNING" enabled="true" />
+        <coding_rule class="DB_DUPLICATE_BRANCHES" level="ERROR" enabled="true" />
+        <coding_rule class="DB_DUPLICATE_SWITCH_CLAUSES" level="ERROR" enabled="true" />
+        <coding_rule class="DC_DOUBLECHECK" level="WARNING" enabled="true" />
+        <coding_rule class="DE_MIGHT_DROP" level="WARNING" enabled="true" />
+        <coding_rule class="DE_MIGHT_IGNORE" level="WARNING" enabled="true" />
+        <coding_rule class="DLS_DEAD_LOCAL_STORE" level="ERROR" enabled="true" />
+        <coding_rule class="DLS_DEAD_LOCAL_STORE_IN_RETURN" level="ERROR" enabled="true" />
+        <coding_rule class="DLS_DEAD_LOCAL_STORE_OF_NULL" level="ERROR" enabled="true" />
+        <coding_rule class="DLS_DEAD_STORE_OF_CLASS_LITERAL" level="ERROR" enabled="true" />
+        <coding_rule class="DLS_OVERWRITTEN_INCREMENT" level="ERROR" enabled="true" />
+        <coding_rule class="DL_SYNCHRONIZATION_ON_BOOLEAN" level="ERROR" enabled="true" />
+        <coding_rule class="DL_SYNCHRONIZATION_ON_BOXED_PRIMITIVE" level="ERROR" enabled="true" />
+        <coding_rule class="DL_SYNCHRONIZATION_ON_SHARED_CONSTANT" level="ERROR" enabled="true" />
+        <coding_rule class="DL_SYNCHRONIZATION_ON_UNSHARED_BOXED_PRIMITIVE" level="ERROR" enabled="true" />
+        <coding_rule class="DMI_ANNOTATION_IS_NOT_VISIBLE_TO_REFLECTION" level="WARNING" enabled="true" />
+        <coding_rule class="DMI_BAD_MONTH" level="ERROR" enabled="true" />
+        <coding_rule class="DMI_BLOCKING_METHODS_ON_URL" level="ERROR" enabled="true" />
+        <coding_rule class="DMI_CALLING_NEXT_FROM_HASNEXT" level="ERROR" enabled="true" />
+        <coding_rule class="DMI_COLLECTIONS_SHOULD_NOT_CONTAIN_THEMSELVES" level="ERROR" enabled="true" />
+        <coding_rule class="DMI_COLLECTION_OF_URLS" level="ERROR" enabled="true" />
+        <coding_rule class="DMI_CONSTANT_DB_PASSWORD" level="ERROR" enabled="true" />
+        <coding_rule class="DMI_EMPTY_DB_PASSWORD" level="ERROR" enabled="true" />
+        <coding_rule class="DMI_FUTILE_ATTEMPT_TO_CHANGE_MAXPOOL_SIZE_OF_SCHEDULED_THREAD_POOL_EXECUTOR" level="INFO" enabled="true" />
+        <coding_rule class="DMI_HARDCODED_ABSOLUTE_FILENAME" level="ERROR" enabled="true" />
+        <coding_rule class="DMI_INVOKING_HASHCODE_ON_ARRAY" level="ERROR" enabled="true" />
+        <coding_rule class="DMI_INVOKING_TOSTRING_ON_ANONYMOUS_ARRAY" level="ERROR" enabled="true" />
+        <coding_rule class="DMI_INVOKING_TOSTRING_ON_ARRAY" level="ERROR" enabled="true" />
+        <coding_rule class="DMI_LONG_BITS_TO_DOUBLE_INVOKED_ON_INT" level="ERROR" enabled="true" />
+        <coding_rule class="DMI_NONSERIALIZABLE_OBJECT_WRITTEN" level="ERROR" enabled="true" />
+        <coding_rule class="DMI_RANDOM_USED_ONLY_ONCE" level="ERROR" enabled="true" />
+        <coding_rule class="DMI_SCHEDULED_THREAD_POOL_EXECUTOR_WITH_ZERO_CORE_THREADS" level="INFO" enabled="true" />
+        <coding_rule class="DMI_THREAD_PASSED_WHERE_RUNNABLE_EXPECTED" level="WARNING" enabled="true" />
+        <coding_rule class="DMI_UNSUPPORTED_METHOD" level="WARNING" enabled="true" />
+        <coding_rule class="DMI_USELESS_SUBSTRING" level="ERROR" enabled="true" />
+        <coding_rule class="DMI_USING_REMOVEALL_TO_CLEAR_COLLECTION" level="ERROR" enabled="true" />
+        <coding_rule class="DMI_VACUOUS_CALL_TO_EASYMOCK_METHOD" level="INFO" enabled="true" />
+        <coding_rule class="DMI_VACUOUS_SELF_COLLECTION_CALL" level="ERROR" enabled="true" />
+        <coding_rule class="DM_BOOLEAN_CTOR" level="WARNING" enabled="true" />
+        <coding_rule class="DM_BOXED_PRIMITIVE_TOSTRING" level="WARNING" enabled="true" />
+        <coding_rule class="DM_CONVERT_CASE" level="INFO" enabled="true" />
+        <coding_rule class="DM_EXIT" level="WARNING" enabled="true" />
+        <coding_rule class="DM_FP_NUMBER_CTOR" level="WARNING" enabled="true" />
+        <coding_rule class="DM_GC" level="WARNING" enabled="true" />
+        <coding_rule class="DM_MONITOR_WAIT_ON_CONDITION" level="WARNING" enabled="true" />
+        <coding_rule class="DM_NEW_FOR_GETCLASS" level="WARNING" enabled="true" />
+        <coding_rule class="DM_NEXTINT_VIA_NEXTDOUBLE" level="WARNING" enabled="true" />
+        <coding_rule class="DM_NUMBER_CTOR" level="ERROR" enabled="true" />
+        <coding_rule class="DM_RUN_FINALIZERS_ON_EXIT" level="WARNING" enabled="true" />
+        <coding_rule class="DM_STRING_CTOR" level="WARNING" enabled="true" />
+        <coding_rule class="DM_STRING_TOSTRING" level="INFO" enabled="true" />
+        <coding_rule class="DM_STRING_VOID_CTOR" level="WARNING" enabled="true" />
+        <coding_rule class="DM_USELESS_THREAD" level="WARNING" enabled="true" />
+        <coding_rule class="DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED" level="WARNING" enabled="true" />
+        <coding_rule class="DP_DO_INSIDE_DO_PRIVILEGED" level="WARNING" enabled="true" />
+        <coding_rule class="DesignRulesAbstractClassWithoutAbstractMethod" level="WARNING" enabled="false" />
+        <coding_rule class="DesignRulesAbstractClassWithoutAnyMethod" level="WARNING" enabled="false" />
+        <coding_rule class="DesignRulesAccessorClassGeneration" level="WARNING" enabled="false" />
+        <coding_rule class="DesignRulesAssignmentToNonFinalStatic" level="WARNING" enabled="false" />
+        <coding_rule class="DesignRulesAvoidConstantsInterface" level="WARNING" enabled="false" />
+        <coding_rule class="DesignRulesAvoidDeeplyNestedIfStmts" level="WARNING" enabled="false" />
+        <coding_rule class="DesignRulesAvoidInstanceofChecksInCatchClause" level="INFO" enabled="true" />
+        <coding_rule class="DesignRulesAvoidProtectedFieldInFinalClass" level="WARNING" enabled="false" />
+        <coding_rule class="DesignRulesAvoidReassigningParameters" level="WARNING" enabled="false" />
+        <coding_rule class="DesignRulesAvoidSynchronizedAtMethodLevel" level="WARNING" enabled="false" />
+        <coding_rule class="DesignRulesBadComparison" level="WARNING" enabled="false" />
+        <coding_rule class="DesignRulesClassWithOnlyPrivateConstructorsShouldBeFinal" level="WARNING" enabled="false" />
+        <coding_rule class="DesignRulesCloseResource" level="WARNING" enabled="true" />
+        <coding_rule class="DesignRulesCompareObjectsWithEquals" level="WARNING" enabled="true" />
+        <coding_rule class="DesignRulesConfusingTernary" level="WARNING" enabled="false" />
+        <coding_rule class="DesignRulesConstructorCallsOverridableMethod" level="WARNING" enabled="true" />
+        <coding_rule class="DesignRulesDefaultLabelNotLastInSwitchStmt" level="WARNING" enabled="false" />
+        <coding_rule class="DesignRulesEmptyMethodInAbstractClassShouldBeAbstract" level="WARNING" enabled="false" />
+        <coding_rule class="DesignRulesEqualsNull" level="ERROR" enabled="true" />
+        <coding_rule class="DesignRulesFinalFieldCouldBeStatic" level="INFO" enabled="true" />
+        <coding_rule class="DesignRulesIdempotentOperations" level="WARNING" enabled="true" />
+        <coding_rule class="DesignRulesImmutableField" level="WARNING" enabled="false" />
+        <coding_rule class="DesignRulesInstantiationToGetClass" level="WARNING" enabled="true" />
+        <coding_rule class="DesignRulesMissingBreakInSwitch" level="ERROR" enabled="false" />
+        <coding_rule class="DesignRulesMissingStaticMethodInNonInstantiatableClass" level="WARNING" enabled="true" />
+        <coding_rule class="DesignRulesNonCaseLabelInSwitchStatement" level="WARNING" enabled="false" />
+        <coding_rule class="DesignRulesNonStaticInitializer" level="WARNING" enabled="false" />
+        <coding_rule class="DesignRulesNonThreadSafeSingleton" level="WARNING" enabled="false" />
+        <coding_rule class="DesignRulesOptimizableToArrayCall" level="WARNING" enabled="false" />
+        <coding_rule class="DesignRulesPositionLiteralsFirstInComparisons" level="WARNING" enabled="false" />
+        <coding_rule class="DesignRulesPreserveStackTrace" level="WARNING" enabled="true" />
+        <coding_rule class="DesignRulesReturnEmptyArrayRatherThanNull" level="INFO" enabled="false" />
+        <coding_rule class="DesignRulesSimpleDateFormatNeedsLocale" level="WARNING" enabled="false" />
+        <coding_rule class="DesignRulesSimplifyBooleanExpressions" level="WARNING" enabled="false" />
+        <coding_rule class="DesignRulesSimplifyBooleanReturns" level="INFO" enabled="false" />
+        <coding_rule class="DesignRulesSimplifyConditional" level="WARNING" enabled="true" />
+        <coding_rule class="DesignRulesSingularField" level="INFO" enabled="true" />
+        <coding_rule class="DesignRulesSwitchDensity" level="WARNING" enabled="false" />
+        <coding_rule class="DesignRulesSwitchStmtsShouldHaveDefault" level="WARNING" enabled="false" />
+        <coding_rule class="DesignRulesTooFewBranchesForASwitchStatement" level="INFO" enabled="false" />
+        <coding_rule class="DesignRulesUncommentedEmptyConstructor" level="WARNING" enabled="false" />
+        <coding_rule class="DesignRulesUncommentedEmptyMethod" level="WARNING" enabled="false" />
+        <coding_rule class="DesignRulesUnnecessaryLocalBeforeReturn" level="WARNING" enabled="true" />
+        <coding_rule class="DesignRulesUnsynchronizedStaticDateFormatter" level="WARNING" enabled="false" />
+        <coding_rule class="DesignRulesUseCollectionIsEmpty" level="INFO" enabled="false" />
+        <coding_rule class="DesignRulesUseLocaleWithCaseConversions" level="WARNING" enabled="false" />
+        <coding_rule class="DesignRulesUseNotifyAllInsteadOfNotify" level="WARNING" enabled="false" />
+        <coding_rule class="DesignRulesUseSingleton" level="WARNING" enabled="false" />
+        <coding_rule class="EC_ARRAY_AND_NONARRAY" level="ERROR" enabled="true" />
+        <coding_rule class="EC_BAD_ARRAY_COMPARE" level="ERROR" enabled="true" />
+        <coding_rule class="EC_INCOMPATIBLE_ARRAY_COMPARE" level="WARNING" enabled="false" />
+        <coding_rule class="EC_NULL_ARG" level="ERROR" enabled="true" />
+        <coding_rule class="EC_UNRELATED_CLASS_AND_INTERFACE" level="ERROR" enabled="true" />
+        <coding_rule class="EC_UNRELATED_INTERFACES" level="ERROR" enabled="true" />
+        <coding_rule class="EC_UNRELATED_TYPES" level="ERROR" enabled="true" />
+        <coding_rule class="EC_UNRELATED_TYPES_USING_POINTER_EQUALITY" level="ERROR" enabled="true" />
+        <coding_rule class="EI_EXPOSE_REP" level="WARNING" enabled="true" />
+        <coding_rule class="EI_EXPOSE_REP2" level="WARNING" enabled="true" />
+        <coding_rule class="EI_EXPOSE_STATIC_REP2" level="WARNING" enabled="true" />
+        <coding_rule class="EQ_ABSTRACT_SELF" level="WARNING" enabled="true" />
+        <coding_rule class="EQ_ALWAYS_FALSE" level="ERROR" enabled="true" />
+        <coding_rule class="EQ_ALWAYS_TRUE" level="ERROR" enabled="true" />
+        <coding_rule class="EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS" level="WARNING" enabled="true" />
+        <coding_rule class="EQ_COMPARETO_USE_OBJECT_EQUALS" level="ERROR" enabled="true" />
+        <coding_rule class="EQ_COMPARING_CLASS_NAMES" level="WARNING" enabled="true" />
+        <coding_rule class="EQ_DOESNT_OVERRIDE_EQUALS" level="WARNING" enabled="false" />
+        <coding_rule class="EQ_DONT_DEFINE_EQUALS_FOR_ENUM" level="WARNING" enabled="true" />
+        <coding_rule class="EQ_GETCLASS_AND_CLASS_CONSTANT" level="ERROR" enabled="true" />
+        <coding_rule class="EQ_OTHER_NO_OBJECT" level="WARNING" enabled="true" />
+        <coding_rule class="EQ_OTHER_USE_OBJECT" level="WARNING" enabled="true" />
+        <coding_rule class="EQ_OVERRIDING_EQUALS_NOT_SYMMETRIC" level="WARNING" enabled="true" />
+        <coding_rule class="EQ_SELF_NO_OBJECT" level="WARNING" enabled="true" />
+        <coding_rule class="EQ_SELF_USE_OBJECT" level="WARNING" enabled="true" />
+        <coding_rule class="EQ_UNUSUAL" level="INFO" enabled="true" />
+        <coding_rule class="ES_COMPARING_PARAMETER_STRING_WITH_EQ" level="WARNING" enabled="true" />
+        <coding_rule class="ES_COMPARING_STRINGS_WITH_EQ" level="WARNING" enabled="true" />
+        <coding_rule class="ESync_EMPTY_SYNC" level="WARNING" enabled="true" />
+        <coding_rule class="FE_FLOATING_POINT_EQUALITY" level="ERROR" enabled="true" />
+        <coding_rule class="FE_TEST_IF_EQUAL_TO_NOT_A_NUMBER" level="ERROR" enabled="true" />
+        <coding_rule class="FI_EMPTY" level="WARNING" enabled="true" />
+        <coding_rule class="FI_EXPLICIT_INVOCATION" level="WARNING" enabled="true" />
+        <coding_rule class="FI_FINALIZER_NULLS_FIELDS" level="WARNING" enabled="true" />
+        <coding_rule class="FI_FINALIZER_ONLY_NULLS_FIELDS" level="WARNING" enabled="true" />
+        <coding_rule class="FI_MISSING_SUPER_CALL" level="WARNING" enabled="true" />
+        <coding_rule class="FI_NULLIFY_SUPER" level="ERROR" enabled="true" />
+        <coding_rule class="FI_PUBLIC_SHOULD_BE_PROTECTED" level="WARNING" enabled="true" />
+        <coding_rule class="FI_USELESS" level="INFO" enabled="true" />
+        <coding_rule class="FL_MATH_USING_FLOAT_PRECISION" level="ERROR" enabled="true" />
+        <coding_rule class="FinalizerRulesAvoidCallingFinalize" level="WARNING" enabled="true" />
+        <coding_rule class="FinalizerRulesEmptyFinalizer" level="WARNING" enabled="true" />
+        <coding_rule class="FinalizerRulesFinalizeDoesNotCallSuperFinalize" level="WARNING" enabled="true" />
+        <coding_rule class="FinalizerRulesFinalizeOnlyCallsSuperFinalize" level="WARNING" enabled="false" />
+        <coding_rule class="FinalizerRulesFinalizeOverloaded" level="WARNING" enabled="true" />
+        <coding_rule class="FinalizerRulesFinalizeShouldBeProtected" level="WARNING" enabled="false" />
+        <coding_rule class="GC_UNCHECKED_TYPE_IN_GENERIC_CALL" level="ERROR" enabled="true" />
+        <coding_rule class="GC_UNRELATED_TYPES" level="ERROR" enabled="true" />
+        <coding_rule class="HE_EQUALS_NO_HASHCODE" level="WARNING" enabled="true" />
+        <coding_rule class="HE_EQUALS_USE_HASHCODE" level="ERROR" enabled="true" />
+        <coding_rule class="HE_HASHCODE_NO_EQUALS" level="ERROR" enabled="true" />
+        <coding_rule class="HE_HASHCODE_USE_OBJECT_EQUALS" level="ERROR" enabled="true" />
+        <coding_rule class="HE_INHERITS_EQUALS_USE_HASHCODE" level="ERROR" enabled="true" />
+        <coding_rule class="HE_SIGNATURE_DECLARES_HASHING_OF_UNHASHABLE_CLASS" level="ERROR" enabled="true" />
+        <coding_rule class="HE_USE_OF_UNHASHABLE_CLASS" level="ERROR" enabled="true" />
+        <coding_rule class="HRS_REQUEST_PARAMETER_TO_COOKIE" level="WARNING" enabled="true" />
+        <coding_rule class="HRS_REQUEST_PARAMETER_TO_HTTP_HEADER" level="WARNING" enabled="true" />
+        <coding_rule class="HSC_HUGE_SHARED_STRING_CONSTANT" level="ERROR" enabled="true" />
+        <coding_rule class="IA_AMBIGUOUS_INVOCATION_OF_INHERITED_OR_OUTER_METHOD" level="WARNING" enabled="true" />
+        <coding_rule class="ICAST_BAD_SHIFT_AMOUNT" level="ERROR" enabled="true" />
+        <coding_rule class="ICAST_IDIV_CAST_TO_DOUBLE" level="ERROR" enabled="true" />
+        <coding_rule class="ICAST_INTEGER_MULTIPLY_CAST_TO_LONG" level="ERROR" enabled="true" />
+        <coding_rule class="ICAST_INT_CAST_TO_DOUBLE_PASSED_TO_CEIL" level="ERROR" enabled="true" />
+        <coding_rule class="ICAST_INT_CAST_TO_FLOAT_PASSED_TO_ROUND" level="ERROR" enabled="true" />
+        <coding_rule class="ICAST_QUESTIONABLE_UNSIGNED_RIGHT_SHIFT" level="ERROR" enabled="true" />
+        <coding_rule class="IC_INIT_CIRCULARITY" level="ERROR" enabled="true" />
+        <coding_rule class="IC_SUPERCLASS_USES_SUBCLASS_DURING_INITIALIZATION" level="WARNING" enabled="true" />
+        <coding_rule class="IJU_ASSERT_METHOD_INVOKED_FROM_RUN_METHOD" level="ERROR" enabled="true" />
+        <coding_rule class="IJU_BAD_SUITE_METHOD" level="ERROR" enabled="true" />
+        <coding_rule class="IJU_NO_TESTS" level="ERROR" enabled="true" />
+        <coding_rule class="IJU_SETUP_NO_SUPER" level="ERROR" enabled="true" />
+        <coding_rule class="IJU_SUITE_NOT_STATIC" level="ERROR" enabled="true" />
+        <coding_rule class="IJU_TEARDOWN_NO_SUPER" level="ERROR" enabled="true" />
+        <coding_rule class="IL_CONTAINER_ADDED_TO_ITSELF" level="ERROR" enabled="true" />
+        <coding_rule class="IL_INFINITE_LOOP" level="ERROR" enabled="true" />
+        <coding_rule class="IL_INFINITE_RECURSIVE_LOOP" level="ERROR" enabled="true" />
+        <coding_rule class="IMA_INEFFICIENT_MEMBER_ACCESS" level="WARNING" enabled="false" />
+        <coding_rule class="IMSE_DONT_CATCH_IMSE" level="WARNING" enabled="true" />
+        <coding_rule class="IM_AVERAGE_COMPUTATION_COULD_OVERFLOW" level="ERROR" enabled="true" />
+        <coding_rule class="IM_BAD_CHECK_FOR_ODD" level="ERROR" enabled="true" />
+        <coding_rule class="IM_MULTIPLYING_RESULT_OF_IREM" level="ERROR" enabled="true" />
+        <coding_rule class="INT_BAD_COMPARISON_WITH_NONNEGATIVE_VALUE" level="ERROR" enabled="true" />
+        <coding_rule class="INT_BAD_COMPARISON_WITH_SIGNED_BYTE" level="ERROR" enabled="true" />
+        <coding_rule class="INT_BAD_REM_BY_1" level="ERROR" enabled="true" />
+        <coding_rule class="INT_VACUOUS_COMPARISON" level="ERROR" enabled="true" />
+        <coding_rule class="IO_APPENDING_TO_OBJECT_OUTPUT_STREAM" level="ERROR" enabled="true" />
+        <coding_rule class="IP_PARAMETER_IS_DEAD_BUT_OVERWRITTEN" level="ERROR" enabled="true" />
+        <coding_rule class="IS2_INCONSISTENT_SYNC" level="ERROR" enabled="true" />
+        <coding_rule class="ISC_INSTANTIATE_STATIC_CLASS" level="WARNING" enabled="true" />
+        <coding_rule class="IS_FIELD_NOT_GUARDED" level="ERROR" enabled="true" />
+        <coding_rule class="IS_INCONSISTENT_SYNC" level="WARNING" enabled="true" />
+        <coding_rule class="ITA_INEFFICIENT_TO_ARRAY" level="ERROR" enabled="true" />
+        <coding_rule class="IT_NO_SUCH_ELEMENT" level="INFO" enabled="true" />
+        <coding_rule class="ImportStatementRulesDontImportJavaLang" level="INFO" enabled="true" />
+        <coding_rule class="ImportStatementRulesDuplicateImports" level="INFO" enabled="false" />
+        <coding_rule class="ImportStatementRulesImportFromSamePackage" level="INFO" enabled="false" />
+        <coding_rule class="ImportStatementRulesTooManyStaticImports" level="WARNING" enabled="false" />
+        <coding_rule class="ImportStatementRulesUnusedImports" level="INFO" enabled="false" />
+        <coding_rule class="J2EERulesDoNotCallSystemExit" level="WARNING" enabled="false" />
+        <coding_rule class="J2EERulesDoNotUseThreads" level="WARNING" enabled="false" />
+        <coding_rule class="J2EERulesLocalHomeNamingConvention" level="WARNING" enabled="false" />
+        <coding_rule class="J2EERulesLocalInterfaceSessionNamingConvention" level="WARNING" enabled="false" />
+        <coding_rule class="J2EERulesMDBAndSessionBeanNamingConvention" level="WARNING" enabled="false" />
+        <coding_rule class="J2EERulesRemoteInterfaceNamingConvention" level="WARNING" enabled="false" />
+        <coding_rule class="J2EERulesRemoteSessionInterfaceNamingConvention" level="WARNING" enabled="false" />
+        <coding_rule class="J2EERulesStaticEJBFieldShouldBeFinal" level="WARNING" enabled="false" />
+        <coding_rule class="J2EERulesUseProperClassLoader" level="ERROR" enabled="false" />
+        <coding_rule class="J2EE_STORE_OF_NON_SERIALIZABLE_OBJECT_INTO_SESSION" level="ERROR" enabled="true" />
+        <coding_rule class="JCIP_FIELD_ISNT_FINAL_IN_IMMUTABLE_CLASS" level="INFO" enabled="true" />
+        <coding_rule class="JLM_JSR166_LOCK_MONITORENTER" level="ERROR" enabled="true" />
+        <coding_rule class="JUnitRulesJUnitAssertionsShouldIncludeMessage" level="WARNING" enabled="false" />
+        <coding_rule class="JUnitRulesJUnitSpelling" level="WARNING" enabled="false" />
+        <coding_rule class="JUnitRulesJUnitStaticSuite" level="WARNING" enabled="false" />
+        <coding_rule class="JUnitRulesJUnitTestsShouldIncludeAssert" level="WARNING" enabled="false" />
+        <coding_rule class="JUnitRulesSimplifyBooleanAssertion" level="WARNING" enabled="false" />
+        <coding_rule class="JUnitRulesTestClassWithoutTestCases" level="WARNING" enabled="false" />
+        <coding_rule class="JUnitRulesUnnecessaryBooleanAssertion" level="WARNING" enabled="false" />
+        <coding_rule class="JUnitRulesUseAssertEqualsInsteadOfAssertTrue" level="WARNING" enabled="false" />
+        <coding_rule class="JUnitRulesUseAssertNullInsteadOfAssertTrue" level="WARNING" enabled="false" />
+        <coding_rule class="JUnitRulesUseAssertSameInsteadOfAssertTrue" level="WARNING" enabled="false" />
+        <coding_rule class="JakartaCommonsLoggingRulesProperLogger" level="WARNING" enabled="false" />
+        <coding_rule class="JakartaCommonsLoggingRulesUseCorrectExceptionLogging" level="WARNING" enabled="true" />
+        <coding_rule class="JavaBeanRulesBeanMembersShouldSerialize" level="WARNING" enabled="false" />
+        <coding_rule class="JavaBeanRulesMissingSerialVersionUID" level="WARNING" enabled="false" />
+        <coding_rule class="JavaLoggingRulesAvoidPrintStackTrace" level="WARNING" enabled="true" />
+        <coding_rule class="JavaLoggingRulesLoggerIsNotStaticFinal" level="WARNING" enabled="false" />
+        <coding_rule class="JavaLoggingRulesMoreThanOneLogger" level="WARNING" enabled="false" />
+        <coding_rule class="JavaLoggingRulesSystemPrintln" level="WARNING" enabled="true" />
+        <coding_rule class="LG_LOST_LOGGER_DUE_TO_WEAK_REFERENCE" level="WARNING" enabled="false" />
+        <coding_rule class="LI_LAZY_INIT_STATIC" level="ERROR" enabled="true" />
+        <coding_rule class="LI_LAZY_INIT_UPDATE_STATIC" level="ERROR" enabled="true" />
+        <coding_rule class="MF_CLASS_MASKS_FIELD" level="WARNING" enabled="true" />
+        <coding_rule class="MF_METHOD_MASKS_FIELD" level="WARNING" enabled="true" />
+        <coding_rule class="ML_SYNC_ON_FIELD_TO_GUARD_CHANGING_THAT_FIELD" level="WARNING" enabled="true" />
+        <coding_rule class="ML_SYNC_ON_UPDATED_FIELD" level="WARNING" enabled="true" />
+        <coding_rule class="MSF_MUTABLE_SERVLET_FIELD" level="WARNING" enabled="true" />
+        <coding_rule class="MS_CANNOT_BE_FINAL" level="WARNING" enabled="true" />
+        <coding_rule class="MS_EXPOSE_REP" level="ERROR" enabled="true" />
+        <coding_rule class="MS_FINAL_PKGPROTECT" level="WARNING" enabled="true" />
+        <coding_rule class="MS_MUTABLE_ARRAY" level="WARNING" enabled="true" />
+        <coding_rule class="MS_MUTABLE_HASHTABLE" level="WARNING" enabled="true" />
+        <coding_rule class="MS_OOI_PKGPROTECT" level="WARNING" enabled="true" />
+        <coding_rule class="MS_PKGPROTECT" level="WARNING" enabled="true" />
+        <coding_rule class="MS_SHOULD_BE_FINAL" level="WARNING" enabled="true" />
+        <coding_rule class="MTIA_SUSPECT_SERVLET_INSTANCE_FIELD" level="ERROR" enabled="true" />
+        <coding_rule class="MTIA_SUSPECT_STRUTS_INSTANCE_FIELD" level="ERROR" enabled="true" />
+        <coding_rule class="MWN_MISMATCHED_NOTIFY" level="ERROR" enabled="true" />
+        <coding_rule class="MWN_MISMATCHED_WAIT" level="ERROR" enabled="true" />
+        <coding_rule class="MigrationRulesAvoidAssertAsIdentifier" level="WARNING" enabled="true" />
+        <coding_rule class="MigrationRulesAvoidEnumAsIdentifier" level="WARNING" enabled="true" />
+        <coding_rule class="MigrationRulesByteInstantiation" level="WARNING" enabled="false" />
+        <coding_rule class="MigrationRulesIntegerInstantiation" level="WARNING" enabled="true" />
+        <coding_rule class="MigrationRulesJUnit4SuitesShouldUseSuiteAnnotation" level="WARNING" enabled="false" />
+        <coding_rule class="MigrationRulesJUnit4TestShouldUseAfterAnnotation" level="WARNING" enabled="false" />
+        <coding_rule class="MigrationRulesJUnit4TestShouldUseBeforeAnnotation" level="WARNING" enabled="false" />
+        <coding_rule class="MigrationRulesJUnit4TestShouldUseTestAnnotation" level="WARNING" enabled="false" />
+        <coding_rule class="MigrationRulesJUnitUseExpected" level="WARNING" enabled="false" />
+        <coding_rule class="MigrationRulesLongInstantiation" level="WARNING" enabled="false" />
+        <coding_rule class="MigrationRulesReplaceEnumerationWithIterator" level="WARNING" enabled="true" />
+        <coding_rule class="MigrationRulesReplaceHashtableWithMap" level="WARNING" enabled="true" />
+        <coding_rule class="MigrationRulesReplaceVectorWithList" level="WARNING" enabled="true" />
+        <coding_rule class="MigrationRulesShortInstantiation" level="WARNING" enabled="false" />
+        <coding_rule class="NM_BAD_EQUAL" level="WARNING" enabled="false" />
+        <coding_rule class="NM_CLASS_NAMING_CONVENTION" level="WARNING" enabled="false" />
+        <coding_rule class="NM_CLASS_NOT_EXCEPTION" level="WARNING" enabled="true" />
+        <coding_rule class="NM_CONFUSING" level="WARNING" enabled="true" />
+        <coding_rule class="NM_FIELD_NAMING_CONVENTION" level="WARNING" enabled="false" />
+        <coding_rule class="NM_FUTURE_KEYWORD_USED_AS_IDENTIFIER" level="WARNING" enabled="true" />
+        <coding_rule class="NM_FUTURE_KEYWORD_USED_AS_MEMBER_IDENTIFIER" level="WARNING" enabled="true" />
+        <coding_rule class="NM_LCASE_HASHCODE" level="WARNING" enabled="false" />
+        <coding_rule class="NM_LCASE_TOSTRING" level="WARNING" enabled="false" />
+        <coding_rule class="NM_METHOD_CONSTRUCTOR_CONFUSION" level="WARNING" enabled="true" />
+        <coding_rule class="NM_METHOD_NAMING_CONVENTION" level="WARNING" enabled="false" />
+        <coding_rule class="NM_SAME_SIMPLE_NAME_AS_INTERFACE" level="WARNING" enabled="true" />
+        <coding_rule class="NM_SAME_SIMPLE_NAME_AS_SUPERCLASS" level="WARNING" enabled="true" />
+        <coding_rule class="NM_VERY_CONFUSING" level="WARNING" enabled="true" />
+        <coding_rule class="NM_VERY_CONFUSING_INTENTIONAL" level="WARNING" enabled="true" />
+        <coding_rule class="NM_WRONG_PACKAGE" level="WARNING" enabled="true" />
+        <coding_rule class="NM_WRONG_PACKAGE_INTENTIONAL" level="WARNING" enabled="true" />
+        <coding_rule class="NN_NAKED_NOTIFY" level="ERROR" enabled="true" />
+        <coding_rule class="NOISE_FIELD_REFERENCE" level="WARNING" enabled="false" />
+        <coding_rule class="NOISE_METHOD_CALL" level="WARNING" enabled="false" />
+        <coding_rule class="NOISE_NULL_DEREFERENCE" level="WARNING" enabled="false" />
+        <coding_rule class="NOISE_OPERATION" level="WARNING" enabled="false" />
+        <coding_rule class="NO_NOTIFY_NOT_NOTIFYALL" level="ERROR" enabled="true" />
+        <coding_rule class="NP_ALWAYS_NULL" level="ERROR" enabled="true" />
+        <coding_rule class="NP_ALWAYS_NULL_EXCEPTION" level="ERROR" enabled="true" />
+        <coding_rule class="NP_ARGUMENT_MIGHT_BE_NULL" level="WARNING" enabled="true" />
+        <coding_rule class="NP_BOOLEAN_RETURN_NULL" level="WARNING" enabled="true" />
+        <coding_rule class="NP_CLONE_COULD_RETURN_NULL" level="ERROR" enabled="true" />
+        <coding_rule class="NP_CLOSING_NULL" level="WARNING" enabled="false" />
+        <coding_rule class="NP_DEREFERENCE_OF_READLINE_VALUE" level="ERROR" enabled="true" />
+        <coding_rule class="NP_DOES_NOT_HANDLE_NULL" level="WARNING" enabled="false" />
+        <coding_rule class="NP_EQUALS_SHOULD_HANDLE_NULL_ARGUMENT" level="ERROR" enabled="true" />
+        <coding_rule class="NP_GUARANTEED_DEREF" level="ERROR" enabled="true" />
+        <coding_rule class="NP_GUARANTEED_DEREF_ON_EXCEPTION_PATH" level="ERROR" enabled="true" />
+        <coding_rule class="NP_IMMEDIATE_DEREFERENCE_OF_READLINE" level="ERROR" enabled="true" />
+        <coding_rule class="NP_LOAD_OF_KNOWN_NULL_VALUE" level="ERROR" enabled="true" />
+        <coding_rule class="NP_NONNULL_PARAM_VIOLATION" level="ERROR" enabled="true" />
+        <coding_rule class="NP_NONNULL_RETURN_VIOLATION" level="ERROR" enabled="true" />
+        <coding_rule class="NP_NULL_INSTANCEOF" level="ERROR" enabled="true" />
+        <coding_rule class="NP_NULL_ON_SOME_PATH" level="ERROR" enabled="true" />
+        <coding_rule class="NP_NULL_ON_SOME_PATH_EXCEPTION" level="ERROR" enabled="true" />
+        <coding_rule class="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE" level="ERROR" enabled="true" />
+        <coding_rule class="NP_NULL_ON_SOME_PATH_MIGHT_BE_INFEASIBLE" level="ERROR" enabled="true" />
+        <coding_rule class="NP_NULL_PARAM_DEREF" level="ERROR" enabled="true" />
+        <coding_rule class="NP_NULL_PARAM_DEREF_ALL_TARGETS_DANGEROUS" level="ERROR" enabled="true" />
+        <coding_rule class="NP_NULL_PARAM_DEREF_NONVIRTUAL" level="ERROR" enabled="true" />
+        <coding_rule class="NP_PARAMETER_MUST_BE_NONNULL_BUT_MARKED_AS_NULLABLE" level="ERROR" enabled="true" />
+        <coding_rule class="NP_STORE_INTO_NONNULL_FIELD" level="ERROR" enabled="true" />
+        <coding_rule class="NP_SYNC_AND_NULL_CHECK_FIELD" level="WARNING" enabled="true" />
+        <coding_rule class="NP_TOSTRING_COULD_RETURN_NULL" level="ERROR" enabled="true" />
+        <coding_rule class="NP_UNWRITTEN_FIELD" level="WARNING" enabled="false" />
+        <coding_rule class="NS_DANGEROUS_NON_SHORT_CIRCUIT" level="ERROR" enabled="true" />
+        <coding_rule class="NS_NON_SHORT_CIRCUIT" level="WARNING" enabled="true" />
+        <coding_rule class="NamingRulesAbstractNaming" level="WARNING" enabled="false" />
+        <coding_rule class="NamingRulesAvoidDollarSigns" level="INFO" enabled="true" />
+        <coding_rule class="NamingRulesAvoidFieldNameMatchingMethodName" level="WARNING" enabled="false" />
+        <coding_rule class="NamingRulesAvoidFieldNameMatchingTypeName" level="WARNING" enabled="false" />
+        <coding_rule class="NamingRulesBooleanGetMethodName" level="WARNING" enabled="false" />
+        <coding_rule class="NamingRulesClassNamingConventions" level="WARNING" enabled="true" />
+        <coding_rule class="NamingRulesLongVariable" level="WARNING" enabled="false" />
+        <coding_rule class="NamingRulesMethodNamingConventions" level="WARNING" enabled="false" />
+        <coding_rule class="NamingRulesMethodWithSameNameAsEnclosingClass" level="WARNING" enabled="true" />
+        <coding_rule class="NamingRulesMisleadingVariableName" level="WARNING" enabled="false" />
+        <coding_rule class="NamingRulesNoPackage" level="WARNING" enabled="false" />
+        <coding_rule class="NamingRulesPackageCase" level="WARNING" enabled="false" />
+        <coding_rule class="NamingRulesShortMethodName" level="WARNING" enabled="false" />
+        <coding_rule class="NamingRulesShortVariable" level="WARNING" enabled="false" />
+        <coding_rule class="NamingRulesSuspiciousConstantFieldName" level="WARNING" enabled="true" />
+        <coding_rule class="NamingRulesSuspiciousEqualsMethodName" level="ERROR" enabled="true" />
+        <coding_rule class="NamingRulesSuspiciousHashcodeMethodName" level="WARNING" enabled="true" />
+        <coding_rule class="NamingRulesVariableNamingConventions" level="WARNING" enabled="false" />
+        <coding_rule class="OBL_UNSATISFIED_OBLIGATION" level="WARNING" enabled="false" />
+        <coding_rule class="ODR_OPEN_DATABASE_RESOURCE" level="ERROR" enabled="true" />
+        <coding_rule class="ODR_OPEN_DATABASE_RESOURCE_EXCEPTION_PATH" level="ERROR" enabled="true" />
+        <coding_rule class="OS_OPEN_STREAM" level="ERROR" enabled="true" />
+        <coding_rule class="OS_OPEN_STREAM_EXCEPTION_PATH" level="ERROR" enabled="true" />
+        <coding_rule class="OptimizationRulesAddEmptyString" level="WARNING" enabled="false" />
+        <coding_rule class="OptimizationRulesAvoidArrayLoops" level="WARNING" enabled="true" />
+        <coding_rule class="OptimizationRulesAvoidInstantiatingObjectsInLoops" level="INFO" enabled="false" />
+        <coding_rule class="OptimizationRulesLocalVariableCouldBeFinal" level="INFO" enabled="false" />
+        <coding_rule class="OptimizationRulesMethodArgumentCouldBeFinal" level="INFO" enabled="false" />
+        <coding_rule class="OptimizationRulesSimplifyStartsWith" level="INFO" enabled="false" />
+        <coding_rule class="OptimizationRulesUnnecessaryWrapperObjectCreation" level="WARNING" enabled="false" />
+        <coding_rule class="OptimizationRulesUseArrayListInsteadOfVector" level="WARNING" enabled="true" />
+        <coding_rule class="OptimizationRulesUseArraysAsList" level="WARNING" enabled="true" />
+        <coding_rule class="OptimizationRulesUseStringBufferForStringAppends" level="WARNING" enabled="false" />
+        <coding_rule class="PS_PUBLIC_SEMAPHORES" level="ERROR" enabled="true" />
+        <coding_rule class="PZLA_PREFER_ZERO_LENGTH_ARRAYS" level="WARNING" enabled="true" />
+        <coding_rule class="QBA_QUESTIONABLE_BOOLEAN_ASSIGNMENT" level="ERROR" enabled="true" />
+        <coding_rule class="QF_QUESTIONABLE_FOR_LOOP" level="ERROR" enabled="true" />
+        <coding_rule class="RCN_REDUNDANT_COMPARISON_OF_NULL_AND_NONNULL_VALUE" level="ERROR" enabled="true" />
+        <coding_rule class="RCN_REDUNDANT_COMPARISON_TWO_NULL_VALUES" level="ERROR" enabled="true" />
+        <coding_rule class="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE" level="ERROR" enabled="true" />
+        <coding_rule class="RCN_REDUNDANT_NULLCHECK_OF_NULL_VALUE" level="ERROR" enabled="true" />
+        <coding_rule class="RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE" level="ERROR" enabled="true" />
+        <coding_rule class="RC_REF_COMPARISON" level="ERROR" enabled="true" />
+        <coding_rule class="RC_REF_COMPARISON_BAD_PRACTICE" level="WARNING" enabled="false" />
+        <coding_rule class="RC_REF_COMPARISON_BAD_PRACTICE_BOOLEAN" level="WARNING" enabled="false" />
+        <coding_rule class="REC_CATCH_EXCEPTION" level="WARNING" enabled="true" />
+        <coding_rule class="RE_BAD_SYNTAX_FOR_REGULAR_EXPRESSION" level="ERROR" enabled="true" />
+        <coding_rule class="RE_CANT_USE_FILE_SEPARATOR_AS_REGULAR_EXPRESSION" level="ERROR" enabled="true" />
+        <coding_rule class="RE_POSSIBLE_UNINTENDED_PATTERN" level="ERROR" enabled="true" />
+        <coding_rule class="RI_REDUNDANT_INTERFACES" level="WARNING" enabled="true" />
+        <coding_rule class="RR_NOT_CHECKED" level="WARNING" enabled="true" />
+        <coding_rule class="RS_READOBJECT_SYNC" level="ERROR" enabled="true" />
+        <coding_rule class="RU_INVOKE_RUN" level="WARNING" enabled="true" />
+        <coding_rule class="RV_01_TO_INT" level="WARNING" enabled="true" />
+        <coding_rule class="RV_ABSOLUTE_VALUE_OF_HASHCODE" level="ERROR" enabled="true" />
+        <coding_rule class="RV_ABSOLUTE_VALUE_OF_RANDOM_INT" level="ERROR" enabled="true" />
+        <coding_rule class="RV_CHECK_FOR_POSITIVE_INDEXOF" level="INFO" enabled="true" />
+        <coding_rule class="RV_DONT_JUST_NULL_CHECK_READLINE" level="WARNING" enabled="true" />
+        <coding_rule class="RV_EXCEPTION_NOT_THROWN" level="ERROR" enabled="true" />
+        <coding_rule class="RV_REM_OF_HASHCODE" level="ERROR" enabled="true" />
+        <coding_rule class="RV_REM_OF_RANDOM_INT" level="ERROR" enabled="true" />
+        <coding_rule class="RV_RETURN_VALUE_IGNORED" level="INFO" enabled="true" />
+        <coding_rule class="RV_RETURN_VALUE_IGNORED2" level="WARNING" enabled="true" />
+        <coding_rule class="RV_RETURN_VALUE_IGNORED_BAD_PRACTICE" level="WARNING" enabled="true" />
+        <coding_rule class="RV_RETURN_VALUE_OF_PUTIFABSENT_IGNORED" level="WARNING" enabled="false" />
+        <coding_rule class="RpC_REPEATED_CONDITIONAL_TEST" level="WARNING" enabled="true" />
+        <coding_rule class="SA_FIELD_DOUBLE_ASSIGNMENT" level="ERROR" enabled="true" />
+        <coding_rule class="SA_FIELD_SELF_ASSIGNMENT" level="ERROR" enabled="true" />
+        <coding_rule class="SA_FIELD_SELF_COMPARISON" level="ERROR" enabled="true" />
+        <coding_rule class="SA_FIELD_SELF_COMPUTATION" level="ERROR" enabled="true" />
+        <coding_rule class="SA_LOCAL_DOUBLE_ASSIGNMENT" level="ERROR" enabled="true" />
+        <coding_rule class="SA_LOCAL_SELF_ASSIGNMENT" level="ERROR" enabled="true" />
+        <coding_rule class="SA_LOCAL_SELF_COMPARISON" level="ERROR" enabled="true" />
+        <coding_rule class="SA_LOCAL_SELF_COMPUTATION" level="ERROR" enabled="true" />
+        <coding_rule class="SBSC_USE_STRINGBUFFER_CONCATENATION" level="ERROR" enabled="true" />
+        <coding_rule class="SC_START_IN_CTOR" level="ERROR" enabled="true" />
+        <coding_rule class="SE_BAD_FIELD" level="INFO" enabled="false" />
+        <coding_rule class="SE_BAD_FIELD_INNER_CLASS" level="INFO" enabled="true" />
+        <coding_rule class="SE_BAD_FIELD_STORE" level="ERROR" enabled="true" />
+        <coding_rule class="SE_COMPARATOR_SHOULD_BE_SERIALIZABLE" level="WARNING" enabled="true" />
+        <coding_rule class="SE_INNER_CLASS" level="WARNING" enabled="true" />
+        <coding_rule class="SE_METHOD_MUST_BE_PRIVATE" level="WARNING" enabled="true" />
+        <coding_rule class="SE_NONFINAL_SERIALVERSIONID" level="ERROR" enabled="true" />
+        <coding_rule class="SE_NONLONG_SERIALVERSIONID" level="WARNING" enabled="true" />
+        <coding_rule class="SE_NONSTATIC_SERIALVERSIONID" level="WARNING" enabled="true" />
+        <coding_rule class="SE_NO_SERIALVERSIONID" level="WARNING" enabled="true" />
+        <coding_rule class="SE_NO_SUITABLE_CONSTRUCTOR" level="WARNING" enabled="true" />
+        <coding_rule class="SE_NO_SUITABLE_CONSTRUCTOR_FOR_EXTERNALIZATION" level="WARNING" enabled="true" />
+        <coding_rule class="SE_PRIVATE_READ_RESOLVE_NOT_INHERITED" level="WARNING" enabled="true" />
+        <coding_rule class="SE_READ_RESOLVE_IS_STATIC" level="WARNING" enabled="true" />
+        <coding_rule class="SE_READ_RESOLVE_MUST_RETURN_OBJECT" level="WARNING" enabled="true" />
+        <coding_rule class="SE_TRANSIENT_FIELD_NOT_RESTORED" level="WARNING" enabled="true" />
+        <coding_rule class="SE_TRANSIENT_FIELD_OF_NONSERIALIZABLE_CLASS" level="WARNING" enabled="true" />
+        <coding_rule class="SF_DEAD_STORE_DUE_TO_SWITCH_FALLTHROUGH" level="WARNING" enabled="false" />
+        <coding_rule class="SF_DEAD_STORE_DUE_TO_SWITCH_FALLTHROUGH_TO_THROW" level="WARNING" enabled="false" />
+        <coding_rule class="SF_SWITCH_FALLTHROUGH" level="WARNING" enabled="false" />
+        <coding_rule class="SF_SWITCH_NO_DEFAULT" level="WARNING" enabled="false" />
+        <coding_rule class="SIC_INNER_SHOULD_BE_STATIC" level="WARNING" enabled="true" />
+        <coding_rule class="SIC_INNER_SHOULD_BE_STATIC_ANON" level="WARNING" enabled="true" />
+        <coding_rule class="SIC_INNER_SHOULD_BE_STATIC_NEEDS_THIS" level="WARNING" enabled="true" />
+        <coding_rule class="SIC_THREADLOCAL_DEADLY_EMBRACE" level="WARNING" enabled="false" />
+        <coding_rule class="SIO_SUPERFLUOUS_INSTANCEOF" level="ERROR" enabled="true" />
+        <coding_rule class="SI_INSTANCE_BEFORE_FINALS_ASSIGNED" level="ERROR" enabled="true" />
+        <coding_rule class="SP_SPIN_ON_FIELD" level="WARNING" enabled="true" />
+        <coding_rule class="SQL_BAD_PREPARED_STATEMENT_ACCESS" level="ERROR" enabled="true" />
+        <coding_rule class="SQL_BAD_RESULTSET_ACCESS" level="ERROR" enabled="true" />
+        <coding_rule class="SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE" level="ERROR" enabled="true" />
+        <coding_rule class="SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING" level="ERROR" enabled="true" />
+        <coding_rule class="SR_NOT_CHECKED" level="WARNING" enabled="true" />
+        <coding_rule class="SS_SHOULD_BE_STATIC" level="WARNING" enabled="true" />
+        <coding_rule class="STCAL_INVOKE_ON_STATIC_CALENDAR_INSTANCE" level="ERROR" enabled="true" />
+        <coding_rule class="STCAL_INVOKE_ON_STATIC_DATE_FORMAT_INSTANCE" level="ERROR" enabled="true" />
+        <coding_rule class="STCAL_STATIC_CALENDAR_INSTANCE" level="ERROR" enabled="true" />
+        <coding_rule class="STCAL_STATIC_SIMPLE_DATE_FORMAT_INSTANCE" level="ERROR" enabled="true" />
+        <coding_rule class="STI_INTERRUPTED_ON_CURRENTTHREAD" level="ERROR" enabled="true" />
+        <coding_rule class="STI_INTERRUPTED_ON_UNKNOWNTHREAD" level="ERROR" enabled="true" />
+        <coding_rule class="ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD" level="ERROR" enabled="true" />
+        <coding_rule class="SWL_SLEEP_WITH_LOCK_HELD" level="ERROR" enabled="true" />
+        <coding_rule class="SW_SWING_METHODS_INVOKED_IN_SWING_THREAD" level="WARNING" enabled="true" />
+        <coding_rule class="SecurityCodeGuidelinesArrayIsStoredDirectly" level="ERROR" enabled="true" />
+        <coding_rule class="SecurityCodeGuidelinesMethodReturnsInternalArray" level="ERROR" enabled="false" />
+        <coding_rule class="StrictExceptionRulesAvoidCatchingNPE" level="WARNING" enabled="true" />
+        <coding_rule class="StrictExceptionRulesAvoidCatchingThrowable" level="ERROR" enabled="true" />
+        <coding_rule class="StrictExceptionRulesAvoidRethrowingException" level="WARNING" enabled="true" />
+        <coding_rule class="StrictExceptionRulesAvoidThrowingNewInstanceOfSameException" level="WARNING" enabled="false" />
+        <coding_rule class="StrictExceptionRulesAvoidThrowingNullPointerException" level="WARNING" enabled="true" />
+        <coding_rule class="StrictExceptionRulesAvoidThrowingRawExceptionTypes" level="WARNING" enabled="true" />
+        <coding_rule class="StrictExceptionRulesDoNotExtendJavaLangError" level="WARNING" enabled="false" />
+        <coding_rule class="StrictExceptionRulesDoNotThrowExceptionInFinally" level="WARNING" enabled="false" />
+        <coding_rule class="StrictExceptionRulesExceptionAsFlowControl" level="WARNING" enabled="true" />
+        <coding_rule class="StrictExceptionRulesSignatureDeclareThrowsException" level="WARNING" enabled="true" />
+        <coding_rule class="StringandStringBufferRulesAppendCharacterWithChar" level="INFO" enabled="false" />
+        <coding_rule class="StringandStringBufferRulesAvoidDuplicateLiterals" level="WARNING" enabled="true" />
+        <coding_rule class="StringandStringBufferRulesAvoidStringBufferField" level="WARNING" enabled="false" />
+        <coding_rule class="StringandStringBufferRulesConsecutiveLiteralAppends" level="INFO" enabled="false" />
+        <coding_rule class="StringandStringBufferRulesInefficientEmptyStringCheck" level="WARNING" enabled="false" />
+        <coding_rule class="StringandStringBufferRulesInefficientStringBuffering" level="WARNING" enabled="true" />
+        <coding_rule class="StringandStringBufferRulesInsufficientStringBufferDeclaration" level="WARNING" enabled="false" />
+        <coding_rule class="StringandStringBufferRulesStringBufferInstantiationWithChar" level="WARNING" enabled="true" />
+        <coding_rule class="StringandStringBufferRulesStringInstantiation" level="WARNING" enabled="true" />
+        <coding_rule class="StringandStringBufferRulesStringToString" level="WARNING" enabled="true" />
+        <coding_rule class="StringandStringBufferRulesUnnecessaryCaseChange" level="INFO" enabled="true" />
+        <coding_rule class="StringandStringBufferRulesUseEqualsToCompareStrings" level="WARNING" enabled="false" />
+        <coding_rule class="StringandStringBufferRulesUseIndexOfChar" level="WARNING" enabled="true" />
+        <coding_rule class="StringandStringBufferRulesUseStringBufferLength" level="INFO" enabled="true" />
+        <coding_rule class="StringandStringBufferRulesUselessStringValueOf" level="INFO" enabled="true" />
+        <coding_rule class="TLW_TWO_LOCK_WAIT" level="WARNING" enabled="true" />
+        <coding_rule class="TQ_ALWAYS_VALUE_USED_WHERE_NEVER_REQUIRED" level="ERROR" enabled="true" />
+        <coding_rule class="TQ_EXPLICIT_UNKNOWN_SOURCE_VALUE_REACHES_ALWAYS_SINK" level="ERROR" enabled="true" />
+        <coding_rule class="TQ_EXPLICIT_UNKNOWN_SOURCE_VALUE_REACHES_NEVER_SINK" level="ERROR" enabled="true" />
+        <coding_rule class="TQ_MAYBE_SOURCE_VALUE_REACHES_ALWAYS_SINK" level="ERROR" enabled="true" />
+        <coding_rule class="TQ_MAYBE_SOURCE_VALUE_REACHES_NEVER_SINK" level="ERROR" enabled="true" />
+        <coding_rule class="TQ_NEVER_VALUE_USED_WHERE_ALWAYS_REQUIRED" level="ERROR" enabled="true" />
+        <coding_rule class="TypeResolutionRulesCloneMethodMustImplementCloneable" level="WARNING" enabled="false" />
+        <coding_rule class="TypeResolutionRulesLooseCoupling" level="WARNING" enabled="true" />
+        <coding_rule class="TypeResolutionRulesSignatureDeclareThrowsException" level="WARNING" enabled="true" />
+        <coding_rule class="TypeResolutionRulesUnusedImports" level="INFO" enabled="false" />
+        <coding_rule class="UCF_USELESS_CONTROL_FLOW" level="ERROR" enabled="true" />
+        <coding_rule class="UCF_USELESS_CONTROL_FLOW_NEXT_LINE" level="ERROR" enabled="true" />
+        <coding_rule class="UG_SYNC_SET_UNSYNC_GET" level="WARNING" enabled="true" />
+        <coding_rule class="UI_INHERITANCE_UNSAFE_GETRESOURCE" level="WARNING" enabled="true" />
+        <coding_rule class="UL_UNRELEASED_LOCK" level="ERROR" enabled="true" />
+        <coding_rule class="UL_UNRELEASED_LOCK_EXCEPTION_PATH" level="ERROR" enabled="true" />
+        <coding_rule class="UMAC_UNCALLABLE_METHOD_OF_ANONYMOUS_CLASS" level="ERROR" enabled="true" />
+        <coding_rule class="UM_UNNECESSARY_MATH" level="ERROR" enabled="true" />
+        <coding_rule class="UOE_USE_OBJECT_EQUALS" level="WARNING" enabled="false" />
+        <coding_rule class="UPM_UNCALLED_PRIVATE_METHOD" level="ERROR" enabled="true" />
+        <coding_rule class="URF_UNREAD_FIELD" level="WARNING" enabled="true" />
+        <coding_rule class="UR_UNINIT_READ" level="WARNING" enabled="true" />
+        <coding_rule class="UR_UNINIT_READ_CALLED_FROM_SUPER_CONSTRUCTOR" level="WARNING" enabled="false" />
+        <coding_rule class="USM_USELESS_ABSTRACT_METHOD" level="WARNING" enabled="false" />
+        <coding_rule class="USM_USELESS_SUBCLASS_METHOD" level="WARNING" enabled="false" />
+        <coding_rule class="UUF_UNUSED_FIELD" level="WARNING" enabled="true" />
+        <coding_rule class="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR" level="WARNING" enabled="false" />
+        <coding_rule class="UWF_NULL_FIELD" level="ERROR" enabled="true" />
+        <coding_rule class="UWF_UNWRITTEN_FIELD" level="WARNING" enabled="false" />
+        <coding_rule class="UW_UNCOND_WAIT" level="WARNING" enabled="true" />
+        <coding_rule class="UnusedCodeRulesUnusedFormalParameter" level="WARNING" enabled="true" />
+        <coding_rule class="UnusedCodeRulesUnusedLocalVariable" level="WARNING" enabled="true" />
+        <coding_rule class="UnusedCodeRulesUnusedPrivateField" level="WARNING" enabled="true" />
+        <coding_rule class="UnusedCodeRulesUnusedPrivateMethod" level="WARNING" enabled="true" />
+        <coding_rule class="VA_FORMAT_STRING_BAD_ARGUMENT" level="ERROR" enabled="true" />
+        <coding_rule class="VA_FORMAT_STRING_BAD_CONVERSION" level="ERROR" enabled="true" />
+        <coding_rule class="VA_FORMAT_STRING_BAD_CONVERSION_FROM_ARRAY" level="WARNING" enabled="true" />
+        <coding_rule class="VA_FORMAT_STRING_BAD_CONVERSION_TO_BOOLEAN" level="WARNING" enabled="true" />
+        <coding_rule class="VA_FORMAT_STRING_EXPECTED_MESSAGE_FORMAT_SUPPLIED" level="WARNING" enabled="false" />
+        <coding_rule class="VA_FORMAT_STRING_EXTRA_ARGUMENTS_PASSED" level="WARNING" enabled="true" />
+        <coding_rule class="VA_FORMAT_STRING_ILLEGAL" level="ERROR" enabled="true" />
+        <coding_rule class="VA_FORMAT_STRING_MISSING_ARGUMENT" level="ERROR" enabled="true" />
+        <coding_rule class="VA_FORMAT_STRING_NO_PREVIOUS_ARGUMENT" level="ERROR" enabled="true" />
+        <coding_rule class="VA_PRIMITIVE_ARRAY_PASSED_TO_OBJECT_VARARG" level="ERROR" enabled="true" />
+        <coding_rule class="VO_VOLATILE_REFERENCE_TO_ARRAY" level="WARNING" enabled="true" />
+        <coding_rule class="VR_UNRESOLVABLE_REFERENCE" level="WARNING" enabled="false" />
+        <coding_rule class="WA_AWAIT_NOT_IN_LOOP" level="ERROR" enabled="true" />
+        <coding_rule class="WA_NOT_IN_LOOP" level="ERROR" enabled="true" />
+        <coding_rule class="WL_USING_GETCLASS_RATHER_THAN_CLASS_LITERAL" level="ERROR" enabled="true" />
+        <coding_rule class="WMI_WRONG_MAP_ITERATOR" level="ERROR" enabled="true" />
+        <coding_rule class="WS_WRITEOBJECT_SYNC" level="ERROR" enabled="true" />
+        <coding_rule class="XFB_XML_FACTORY_BYPASS" level="ERROR" enabled="true" />
+        <coding_rule class="XSS_REQUEST_PARAMETER_TO_JSP_WRITER" level="ERROR" enabled="true" />
+        <coding_rule class="XSS_REQUEST_PARAMETER_TO_SEND_ERROR" level="ERROR" enabled="true" />
+        <coding_rule class="XSS_REQUEST_PARAMETER_TO_SERVLET_WRITER" level="ERROR" enabled="true" />
+      </profile>
+    </profiles>
+    <list size="0" />
+  </component>
+  <component name="AntConfiguration">
+    <defaultAnt bundledAnt="true" />
+  </component>
+  <component name="CodeStyleSettingsManager">
+    <option name="PER_PROJECT_SETTINGS">
+      <value>
+        <option name="USE_SAME_INDENTS" value="true" />
+        <option name="OTHER_INDENT_OPTIONS">
+          <value>
+            <option name="INDENT_SIZE" value="2" />
+            <option name="CONTINUATION_INDENT_SIZE" value="4" />
+            <option name="TAB_SIZE" value="2" />
+            <option name="USE_TAB_CHARACTER" value="false" />
+            <option name="SMART_TABS" value="false" />
+            <option name="LABEL_INDENT_SIZE" value="0" />
+            <option name="LABEL_INDENT_ABSOLUTE" value="false" />
+            <option name="USE_RELATIVE_INDENTS" value="false" />
+          </value>
+        </option>
+        <option name="CLASS_BRACE_STYLE" value="2" />
+        <ADDITIONAL_INDENT_OPTIONS fileType="groovy">
+          <option name="INDENT_SIZE" value="4" />
+          <option name="CONTINUATION_INDENT_SIZE" value="8" />
+          <option name="TAB_SIZE" value="4" />
+          <option name="USE_TAB_CHARACTER" value="false" />
+          <option name="SMART_TABS" value="false" />
+          <option name="LABEL_INDENT_SIZE" value="0" />
+          <option name="LABEL_INDENT_ABSOLUTE" value="false" />
+          <option name="USE_RELATIVE_INDENTS" value="false" />
+        </ADDITIONAL_INDENT_OPTIONS>
+        <ADDITIONAL_INDENT_OPTIONS fileType="java">
+          <option name="INDENT_SIZE" value="4" />
+          <option name="CONTINUATION_INDENT_SIZE" value="8" />
+          <option name="TAB_SIZE" value="4" />
+          <option name="USE_TAB_CHARACTER" value="false" />
+          <option name="SMART_TABS" value="false" />
+          <option name="LABEL_INDENT_SIZE" value="0" />
+          <option name="LABEL_INDENT_ABSOLUTE" value="false" />
+          <option name="USE_RELATIVE_INDENTS" value="false" />
+        </ADDITIONAL_INDENT_OPTIONS>
+        <ADDITIONAL_INDENT_OPTIONS fileType="xml">
+          <option name="INDENT_SIZE" value="4" />
+          <option name="CONTINUATION_INDENT_SIZE" value="8" />
+          <option name="TAB_SIZE" value="4" />
+          <option name="USE_TAB_CHARACTER" value="false" />
+          <option name="SMART_TABS" value="false" />
+          <option name="LABEL_INDENT_SIZE" value="0" />
+          <option name="LABEL_INDENT_ABSOLUTE" value="false" />
+          <option name="USE_RELATIVE_INDENTS" value="false" />
+        </ADDITIONAL_INDENT_OPTIONS>
+      </value>
+    </option>
+    <option name="USE_PER_PROJECT_SETTINGS" value="true" />
+  </component>
+  <component name="CompilerConfiguration">
+    <option name="DEFAULT_COMPILER" value="Javac" />
+    <resourceExtensions />
+    <wildcardResourcePatterns>
+      <entry name="?*.properties" />
+      <entry name="?*.xml" />
+      <entry name="?*.gif" />
+      <entry name="?*.png" />
+      <entry name="?*.jpeg" />
+      <entry name="?*.jpg" />
+      <entry name="?*.html" />
+      <entry name="?*.dtd" />
+      <entry name="?*.tld" />
+      <entry name="?*.ftl" />
+    </wildcardResourcePatterns>
+    <annotationProcessing enabled="false" useClasspath="true" />
+  </component>
+  <component name="CopyrightManager" default="">
+    <module2copyright />
+  </component>
+  <component name="DependencyValidationManager">
+    <option name="SKIP_IMPORT_STATEMENTS" value="false" />
+  </component>
+  <component name="Encoding" useUTFGuessing="true" native2AsciiForPropertiesFiles="false" />
+  <component name="EntryPointsManager">
+    <entry_points version="2.0" />
+  </component>
+  <component name="FindBugsConfigurable">
+    <option name="make" value="true" />
+    <option name="effort" value="default" />
+    <option name="priority" value="Medium" />
+  </component>
+  <component name="InspectionProjectProfileManager">
+    <profiles>
+      <profile version="1.0" is_locked="false">
+        <option name="myName" value="Project Default" />
+        <option name="myLocal" value="false" />
+        <inspection_tool class="AutowiredDependenciesInspection" level="WARNING" enabled="false" />
+        <inspection_tool class="CheckTagEmptyBody" enabled="false" level="WARNING" enabled_by_default="false" />
+        <inspection_tool class="EqualsHashCodeCalledOnUrl" enabled="true" level="WARNING" enabled_by_default="true" />
+        <inspection_tool class="GroovyFallthrough" enabled="false" level="WARNING" enabled_by_default="false" />
+        <inspection_tool class="HtmlUnknownTag" enabled="true" level="WARNING" enabled_by_default="true">
+          <option name="myValues">
+            <value>
+              <list size="7">
+                <item index="0" class="java.lang.String" itemvalue="embed" />
+                <item index="1" class="java.lang.String" itemvalue="nobr" />
+                <item index="2" class="java.lang.String" itemvalue="noembed" />
+                <item index="3" class="java.lang.String" itemvalue="comment" />
+                <item index="4" class="java.lang.String" itemvalue="script" />
+                <item index="5" class="java.lang.String" itemvalue="frameset" />
+                <item index="6" class="java.lang.String" itemvalue="frame" />
+              </list>
+            </value>
+          </option>
+          <option name="myCustomValuesEnabled" value="true" />
+        </inspection_tool>
+        <inspection_tool class="JavaDoc" enabled="false" level="WARNING" enabled_by_default="false">
+          <option name="TOP_LEVEL_CLASS_OPTIONS">
+            <value>
+              <option name="ACCESS_JAVADOC_REQUIRED_FOR" value="none" />
+              <option name="REQUIRED_TAGS" value="" />
+            </value>
+          </option>
+          <option name="INNER_CLASS_OPTIONS">
+            <value>
+              <option name="ACCESS_JAVADOC_REQUIRED_FOR" value="none" />
+              <option name="REQUIRED_TAGS" value="" />
+            </value>
+          </option>
+          <option name="METHOD_OPTIONS">
+            <value>
+              <option name="ACCESS_JAVADOC_REQUIRED_FOR" value="none" />
+              <option name="REQUIRED_TAGS" value="@return@param@throws or @exception" />
+            </value>
+          </option>
+          <option name="FIELD_OPTIONS">
+            <value>
+              <option name="ACCESS_JAVADOC_REQUIRED_FOR" value="none" />
+              <option name="REQUIRED_TAGS" value="" />
+            </value>
+          </option>
+          <option name="IGNORE_DEPRECATED" value="false" />
+          <option name="IGNORE_JAVADOC_PERIOD" value="true" />
+          <option name="IGNORE_DUPLICATED_THROWS" value="false" />
+          <option name="IGNORE_POINT_TO_ITSELF" value="false" />
+          <option name="myAdditionalJavadocTags" value="" />
+        </inspection_tool>
+        <inspection_tool class="JavadocReference" enabled="true" level="WARNING" enabled_by_default="true" />
+        <inspection_tool class="NullableProblems" enabled="true" level="WARNING" enabled_by_default="true">
+          <option name="REPORT_NULLABLE_METHOD_OVERRIDES_NOTNULL" value="true" />
+          <option name="REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL" value="true" />
+          <option name="REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE" value="true" />
+          <option name="REPORT_NOT_ANNOTATED_PARAMETER_OVERRIDES_NOTNULL" value="true" />
+          <option name="REPORT_NOT_ANNOTATED_GETTER" value="true" />
+          <option name="REPORT_NOT_ANNOTATED_SETTER_PARAMETER" value="true" />
+          <option name="REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS" value="true" />
+          <option name="REPORT_NULLS_PASSED_TO_NON_ANNOTATED_METHOD" value="false" />
+        </inspection_tool>
+        <inspection_tool class="SerialVersionUIDNotStaticFinal" enabled="true" level="WARNING" enabled_by_default="true" />
+        <inspection_tool class="StringConcatenationInsideStringBufferAppend" enabled="false" level="WARNING" enabled_by_default="false" />
+      </profile>
+    </profiles>
+    <option name="PROJECT_PROFILE" value="Project Default" />
+    <option name="USE_PROJECT_PROFILE" value="true" />
+    <version value="1.0" />
+  </component>
+  <component name="JavadocGenerationManager">
+    <option name="OUTPUT_DIRECTORY" />
+    <option name="OPTION_SCOPE" value="protected" />
+    <option name="OPTION_HIERARCHY" value="true" />
+    <option name="OPTION_NAVIGATOR" value="true" />
+    <option name="OPTION_INDEX" value="true" />
+    <option name="OPTION_SEPARATE_INDEX" value="true" />
+    <option name="OPTION_DOCUMENT_TAG_USE" value="false" />
+    <option name="OPTION_DOCUMENT_TAG_AUTHOR" value="false" />
+    <option name="OPTION_DOCUMENT_TAG_VERSION" value="false" />
+    <option name="OPTION_DOCUMENT_TAG_DEPRECATED" value="true" />
+    <option name="OPTION_DEPRECATED_LIST" value="true" />
+    <option name="OTHER_OPTIONS" value="" />
+    <option name="HEAP_SIZE" />
+    <option name="LOCALE" />
+    <option name="OPEN_IN_BROWSER" value="true" />
+  </component>
+  <component name="MavenProjectsManager">
+    <option name="originalFiles">
+      <list>
+        <option value="$PROJECT_DIR$/pom.xml" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectInspectionProfilesVisibleTreeState">
+    <entry key="Project Default">
+      <profile-state>
+        <expanded-state>
+          <State>
+            <id />
+          </State>
+          <State>
+            <id>Security issues</id>
+          </State>
+          <State>
+            <id>Serialization issues</id>
+          </State>
+        </expanded-state>
+        <selected-state>
+          <State>
+            <id>SerializableHasSerialVersionUIDField</id>
+          </State>
+        </selected-state>
+      </profile-state>
+    </entry>
+  </component>
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/httpproxy.iml" filepath="$PROJECT_DIR$/httpproxy.iml" />
+    </modules>
+  </component>
+  <component name="ProjectResources">
+    <default-html-doctype>http://www.w3.org/1999/xhtml</default-html-doctype>
+  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_6" assert-keyword="true" jdk-15="true" project-jdk-name="1.6" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/out" />
+  </component>
+  <component name="SuppressionsComponent">
+    <option name="suppCommentEnabled" value="false" />
+    <option name="suppComment" value="SUPPRESS CODING RULES" />
+  </component>
+  <component name="VcsDirectoryMappings">
+    <mapping directory="" vcs="Git" />
+  </component>
+  <component name="libraryTable">
+    <library name="Maven: commons-codec:commons-codec:1.2">
+      <CLASSES>
+        <root url="jar://$M2_REPO$/commons-codec/commons-codec/1.2/commons-codec-1.2.jar!/" />
+      </CLASSES>
+      <JAVADOC>
+        <root url="jar://$M2_REPO$/commons-codec/commons-codec/1.2/commons-codec-1.2-javadoc.jar!/" />
+      </JAVADOC>
+      <SOURCES>
+        <root url="jar://$M2_REPO$/commons-codec/commons-codec/1.2/commons-codec-1.2-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Maven: commons-fileupload:commons-fileupload:1.2.1">
+      <CLASSES>
+        <root url="jar://$M2_REPO$/commons-fileupload/commons-fileupload/1.2.1/commons-fileupload-1.2.1.jar!/" />
+      </CLASSES>
+      <JAVADOC>
+        <root url="jar://$M2_REPO$/commons-fileupload/commons-fileupload/1.2.1/commons-fileupload-1.2.1-javadoc.jar!/" />
+      </JAVADOC>
+      <SOURCES>
+        <root url="jar://$M2_REPO$/commons-fileupload/commons-fileupload/1.2.1/commons-fileupload-1.2.1-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Maven: commons-httpclient:commons-httpclient:3.1">
+      <CLASSES>
+        <root url="jar://$M2_REPO$/commons-httpclient/commons-httpclient/3.1/commons-httpclient-3.1.jar!/" />
+      </CLASSES>
+      <JAVADOC>
+        <root url="jar://$M2_REPO$/commons-httpclient/commons-httpclient/3.1/commons-httpclient-3.1-javadoc.jar!/" />
+      </JAVADOC>
+      <SOURCES>
+        <root url="jar://$M2_REPO$/commons-httpclient/commons-httpclient/3.1/commons-httpclient-3.1-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Maven: commons-logging:commons-logging:1.0.4">
+      <CLASSES>
+        <root url="jar://$M2_REPO$/commons-logging/commons-logging/1.0.4/commons-logging-1.0.4.jar!/" />
+      </CLASSES>
+      <JAVADOC>
+        <root url="jar://$M2_REPO$/commons-logging/commons-logging/1.0.4/commons-logging-1.0.4-javadoc.jar!/" />
+      </JAVADOC>
+      <SOURCES>
+        <root url="jar://$M2_REPO$/commons-logging/commons-logging/1.0.4/commons-logging-1.0.4-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Maven: javax.servlet:servlet-api:2.3">
+      <CLASSES>
+        <root url="jar://$M2_REPO$/javax/servlet/servlet-api/2.3/servlet-api-2.3.jar!/" />
+      </CLASSES>
+      <JAVADOC>
+        <root url="jar://$M2_REPO$/javax/servlet/servlet-api/2.3/servlet-api-2.3-javadoc.jar!/" />
+      </JAVADOC>
+      <SOURCES>
+        <root url="jar://$M2_REPO$/javax/servlet/servlet-api/2.3/servlet-api-2.3-sources.jar!/" />
+      </SOURCES>
+    </library>
+  </component>
+  <component name="masterDetails">
+    <states>
+      <state key="GlobalLibrariesConfigurable.UI">
+        <settings>
+          <last-edited>Annotations-FB</last-edited>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="JdkListConfigurable.UI">
+        <settings>
+          <last-edited>1.6</last-edited>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="ProjectJDKs.UI">
+        <settings>
+          <last-edited>1.6</last-edited>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="ProjectLibrariesConfigurable.UI">
+        <settings>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+    </states>
+  </component>
+</project>
+
