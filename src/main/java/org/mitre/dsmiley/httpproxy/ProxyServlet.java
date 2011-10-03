@@ -105,7 +105,8 @@ public class ProxyServlet extends HttpServlet
    *
    * @param servletConfig The Servlet configuration passed in by the servlet container.
    */
-  public void init(ServletConfig servletConfig) {
+  public void init(ServletConfig servletConfig) throws ServletException {
+    super.init(servletConfig);
     // Get the proxy host
     String stringProxyHostNew = servletConfig.getInitParameter(P_PROXY_HOST);
     if (stringProxyHostNew == null || stringProxyHostNew.length() == 0) {
