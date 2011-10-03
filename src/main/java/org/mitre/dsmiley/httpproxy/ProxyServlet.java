@@ -1,6 +1,20 @@
-package org.mitre.dsmiley.httpproxy;
-//originally net.edwardstx
+package org.mitre.dsmiley.httpproxy; //originally net.edwardstx
 
+/**
+ * Copyright 2010 Jason Edwards, from Texas
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
@@ -24,7 +38,17 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 
-
+/**
+ * A servlet that proxies the request to a configured HTTP resource.
+ * <br/>
+ * <h3>Origin and history</h3>
+ * Copied and modified from http://edwardstx.net/2010/06/http-proxy-servlet/
+ * <br />
+ * History:<br/>
+ * <ul>
+ *   <li></li>
+ * </ul>
+ */
 public class ProxyServlet extends HttpServlet
 {
   /**
@@ -74,7 +98,7 @@ public class ProxyServlet extends HttpServlet
   /**
    * Initialize the <code>ProxyServlet</code>
    *
-   * @param servletConfig The Servlet configuration passed in by the servlet conatiner
+   * @param servletConfig The Servlet configuration passed in by the servlet container.
    */
   public void init(ServletConfig servletConfig) {
     // Get the proxy host
@@ -312,7 +336,7 @@ public class ProxyServlet extends HttpServlet
   }
 
   public String getServletInfo() {
-    return "Jason's Proxy Servlet";
+    return "Jason's Proxy Servlet (modified by David Smiley, dsmiley@mitre.org)";
   }
 
   /**
@@ -324,7 +348,6 @@ public class ProxyServlet extends HttpServlet
    * @param httpMethodProxyRequest The request that we are about to send to
    *                               the proxy host
    */
-  @SuppressWarnings("unchecked")
   private void setProxyRequestHeaders(HttpServletRequest httpServletRequest, HttpMethod httpMethodProxyRequest) {
     // Get an Enumeration of all of the header names sent by the client
     Enumeration enumerationOfHeaderNames = httpServletRequest.getHeaderNames();

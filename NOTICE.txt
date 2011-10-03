@@ -1,0 +1,6 @@
+ProxyServlet
+Copyright 2010 Jason Edwards, from Texas
+
+http://edwardstx.net/2010/06/http-proxy-servlet/
+
+Modified by David Smiley, dsmiley@mitre.org.
