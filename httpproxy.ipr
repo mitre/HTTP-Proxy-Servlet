@@ -886,15 +886,15 @@
         <root url="jar://$M2_REPO$/commons-codec/commons-codec/1.2/commons-codec-1.2-sources.jar!/" />
       </SOURCES>
     </library>
-    <library name="Maven: commons-fileupload:commons-fileupload:1.2.1">
+    <library name="Maven: commons-fileupload:commons-fileupload:1.2.2">
       <CLASSES>
-        <root url="jar://$M2_REPO$/commons-fileupload/commons-fileupload/1.2.1/commons-fileupload-1.2.1.jar!/" />
+        <root url="jar://$M2_REPO$/commons-fileupload/commons-fileupload/1.2.2/commons-fileupload-1.2.2.jar!/" />
       </CLASSES>
       <JAVADOC>
-        <root url="jar://$M2_REPO$/commons-fileupload/commons-fileupload/1.2.1/commons-fileupload-1.2.1-javadoc.jar!/" />
+        <root url="jar://$M2_REPO$/commons-fileupload/commons-fileupload/1.2.2/commons-fileupload-1.2.2-javadoc.jar!/" />
       </JAVADOC>
       <SOURCES>
-        <root url="jar://$M2_REPO$/commons-fileupload/commons-fileupload/1.2.1/commons-fileupload-1.2.1-sources.jar!/" />
+        <root url="jar://$M2_REPO$/commons-fileupload/commons-fileupload/1.2.2/commons-fileupload-1.2.2-sources.jar!/" />
       </SOURCES>
     </library>
     <library name="Maven: commons-httpclient:commons-httpclient:3.1">
@@ -930,15 +930,15 @@
         <root url="jar://$M2_REPO$/httpunit/httpunit/1.7/httpunit-1.7-sources.jar!/" />
       </SOURCES>
     </library>
-    <library name="Maven: javax.servlet:servlet-api:2.3">
+    <library name="Maven: javax.servlet:servlet-api:2.4">
       <CLASSES>
-        <root url="jar://$M2_REPO$/javax/servlet/servlet-api/2.3/servlet-api-2.3.jar!/" />
+        <root url="jar://$M2_REPO$/javax/servlet/servlet-api/2.4/servlet-api-2.4.jar!/" />
       </CLASSES>
       <JAVADOC>
-        <root url="jar://$M2_REPO$/javax/servlet/servlet-api/2.3/servlet-api-2.3-javadoc.jar!/" />
+        <root url="jar://$M2_REPO$/javax/servlet/servlet-api/2.4/servlet-api-2.4-javadoc.jar!/" />
       </JAVADOC>
       <SOURCES>
-        <root url="jar://$M2_REPO$/javax/servlet/servlet-api/2.3/servlet-api-2.3-sources.jar!/" />
+        <root url="jar://$M2_REPO$/javax/servlet/servlet-api/2.4/servlet-api-2.4-sources.jar!/" />
       </SOURCES>
     </library>
     <library name="Maven: jtidy:jtidy:4aug2000r7-dev">
@@ -963,26 +963,26 @@
         <root url="jar://$M2_REPO$/junit/junit/4.8.2/junit-4.8.2-sources.jar!/" />
       </SOURCES>
     </library>
-    <library name="Maven: org.apache.httpcomponents:httpclient:tests:4.1.1">
+    <library name="Maven: org.apache.httpcomponents:httpclient:tests:4.1.2">
       <CLASSES>
-        <root url="jar://$M2_REPO$/org/apache/httpcomponents/httpclient/4.1.1/httpclient-4.1.1-tests.jar!/" />
+        <root url="jar://$M2_REPO$/org/apache/httpcomponents/httpclient/4.1.2/httpclient-4.1.2-tests.jar!/" />
       </CLASSES>
       <JAVADOC>
-        <root url="jar://$M2_REPO$/org/apache/httpcomponents/httpclient/4.1.1/httpclient-4.1.1-test-javadoc.jar!/" />
+        <root url="jar://$M2_REPO$/org/apache/httpcomponents/httpclient/4.1.2/httpclient-4.1.2-test-javadoc.jar!/" />
       </JAVADOC>
       <SOURCES>
-        <root url="jar://$M2_REPO$/org/apache/httpcomponents/httpclient/4.1.1/httpclient-4.1.1-test-sources.jar!/" />
+        <root url="jar://$M2_REPO$/org/apache/httpcomponents/httpclient/4.1.2/httpclient-4.1.2-test-sources.jar!/" />
       </SOURCES>
     </library>
-    <library name="Maven: org.apache.httpcomponents:httpcore:4.1">
+    <library name="Maven: org.apache.httpcomponents:httpcore:4.1.2">
       <CLASSES>
-        <root url="jar://$M2_REPO$/org/apache/httpcomponents/httpcore/4.1/httpcore-4.1.jar!/" />
+        <root url="jar://$M2_REPO$/org/apache/httpcomponents/httpcore/4.1.2/httpcore-4.1.2.jar!/" />
       </CLASSES>
       <JAVADOC>
-        <root url="jar://$M2_REPO$/org/apache/httpcomponents/httpcore/4.1/httpcore-4.1-javadoc.jar!/" />
+        <root url="jar://$M2_REPO$/org/apache/httpcomponents/httpcore/4.1.2/httpcore-4.1.2-javadoc.jar!/" />
       </JAVADOC>
       <SOURCES>
-        <root url="jar://$M2_REPO$/org/apache/httpcomponents/httpcore/4.1/httpcore-4.1-sources.jar!/" />
+        <root url="jar://$M2_REPO$/org/apache/httpcomponents/httpcore/4.1.2/httpcore-4.1.2-sources.jar!/" />
       </SOURCES>
     </library>
   </component>

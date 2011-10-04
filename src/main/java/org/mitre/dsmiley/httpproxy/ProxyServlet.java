@@ -20,6 +20,7 @@ import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.fileupload.util.Streams;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
@@ -47,6 +48,7 @@ import java.util.Map;
  * <br />
  * History (newest on top):<br/>
  * <ul>
+ *   <li>Performance: String data using a buffer, not byte by byte</li>
  *   <li>Feature: "log" parameter to log requests</li>
  *   <li>Bug fix: init() should call super.init()</li>
  *   <li>Bug fix: PATH_INFO could be null</li>
@@ -336,12 +338,8 @@ public class ProxyServlet extends HttpServlet
 
     // Send the content to the client
     InputStream inputStreamProxyResponse = httpMethodProxyRequest.getResponseBodyAsStream();
-    BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStreamProxyResponse);
     OutputStream outputStreamClientResponse = httpServletResponse.getOutputStream();
-    int intNextByte;
-    while ((intNextByte = bufferedInputStream.read()) != -1) {
-      outputStreamClientResponse.write(intNextByte);
-    }
+    Streams.copy(inputStreamProxyResponse,outputStreamClientResponse,false);//copy; don't close streams
   }
 
   public String getServletInfo() {

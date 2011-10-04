@@ -25,7 +25,13 @@ import static org.junit.Assert.assertTrue;
 public class ProxyServletTest
 {
 
+  /**
+   * From Apache httpcomponents/httpclient. Note httpunit has a similar thing called PseudoServlet but it is
+   * not as good since you can't even make it echo the request back.
+   */
   private LocalTestServer localTestServer;
+
+  /** From Meterware httpunit. */
   private ServletRunner servletRunner;
 
   @Before
@@ -34,14 +40,12 @@ public class ProxyServletTest
     localTestServer.start();
 
     servletRunner = new ServletRunner();
-    //servletRunner.
     Properties params = new Properties();
     params.setProperty(ProxyServlet.P_PROXY_HOST, "localhost");
     params.setProperty(ProxyServlet.P_PROXY_PORT, localTestServer.getServiceAddress().getPort()+"");
     params.setProperty(ProxyServlet.P_PROXY_PATH, "/targetPath");//dummy
     params.setProperty(ProxyServlet.P_LOG, "true");
     servletRunner.registerServlet("/proxyMe/*", ProxyServlet.class.getName(), params);//also matches /proxyMe (no path info)
-
   }
 
   @After
