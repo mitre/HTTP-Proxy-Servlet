@@ -15,6 +15,7 @@ package org.mitre.dsmiley.httpproxy; //originally net.edwardstx
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
@@ -44,61 +45,58 @@ import java.util.Map;
  * <h3>Origin and history</h3>
  * Copied and modified from http://edwardstx.net/2010/06/http-proxy-servlet/
  * <br />
- * History:<br/>
+ * History (newest on top):<br/>
  * <ul>
- *   <li></li>
+ *   <li>Feature: "log" parameter to log requests</li>
+ *   <li>Bug fix: init() should call super.init()</li>
+ *   <li>Bug fix: PATH_INFO could be null</li>
  * </ul>
  */
 public class ProxyServlet extends HttpServlet
 {
-  /**
-   * Serialization UID.
-   */
-  private static final long serialVersionUID = 1L;
-  /**
-   * Key for redirect location header.
-   */
+
+  private static final long serialVersionUID = 2L;
+
+  /* HEADER NAME CONSTANTS */
   private static final String STRING_LOCATION_HEADER = "Location";
-  /**
-   * Key for content type header.
-   */
+
   private static final String STRING_CONTENT_TYPE_HEADER_NAME = "Content-Type";
 
-  /**
-   * Key for content length header.
-   */
   private static final String STRING_CONTENT_LENGTH_HEADER_NAME = "Content-Length";
-  /**
-   * Key for host header
-   */
+
   private static final String STRING_HOST_HEADER_NAME = "Host";
-  /**
-   * The directory to use to temporarily store uploaded files
-   */
+
+  /* INIT PARAMETER NAME CONSTANTS */
+
+  /** The target proxy host init parameter. */
+  public static final String P_PROXY_HOST = "proxyHost";
+  /** The target proxy port init parameter. */
+  public static final String P_PROXY_PORT = "proxyPort";
+  /** The target proxy path init parameter. This follows the port. Is should be blank or start with a '/'. */
+  public static final String P_PROXY_PATH = "proxyPath";
+  /** The maximum upload size, in bytes. */
+  public static final String P_MAX_FILE_UPLOAD_SIZE = "maxFileUploadSize";
+  /** A boolean parameter then when enabled will log input and target URLs to the servlet log. */
+  public static final String P_LOG = "log";
+
+  /* MISC */
+
+  /** The directory to use to temporarily store uploaded files. */
   private static final File FILE_UPLOAD_TEMP_DIRECTORY = new File(System.getProperty("java.io.tmpdir"));
 
-  public static final String P_PROXY_HOST = "proxyHost";
-  public static final String P_PROXY_PORT = "proxyPort";
-  public static final String P_PROXY_PATH = "proxyPath";
-  public static final String P_MAX_FILE_UPLOAD_SIZE = "maxFileUploadSize";
-
-  // Proxy host params
-  /**
-   * The host to which we are proxying requests
-   */
+  /** The host to which we are proxying requests. */
   private String stringProxyHost;
-  /**
-   * The port on the proxy host to wihch we are proxying requests. Default value is 80.
-   */
+
+  /** The port on the proxy host to wihch we are proxying requests. Default value is 80. */
   private int intProxyPort = 80;
-  /**
-   * The (optional) path on the proxy host to wihch we are proxying requests. Default value is "".
-   */
+
+  /** The (optional) path on the proxy host to which we are proxying requests. Default value is "". */
   private String stringProxyPath = "";
-  /**
-   * The maximum size for uploaded files in bytes. Default value is 5MB.
-   */
-  private int intMaxFileUploadSize = 5 * 1024 * 1024;
+
+  /** The maximum size for uploaded files in bytes. Default value is 5MB. */
+  private int maxFileUploadSize = 5 * 1024 * 1024;
+
+  private boolean doLog = false;
 
   /**
    * Initialize the <code>ProxyServlet</code>
@@ -107,26 +105,26 @@ public class ProxyServlet extends HttpServlet
    */
   public void init(ServletConfig servletConfig) throws ServletException {
     super.init(servletConfig);
-    // Get the proxy host
     String stringProxyHostNew = servletConfig.getInitParameter(P_PROXY_HOST);
     if (stringProxyHostNew == null || stringProxyHostNew.length() == 0) {
       throw new IllegalArgumentException("Proxy host not set, please set init-param 'proxyHost' in web.xml");
     }
-    this.setProxyHost(stringProxyHostNew);
-    // Get the proxy port if specified
+    this.stringProxyHost = stringProxyHostNew;
     String stringProxyPortNew = servletConfig.getInitParameter(P_PROXY_PORT);
     if (stringProxyPortNew != null && stringProxyPortNew.length() > 0) {
-      this.setProxyPort(Integer.parseInt(stringProxyPortNew));
+      this.intProxyPort = Integer.parseInt(stringProxyPortNew);
     }
-    // Get the proxy path if specified
     String stringProxyPathNew = servletConfig.getInitParameter(P_PROXY_PATH);
     if (stringProxyPathNew != null && stringProxyPathNew.length() > 0) {
-      this.setProxyPath(stringProxyPathNew);
+      this.stringProxyPath = stringProxyPathNew;
     }
-    // Get the maximum file upload size if specified
     String stringMaxFileUploadSize = servletConfig.getInitParameter(P_MAX_FILE_UPLOAD_SIZE);
     if (stringMaxFileUploadSize != null && stringMaxFileUploadSize.length() > 0) {
-      this.setMaxFileUploadSize(Integer.parseInt(stringMaxFileUploadSize));
+      this.maxFileUploadSize = Integer.parseInt(stringMaxFileUploadSize);
+    }
+    String stringDoLog = servletConfig.getInitParameter(P_LOG);
+    if (stringDoLog != null && stringDoLog.length() > 0) {
+      this.doLog = Boolean.parseBoolean(stringDoLog);
     }
   }
 
@@ -189,7 +187,7 @@ public class ProxyServlet extends HttpServlet
     // Create a factory for disk-based file items
     DiskFileItemFactory diskFileItemFactory = new DiskFileItemFactory();
     // Set factory constraints
-    diskFileItemFactory.setSizeThreshold(this.getMaxFileUploadSize());
+    diskFileItemFactory.setSizeThreshold(this.maxFileUploadSize);
     diskFileItemFactory.setRepository(FILE_UPLOAD_TEMP_DIRECTORY);
     // Create a new file upload handler
     ServletFileUpload servletFileUpload = new ServletFileUpload(diskFileItemFactory);
@@ -285,6 +283,11 @@ public class ProxyServlet extends HttpServlet
       HttpServletRequest httpServletRequest,
       HttpServletResponse httpServletResponse)
       throws IOException, ServletException {
+
+    if (doLog) {
+      log("proxy: "+httpServletRequest.getRequestURI()+" -- "+httpMethodProxyRequest.getURI());
+    }
+
     // Create a default HttpClient
     HttpClient httpClient = new HttpClient();
     httpMethodProxyRequest.setFollowRedirects(false);
@@ -308,7 +311,7 @@ public class ProxyServlet extends HttpServlet
         stringMyHostName += ":" + httpServletRequest.getServerPort();
       }
       stringMyHostName += httpServletRequest.getContextPath();
-      httpServletResponse.sendRedirect(stringLocation.replace(getProxyHostAndPort() + this.getProxyPath(), stringMyHostName));
+      httpServletResponse.sendRedirect(stringLocation.replace(getProxyHostAndPort() + this.stringProxyPath, stringMyHostName));
       return;
     } else if (intProxyResponseCode == HttpServletResponse.SC_NOT_MODIFIED) {
       // 304 needs special handling.  See:
@@ -387,8 +390,8 @@ public class ProxyServlet extends HttpServlet
     // Set the protocol to HTTP
     String stringProxyURL = "http://" + this.getProxyHostAndPort();
     // Check if we are proxying to a path other that the document root
-    if (!this.getProxyPath().equalsIgnoreCase("")) {
-      stringProxyURL += this.getProxyPath();
+    if (!this.stringProxyPath.equalsIgnoreCase("")) {
+      stringProxyURL += this.stringProxyPath;
     }
     // Handle the path given to the servlet
     if (httpServletRequest.getPathInfo() != null) {
@@ -402,42 +405,11 @@ public class ProxyServlet extends HttpServlet
   }
 
   private String getProxyHostAndPort() {
-    if (this.getProxyPort() == 80) {
-      return this.getProxyHost();
+    if (this.intProxyPort == 80) {
+      return this.stringProxyHost;
     } else {
-      return this.getProxyHost() + ":" + this.getProxyPort();
+      return this.stringProxyHost + ":" + this.intProxyPort;
     }
   }
 
-  private String getProxyHost() {
-    return this.stringProxyHost;
-  }
-
-  private void setProxyHost(String stringProxyHostNew) {
-    this.stringProxyHost = stringProxyHostNew;
-  }
-
-  private int getProxyPort() {
-    return this.intProxyPort;
-  }
-
-  private void setProxyPort(int intProxyPortNew) {
-    this.intProxyPort = intProxyPortNew;
-  }
-
-  private String getProxyPath() {
-    return this.stringProxyPath;
-  }
-
-  private void setProxyPath(String stringProxyPathNew) {
-    this.stringProxyPath = stringProxyPathNew;
-  }
-
-  private int getMaxFileUploadSize() {
-    return this.intMaxFileUploadSize;
-  }
-
-  private void setMaxFileUploadSize(int intMaxFileUploadSizeNew) {
-    this.intMaxFileUploadSize = intMaxFileUploadSizeNew;
-  }
 }

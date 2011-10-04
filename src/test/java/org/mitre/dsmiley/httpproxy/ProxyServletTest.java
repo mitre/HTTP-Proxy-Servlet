@@ -39,7 +39,8 @@ public class ProxyServletTest
     params.setProperty(ProxyServlet.P_PROXY_HOST, "localhost");
     params.setProperty(ProxyServlet.P_PROXY_PORT, localTestServer.getServiceAddress().getPort()+"");
     params.setProperty(ProxyServlet.P_PROXY_PATH, "/targetPath");//dummy
-    servletRunner.registerServlet("/proxyMe/*", ProxyServlet.class.getName(), params);//also matches /proxyMe (no pathinfo)
+    params.setProperty(ProxyServlet.P_LOG, "true");
+    servletRunner.registerServlet("/proxyMe/*", ProxyServlet.class.getName(), params);//also matches /proxyMe (no path info)
 
   }
 
