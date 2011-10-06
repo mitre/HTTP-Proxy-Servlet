@@ -61,16 +61,37 @@ public class ProxyServletTest
    localTestServer.stop();
   }
 
-  @Test
-  public void test() throws Exception {
-    execGetAndAssert(new GetMethodWebRequest("http://localhost/proxyMe"));
-    execGetAndAssert(new GetMethodWebRequest("http://localhost/proxyMe/"));
+  private static String[] testUrlSuffixes = new String[]{"","/pathInfo","?def=DEF","/pathInfo?def=DEF"};
 
-    execPostAndAssert(new PostMethodWebRequest("http://localhost/proxyMe"));
-    execPostAndAssert(new PostMethodWebRequest("http://localhost/proxyMe/pathInfo"));
-    execPostAndAssert(new PostMethodWebRequest("http://localhost/proxyMe?def=DEF"));
-    execPostAndAssert(new PostMethodWebRequest("http://localhost/proxyMe/pathInfo?def=DEF"));
+  @Test
+  public void testGet() throws Exception {
+    for (String urlSuffix : testUrlSuffixes) {
+      execGetAndAssert(makeGetMethodRequest("http://localhost/proxyMe"+urlSuffix));
+    }
   }
+
+  @Test
+  public void testPost() throws Exception {
+    for (String urlSuffix : testUrlSuffixes) {
+      execPostAndAssert(makePostMethodRequest("http://localhost/proxyMe" + urlSuffix));
+    }
+  }
+
+//  @Test
+//  public void testRedirect() throws IOException, SAXException {
+//    localTestServer.register("/targetPath*",new HttpRequestHandler()
+//    {
+//      public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
+//        response.setHeader(HttpHeaders.LOCATION,request.getFirstHeader("xxTarget").getValue());
+//        response.setStatusCode(HttpStatus.SC_MOVED_PERMANENTLY);
+//      }
+//    });//matches /targetPath and /targetPath/blahblah
+//    GetMethodWebRequest request = makeGetMethodRequest("http://localhost/proxyMe");
+//    request.setHeaderField("xxTarget", "/dummy");
+//
+//    WebResponse rsp = sc.getResponse( request );
+//    assertEquals(HttpStatus.SC_MOVED_PERMANENTLY);
+//  }
 
   @Test
   public void testSendFile() throws Exception {
@@ -83,7 +104,6 @@ public class ProxyServletTest
 
   private WebResponse execGetAndAssert(GetMethodWebRequest request) throws IOException, SAXException {
     WebResponse rsp = execAndAssert(request);
-    //TODO     //no assertions for GET but a failure should throw
     return rsp;
   }
 
@@ -98,15 +118,71 @@ public class ProxyServletTest
 
   private WebResponse execAndAssert(WebRequest request) throws IOException, SAXException {
     WebResponse rsp = sc.getResponse( request );
-    assertEquals(200,rsp.getResponseCode());
+
+    assertEquals(HttpStatus.SC_OK,rsp.getResponseCode());
+    //HttpUnit doesn't pass the message; not a big deal
     //assertEquals("TESTREASON",rsp.getResponseMessage());
-    assertTrue(rsp.getText().startsWith("REQUESTLINE:"));
+    final String text = rsp.getText();
+    assertTrue(text.startsWith("REQUESTLINE:"));
+
+    final String query = request.getURL().getQuery();
+    if (query != null)
+      assertTrue(text.contains(query));
+
     return rsp;
   }
 
+  private GetMethodWebRequest makeGetMethodRequest(final String url) {
+    return makeMethodRequest(url,GetMethodWebRequest.class);
+  }
+
+  private PostMethodWebRequest makePostMethodRequest(final String url) {
+    return makeMethodRequest(url,PostMethodWebRequest.class);
+  }
+
+  //Fixes problems in HttpUnit in which I can't specify the query string via the url. I don't want to use
+  // setParam on a get request.
+  private static <M> M makeMethodRequest(final String url, Class<M> clazz) {
+    String urlNoQuery;
+    final String queryString;
+    int qIdx = url.indexOf('?');
+    if (qIdx == -1) {
+      urlNoQuery = url;
+      queryString = null;
+    } else {
+      urlNoQuery = url.substring(0,qIdx);
+      queryString = url.substring(qIdx + 1);
+
+    }
+    //WARNING: Ugly! Groovy could do this better.
+    if (clazz == PostMethodWebRequest.class) {
+      return (M) new PostMethodWebRequest(urlNoQuery) {
+        @Override
+        public String getQueryString() {
+          return queryString;
+        }
+        @Override
+        protected String getURLString() {
+          return url;
+        }
+      };
+    } else if (clazz == GetMethodWebRequest.class) {
+      return (M) new GetMethodWebRequest(urlNoQuery) {
+        @Override
+        public String getQueryString() {
+          return queryString;
+        }
+        @Override
+        protected String getURLString() {
+          return url;
+        }
+      };
+    }
+    throw new IllegalArgumentException(clazz.toString());
+  }
 
   /**
-   * Writes the input 
+   * Writes all information about the request back to the response.
    */
   private static class RequestInfoHandler implements HttpRequestHandler
   {
@@ -115,7 +191,8 @@ public class ProxyServletTest
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       PrintWriter pw = new PrintWriter(baos,false);
       final RequestLine rl = request.getRequestLine();
-      pw.println("REQUESTLINE: " + rl.getProtocolVersion() + " " + rl.getMethod() + " " + rl.getUri());
+      pw.println("REQUESTLINE: " + rl);
+
       for (Header header : request.getAllHeaders()) {
         pw.println(header.getName() + ": " + header.getValue());
       }

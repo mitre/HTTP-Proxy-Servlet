@@ -1,6 +1,4 @@
-ProxyServlet
-Copyright 2010 Jason Edwards, from Texas
+Smiley's Proxy Servlet
+Copyright 2011, The MITRE Corporation
 
-http://edwardstx.net/2010/06/http-proxy-servlet/
-
-Modified by David Smiley, dsmiley@mitre.org.
+Created by David Smiley, dsmiley@mitre.org.
