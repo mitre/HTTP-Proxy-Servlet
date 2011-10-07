@@ -122,53 +122,31 @@ public class ProxyServlet extends HttpServlet
 
   @Override
   protected void service(HttpServletRequest servletRequest, HttpServletResponse servletResponse) throws ServletException, IOException {
-    InputStream is = servletRequest.getInputStream();
+    // Make the Request
+    //note: we won't transfer the protocol version because I'm not sure it would truly be compatible
+    BasicHttpEntityEnclosingRequest proxyRequest = new BasicHttpEntityEnclosingRequest(servletRequest.getMethod(),getProxyURL(servletRequest));;
+    
+    copyRequestHeaders(servletRequest, proxyRequest);
+
+    // Add the input entity (streamed) then execute the request.
+    HttpResponse proxyResponse = null;
+    InputStream servletRequestInputStream = servletRequest.getInputStream();
     try {
-      //note: we won't transfer the protocol version because I'm not sure it would truly be compatible
-      BasicHttpEntityEnclosingRequest proxyRequest = new BasicHttpEntityEnclosingRequest(servletRequest.getMethod(),getProxyURL(servletRequest));
-      copyRequestHeaders(servletRequest, proxyRequest);
-      proxyRequest.setEntity(new InputStreamEntity(is, servletRequest.getContentLength()));
-      this.executeProxyRequest(proxyRequest, servletRequest, servletResponse);
+      proxyRequest.setEntity(new InputStreamEntity(servletRequestInputStream, servletRequest.getContentLength()));
+
+      // Execute the request
+      if (doLog) {
+        log("proxy " + servletRequest.getMethod() + " uri: " + servletRequest.getRequestURI() + " -- " + proxyRequest.getRequestLine().getUri());
+      }
+      HttpHost proxyHostTarget = new HttpHost(proxyHost, proxyPort,"http");
+      proxyResponse = proxyClient.execute(proxyHostTarget, proxyRequest);    
     } finally {
-      closeQuietly(is);
-    }
-  }
-
-  protected void closeQuietly(Closeable closeable) {
-    try {
-      closeable.close();
-    } catch (IOException e) {
-      log(e.getMessage(),e);
-    }
-  }
-
-  /**
-   * Executes the {@link HttpMethod} passed in and sends the proxy response
-   * back to the client via the given {@link HttpServletResponse}
-   *
-   * @param proxyRequest An object representing the proxy request to be made
-   * @param servletResponse    An object by which we can send the proxied
-   *                               response back to the client
-   * @throws IOException      Can be thrown by the {@link HttpClient}.executeMethod
-   * @throws ServletException Can be thrown to indicate that another error has occurred
-   */
-  private void executeProxyRequest(
-      HttpRequest proxyRequest,
-      HttpServletRequest servletRequest,
-      HttpServletResponse servletResponse)
-      throws IOException, ServletException {
-
-    if (doLog) {
-      log("proxy " + servletRequest.getMethod() + " uri: " + servletRequest.getRequestURI() + " -- " + proxyRequest.getRequestLine().getUri());
+      closeQuietly(servletRequestInputStream);
     }
 
-    // Execute the request
-    HttpHost proxyHostTarget = new HttpHost(proxyHost, proxyPort,"http");
-
-    HttpResponse proxyResponse = proxyClient.execute(proxyHostTarget, proxyRequest);
+    // Process the response
     int statusCode = proxyResponse.getStatusLine().getStatusCode();
 
-    //TODO check this
     // Check if the proxy response is a redirect
     // The following code is adapted from org.tigris.noodle.filters.CheckForRedirect
     if (statusCode >= HttpServletResponse.SC_MULTIPLE_CHOICES /* 300 */
@@ -212,15 +190,11 @@ public class ProxyServlet extends HttpServlet
     copyResponseEntity(proxyResponse, servletResponse);
   }
 
-  private void copyResponseEntity(HttpResponse proxyResponse, HttpServletResponse servletResponse) throws IOException {
-    HttpEntity entity = proxyResponse.getEntity();
-    if (entity != null) {
-      OutputStream servletOutputStream = servletResponse.getOutputStream();
-      try {
-        entity.writeTo(servletOutputStream);
-      } finally {
-        closeQuietly(servletOutputStream);
-      }
+  protected void closeQuietly(Closeable closeable) {
+    try {
+      closeable.close();
+    } catch (IOException e) {
+      log(e.getMessage(),e);
     }
   }
 
@@ -258,6 +232,19 @@ public class ProxyServlet extends HttpServlet
     }
   }
 
+  /** Copy response body data (the entity) from the proxy to the servlet client. */
+  private void copyResponseEntity(HttpResponse proxyResponse, HttpServletResponse servletResponse) throws IOException {
+    HttpEntity entity = proxyResponse.getEntity();
+    if (entity != null) {
+      OutputStream servletOutputStream = servletResponse.getOutputStream();
+      try {
+        entity.writeTo(servletOutputStream);
+      } finally {
+        closeQuietly(servletOutputStream);
+      }
+    }
+  }
+  
   private String getProxyURL(HttpServletRequest servletRequest) {
     // Set the protocol to HTTP
     String stringProxyURL = "http://" + this.getProxyHostAndPort();
