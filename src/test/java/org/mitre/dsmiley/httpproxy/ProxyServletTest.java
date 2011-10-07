@@ -39,6 +39,9 @@ public class ProxyServletTest
   private ServletRunner servletRunner;
   private ServletUnitClient sc;
 
+  private String targetBaseUri;
+  private String sourceBaseUri;
+
   @Before
   public void setUp() throws Exception {
     localTestServer = new LocalTestServer(null, null);
@@ -47,12 +50,16 @@ public class ProxyServletTest
 
     servletRunner = new ServletRunner();
     Properties params = new Properties();
+    params.setProperty("http.protocol.handle-redirects", "false");
     params.setProperty(ProxyServlet.P_PROXY_HOST, "localhost");
     params.setProperty(ProxyServlet.P_PROXY_PORT, localTestServer.getServiceAddress().getPort()+"");
     params.setProperty(ProxyServlet.P_PROXY_PATH, "/targetPath");//dummy
+    targetBaseUri = "http://localhost:"+localTestServer.getServiceAddress().getPort()+"/targetPath";
+    sourceBaseUri = "http://localhost:0/proxyMe";//localhost:0 is hard-coded in ServletUnitHttpRequest
     params.setProperty(ProxyServlet.P_LOG, "true");
     servletRunner.registerServlet("/proxyMe/*", ProxyServlet.class.getName(), params);//also matches /proxyMe (no path info)
     sc = servletRunner.newClient();
+    sc.getClientProperties().setAutoRedirect(false);//don't want httpunit itself to redirect
   }
 
   @After
@@ -66,32 +73,40 @@ public class ProxyServletTest
   @Test
   public void testGet() throws Exception {
     for (String urlSuffix : testUrlSuffixes) {
-      execGetAndAssert(makeGetMethodRequest("http://localhost/proxyMe"+urlSuffix));
+      execGetAndAssert(makeGetMethodRequest(sourceBaseUri +urlSuffix));
     }
   }
 
   @Test
   public void testPost() throws Exception {
     for (String urlSuffix : testUrlSuffixes) {
-      execPostAndAssert(makePostMethodRequest("http://localhost/proxyMe" + urlSuffix));
+      execPostAndAssert(makePostMethodRequest(sourceBaseUri + urlSuffix));
     }
   }
 
-//  @Test
-//  public void testRedirect() throws IOException, SAXException {
-//    localTestServer.register("/targetPath*",new HttpRequestHandler()
-//    {
-//      public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
-//        response.setHeader(HttpHeaders.LOCATION,request.getFirstHeader("xxTarget").getValue());
-//        response.setStatusCode(HttpStatus.SC_MOVED_PERMANENTLY);
-//      }
-//    });//matches /targetPath and /targetPath/blahblah
-//    GetMethodWebRequest request = makeGetMethodRequest("http://localhost/proxyMe");
-//    request.setHeaderField("xxTarget", "/dummy");
-//
-//    WebResponse rsp = sc.getResponse( request );
-//    assertEquals(HttpStatus.SC_MOVED_PERMANENTLY);
-//  }
+  @Test
+  public void testRedirect() throws IOException, SAXException {
+    localTestServer.register("/targetPath*",new HttpRequestHandler()
+    {
+      public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
+        response.setHeader(HttpHeaders.LOCATION,request.getFirstHeader("xxTarget").getValue());
+        response.setStatusCode(HttpStatus.SC_MOVED_TEMPORARILY);
+      }
+    });//matches /targetPath and /targetPath/blahblah
+    GetMethodWebRequest request = makeGetMethodRequest("http://localhost/proxyMe");
+
+    assertRedirect(request, "/dummy", "/dummy");//TODO represents a bug to fix
+    assertRedirect(request, targetBaseUri+"/dummy?a=b", sourceBaseUri+"/dummy?a=b");
+  }
+
+  private void assertRedirect(GetMethodWebRequest request, String origRedirect, String resultRedirect) throws IOException, SAXException {
+    request.setHeaderField("xxTarget", origRedirect);
+    WebResponse rsp = sc.getResponse( request );
+
+    assertEquals(HttpStatus.SC_MOVED_TEMPORARILY,rsp.getResponseCode());
+    assertEquals("",rsp.getText());
+    assertEquals(resultRedirect,rsp.getHeaderField(HttpHeaders.LOCATION));
+  }
 
   @Test
   public void testSendFile() throws Exception {

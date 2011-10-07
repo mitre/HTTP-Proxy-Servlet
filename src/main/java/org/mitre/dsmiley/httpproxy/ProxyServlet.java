@@ -18,9 +18,11 @@ package org.mitre.dsmiley.httpproxy; //originally net.edwardstx
 
 import org.apache.http.*;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.params.ClientPNames;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHttpEntityEnclosingRequest;
+import org.apache.http.util.EntityUtils;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -40,7 +42,7 @@ import java.util.Enumeration;
  * <p>
  *   There are alternatives to a servlet based proxy such as Apache mod_proxy if that is available to you. However
  *   this servlet is easily customizable by Java, secure-able by your web application's security (e.g. spring-security),
- *   and is portable across servlet engines.
+ *   portable across servlet engines, and is embeddable into another web application.
  * </p>
  * <p>
  *   Inspiration: http://httpd.apache.org/docs/2.0/mod/mod_proxy.html
@@ -72,6 +74,12 @@ public class ProxyServlet extends HttpServlet
   private String proxyPath = "";
 
   private boolean doLog = false;
+  private HttpClient proxyClient;
+
+  @Override
+  public String getServletInfo() {
+    return "A proxy servlet by David Smiley, dsmiley@mitre.org";
+  }
 
   @Override
   public void init(ServletConfig servletConfig) throws ServletException {
@@ -93,6 +101,23 @@ public class ProxyServlet extends HttpServlet
     if (stringDoLog != null && stringDoLog.length() > 0) {
       this.doLog = Boolean.parseBoolean(stringDoLog);
     }
+
+    proxyClient = createHttpClient();
+  }
+
+  /** Called from {@link #init(javax.servlet.ServletConfig)}. HttpClient offers many opportunities for customization. */
+  protected HttpClient createHttpClient() {
+    HttpClient hc = new DefaultHttpClient();
+    String scParam = getServletConfig().getInitParameter(ClientPNames.HANDLE_REDIRECTS);
+    hc.getParams().setBooleanParameter(ClientPNames.HANDLE_REDIRECTS, scParam == null ? true : Boolean.valueOf(scParam));
+    return hc;
+  }
+
+  @Override
+  public void destroy() {
+    //shutdown() must be called according to documentation.
+    proxyClient.getConnectionManager().shutdown();
+    super.destroy();
   }
 
   @Override
@@ -101,9 +126,9 @@ public class ProxyServlet extends HttpServlet
     try {
       //note: we won't transfer the protocol version because I'm not sure it would truly be compatible
       BasicHttpEntityEnclosingRequest proxyRequest = new BasicHttpEntityEnclosingRequest(servletRequest.getMethod(),getProxyURL(servletRequest));
-      copyRequestHeaders(proxyRequest, servletRequest);
+      copyRequestHeaders(servletRequest, proxyRequest);
       proxyRequest.setEntity(new InputStreamEntity(is, servletRequest.getContentLength()));
-      this.executeProxyRequest(proxyRequest,servletRequest,servletResponse);
+      this.executeProxyRequest(proxyRequest, servletRequest, servletResponse);
     } finally {
       closeQuietly(is);
     }
@@ -137,13 +162,10 @@ public class ProxyServlet extends HttpServlet
       log("proxy " + servletRequest.getMethod() + " uri: " + servletRequest.getRequestURI() + " -- " + proxyRequest.getRequestLine().getUri());
     }
 
-    // Create a default HttpClient
-    HttpClient proxyClient = createHttpClient();
-
     // Execute the request
     HttpHost proxyHostTarget = new HttpHost(proxyHost, proxyPort,"http");
 
-    HttpResponse proxyResponse = proxyClient.execute(proxyHostTarget,proxyRequest);
+    HttpResponse proxyResponse = proxyClient.execute(proxyHostTarget, proxyRequest);
     int statusCode = proxyResponse.getStatusLine().getStatusCode();
 
     //TODO check this
@@ -157,12 +179,15 @@ public class ProxyServlet extends HttpServlet
             + " but no " + HttpHeaders.LOCATION + " header was found in the response");
       }
       // Modify the redirect to go to this proxy servlet rather that the proxied host
-      String stringMyHostName = servletRequest.getServerName();
+      String thisHostName = servletRequest.getServerName();
       if (servletRequest.getServerPort() != 80) {
-        stringMyHostName += ":" + servletRequest.getServerPort();
+        thisHostName += ":" + servletRequest.getServerPort();
       }
-      stringMyHostName += servletRequest.getContextPath();
-      servletResponse.sendRedirect(locationHeader.getValue().replace(getProxyHostAndPort() + this.proxyPath, stringMyHostName));
+      thisHostName += servletRequest.getContextPath() + servletRequest.getServletPath();
+      final String redirectTarget = locationHeader.getValue().replace(getProxyHostAndPort() + this.proxyPath, thisHostName);
+
+      servletResponse.sendRedirect(redirectTarget);
+      EntityUtils.consume(proxyResponse.getEntity());
       return;
     } else if (statusCode == HttpServletResponse.SC_NOT_MODIFIED) {
       // 304 needs special handling.  See:
@@ -173,16 +198,21 @@ public class ProxyServlet extends HttpServlet
       // body because the file has not changed.
       servletResponse.setIntHeader(HttpHeaders.CONTENT_LENGTH, 0);
       servletResponse.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
+      EntityUtils.consume(proxyResponse.getEntity());
       return;
     }
 
-    // Pass the response code. This method with the "reason phrase" may be deprecated but it's the only way to pass that
-    //  along.
+    // Pass the response code. This method with the "reason phrase" is deprecated but it's the only way to pass the
+    //  reason along too.
     servletResponse.setStatus(statusCode, proxyResponse.getStatusLine().getReasonPhrase());
 
     copyResponseHeaders(proxyResponse, servletResponse);
 
     // Send the content to the client
+    copyResponseEntity(proxyResponse, servletResponse);
+  }
+
+  private void copyResponseEntity(HttpResponse proxyResponse, HttpServletResponse servletResponse) throws IOException {
     HttpEntity entity = proxyResponse.getEntity();
     if (entity != null) {
       OutputStream servletOutputStream = servletResponse.getOutputStream();
@@ -194,51 +224,37 @@ public class ProxyServlet extends HttpServlet
     }
   }
 
-  /** Pass response headers back to the client. */
-  protected void copyResponseHeaders(HttpResponse hcResponse, HttpServletResponse httpServletResponse) {
-    for (Header header : hcResponse.getAllHeaders()) {
-      httpServletResponse.addHeader(header.getName(),header.getValue());
-    }
-  }
-
-  protected HttpClient createHttpClient() {
-    HttpClient hc = new DefaultHttpClient();
-    //TODO
-    //hcRequest.setFollowRedirects(false);
-    return hc;
-  }
-
-  public String getServletInfo() {
-    return "A proxy servlet by David Smiley, dsmiley@mitre.org";
-  }
-
-  /**
-   * Retrieves all of the headers from the servlet request and sets them on
-   * the proxy request
-   */
-  protected void copyRequestHeaders(HttpRequest hcRequest, HttpServletRequest servletRequest) {
+  /** Copy request headers from the servlet client to the proxy request. */
+  protected void copyRequestHeaders(HttpServletRequest servletRequest, HttpRequest proxyRequest) {
     // Get an Enumeration of all of the header names sent by the client
     Enumeration enumerationOfHeaderNames = servletRequest.getHeaderNames();
     while (enumerationOfHeaderNames.hasMoreElements()) {
-      String stringHeaderName = (String) enumerationOfHeaderNames.nextElement();
-      if (stringHeaderName.equalsIgnoreCase(HttpHeaders.CONTENT_LENGTH))
+      String headerName = (String) enumerationOfHeaderNames.nextElement();
+      if (headerName.equalsIgnoreCase(HttpHeaders.CONTENT_LENGTH))
         continue;
       // As per the Java Servlet API 2.5 documentation:
       //		Some headers, such as Accept-Language can be sent by clients
       //		as several headers each with a different value rather than
       //		sending the header as a comma separated list.
       // Thus, we get an Enumeration of the header values sent by the client
-      Enumeration enumerationOfHeaderValues = servletRequest.getHeaders(stringHeaderName);
-      while (enumerationOfHeaderValues.hasMoreElements()) {
-        String stringHeaderValue = (String) enumerationOfHeaderValues.nextElement();
+      Enumeration headers = servletRequest.getHeaders(headerName);
+      while (headers.hasMoreElements()) {
+        String headerValue = (String) headers.nextElement();
         // In case the proxy host is running multiple virtual servers,
         // rewrite the Host header to ensure that we get content from
         // the correct virtual server
-        if (stringHeaderName.equalsIgnoreCase(HttpHeaders.HOST)) {
-          stringHeaderValue = getProxyHostAndPort();
+        if (headerName.equalsIgnoreCase(HttpHeaders.HOST)) {
+          headerValue = getProxyHostAndPort();
         }
-        hcRequest.addHeader(stringHeaderName, stringHeaderValue);
+        proxyRequest.addHeader(headerName, headerValue);
       }
+    }
+  }
+
+  /** Copy proxied response headers back to the servlet client. */
+  protected void copyResponseHeaders(HttpResponse proxyResponse, HttpServletResponse servletResponse) {
+    for (Header header : proxyResponse.getAllHeaders()) {
+      servletResponse.addHeader(header.getName(), header.getValue());
     }
   }
 
