@@ -19,6 +19,7 @@ package org.mitre.dsmiley.httpproxy; //originally net.edwardstx
 import org.apache.http.*;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.params.ClientPNames;
+import org.apache.http.client.utils.URIUtils;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHttpEntityEnclosingRequest;
@@ -33,6 +34,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
 import java.util.Enumeration;
 
 /**
@@ -53,28 +55,14 @@ public class ProxyServlet extends HttpServlet
 
   /* INIT PARAMETER NAME CONSTANTS */
 
-  /** The target proxy host init parameter. */
-  public static final String P_PROXY_HOST = "proxyHost";
-  /** The target proxy port init parameter. */
-  public static final String P_PROXY_PORT = "proxyPort";
-  /** The target proxy path init parameter. This follows the port. Is should be blank or start with a '/'. */
-  public static final String P_PROXY_PATH = "proxyPath";
   /** A boolean parameter then when enabled will log input and target URLs to the servlet log. */
   public static final String P_LOG = "log";
 
   /* MISC */
 
-  /** The host to which we are proxying requests. */
-  private String proxyHost;
-
-  /** The port on the proxy host to which we are proxying requests. Default value is 80. */
-  private int proxyPort = 80;
-
-  /** The (optional) path on the proxy host to which we are proxying requests. Default value is "". */
-  private String proxyPath = "";
-
-  private boolean doLog = false;
-  private HttpClient proxyClient;
+  protected boolean doLog = false;
+  protected URI targetUri;
+  protected HttpClient proxyClient;
 
   @Override
   public String getServletInfo() {
@@ -84,22 +72,16 @@ public class ProxyServlet extends HttpServlet
   @Override
   public void init(ServletConfig servletConfig) throws ServletException {
     super.init(servletConfig);
-    String stringProxyHostNew = servletConfig.getInitParameter(P_PROXY_HOST);
-    if (stringProxyHostNew == null || stringProxyHostNew.length() == 0) {
-      throw new IllegalArgumentException("Proxy host not set, please set init-param 'proxyHost' in web.xml");
+
+    String doLogStr = servletConfig.getInitParameter(P_LOG);
+    if (doLogStr != null) {
+      this.doLog = Boolean.parseBoolean(doLogStr);
     }
-    this.proxyHost = stringProxyHostNew;
-    String stringProxyPortNew = servletConfig.getInitParameter(P_PROXY_PORT);
-    if (stringProxyPortNew != null && stringProxyPortNew.length() > 0) {
-      this.proxyPort = Integer.parseInt(stringProxyPortNew);
-    }
-    String stringProxyPathNew = servletConfig.getInitParameter(P_PROXY_PATH);
-    if (stringProxyPathNew != null && stringProxyPathNew.length() > 0) {
-      this.proxyPath = stringProxyPathNew;
-    }
-    String stringDoLog = servletConfig.getInitParameter(P_LOG);
-    if (stringDoLog != null && stringDoLog.length() > 0) {
-      this.doLog = Boolean.parseBoolean(stringDoLog);
+
+    try {
+      targetUri = new URI(servletConfig.getInitParameter("targetUri"));
+    } catch (Exception e) {
+      throw new RuntimeException("Trying to process targetUri init parameter: "+e,e);
     }
 
     proxyClient = createHttpClient();
@@ -124,7 +106,8 @@ public class ProxyServlet extends HttpServlet
   protected void service(HttpServletRequest servletRequest, HttpServletResponse servletResponse) throws ServletException, IOException {
     // Make the Request
     //note: we won't transfer the protocol version because I'm not sure it would truly be compatible
-    BasicHttpEntityEnclosingRequest proxyRequest = new BasicHttpEntityEnclosingRequest(servletRequest.getMethod(),getProxyURL(servletRequest));;
+    BasicHttpEntityEnclosingRequest proxyRequest =
+        new BasicHttpEntityEnclosingRequest(servletRequest.getMethod(), rewriteUrlFromRequest(servletRequest));
     
     copyRequestHeaders(servletRequest, proxyRequest);
 
@@ -138,8 +121,7 @@ public class ProxyServlet extends HttpServlet
       if (doLog) {
         log("proxy " + servletRequest.getMethod() + " uri: " + servletRequest.getRequestURI() + " -- " + proxyRequest.getRequestLine().getUri());
       }
-      HttpHost proxyHostTarget = new HttpHost(proxyHost, proxyPort,"http");
-      proxyResponse = proxyClient.execute(proxyHostTarget, proxyRequest);    
+      proxyResponse = proxyClient.execute(URIUtils.extractHost(targetUri), proxyRequest);
     } finally {
       closeQuietly(servletRequestInputStream);
     }
@@ -157,14 +139,9 @@ public class ProxyServlet extends HttpServlet
             + " but no " + HttpHeaders.LOCATION + " header was found in the response");
       }
       // Modify the redirect to go to this proxy servlet rather that the proxied host
-      String thisHostName = servletRequest.getServerName();
-      if (servletRequest.getServerPort() != 80) {
-        thisHostName += ":" + servletRequest.getServerPort();
-      }
-      thisHostName += servletRequest.getContextPath() + servletRequest.getServletPath();
-      final String redirectTarget = locationHeader.getValue().replace(getProxyHostAndPort() + this.proxyPath, thisHostName);
+      String locStr = rewriteUrlFromResponse(servletRequest, locationHeader.getValue());
 
-      servletResponse.sendRedirect(redirectTarget);
+      servletResponse.sendRedirect(locStr);
       EntityUtils.consume(proxyResponse.getEntity());
       return;
     } else if (statusCode == HttpServletResponse.SC_NOT_MODIFIED) {
@@ -182,6 +159,7 @@ public class ProxyServlet extends HttpServlet
 
     // Pass the response code. This method with the "reason phrase" is deprecated but it's the only way to pass the
     //  reason along too.
+    //noinspection deprecation
     servletResponse.setStatus(statusCode, proxyResponse.getStatusLine().getReasonPhrase());
 
     copyResponseHeaders(proxyResponse, servletResponse);
@@ -218,7 +196,10 @@ public class ProxyServlet extends HttpServlet
         // rewrite the Host header to ensure that we get content from
         // the correct virtual server
         if (headerName.equalsIgnoreCase(HttpHeaders.HOST)) {
-          headerValue = getProxyHostAndPort();
+          HttpHost host = URIUtils.extractHost(this.targetUri);
+          headerValue = host.getHostName();
+          if (host.getPort() != -1)
+            headerValue += ":"+host.getPort();
         }
         proxyRequest.addHeader(headerName, headerValue);
       }
@@ -245,30 +226,32 @@ public class ProxyServlet extends HttpServlet
     }
   }
   
-  private String getProxyURL(HttpServletRequest servletRequest) {
-    // Set the protocol to HTTP
-    String stringProxyURL = "http://" + this.getProxyHostAndPort();
-    // Check if we are proxying to a path other that the document root
-    if (!this.proxyPath.equals("")) {
-      stringProxyURL += this.proxyPath;
-    }
+  private String rewriteUrlFromRequest(HttpServletRequest servletRequest) {
+    StringBuilder uri = new StringBuilder(500);
+    uri.append(this.targetUri.toString());
     // Handle the path given to the servlet
     if (servletRequest.getPathInfo() != null) {
-      stringProxyURL += servletRequest.getPathInfo();
+      uri.append(servletRequest.getPathInfo());
     }
     // Handle the query string
     if (servletRequest.getQueryString() != null) {
-      stringProxyURL += "?" + servletRequest.getQueryString();
+      uri.append('?').append(servletRequest.getQueryString());
     }
-    return stringProxyURL;
+    return uri.toString();
   }
 
-  private String getProxyHostAndPort() {
-    if (this.proxyPort == 80) {
-      return this.proxyHost;
-    } else {
-      return this.proxyHost + ":" + this.proxyPort;
+  private String rewriteUrlFromResponse(HttpServletRequest servletRequest, String theUrl) {
+    //TODO document example paths
+    if (theUrl.startsWith(this.targetUri.toString())) {
+      String curUrl = servletRequest.getRequestURL().toString();//no query
+      String pathInfo = servletRequest.getPathInfo();
+      if (pathInfo != null) {
+        assert curUrl.endsWith(pathInfo);
+        curUrl = curUrl.substring(0,curUrl.length()-pathInfo.length());//take pathInfo off
+      }
+      theUrl = curUrl+theUrl.substring(this.targetUri.toString().length());
     }
+    return theUrl;
   }
 
 }

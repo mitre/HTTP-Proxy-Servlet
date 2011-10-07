@@ -46,18 +46,16 @@ public class ProxyServletTest
   public void setUp() throws Exception {
     localTestServer = new LocalTestServer(null, null);
     localTestServer.start();
-    localTestServer.register("/targetPath*",new RequestInfoHandler());//matches /targetPath and /targetPath/blahblah
+    localTestServer.register("/targetPath*", new RequestInfoHandler());//matches /targetPath and /targetPath/blahblah
+    targetBaseUri = "http://localhost:"+localTestServer.getServiceAddress().getPort()+"/targetPath";
 
     servletRunner = new ServletRunner();
     Properties params = new Properties();
     params.setProperty("http.protocol.handle-redirects", "false");
-    params.setProperty(ProxyServlet.P_PROXY_HOST, "localhost");
-    params.setProperty(ProxyServlet.P_PROXY_PORT, localTestServer.getServiceAddress().getPort()+"");
-    params.setProperty(ProxyServlet.P_PROXY_PATH, "/targetPath");//dummy
-    targetBaseUri = "http://localhost:"+localTestServer.getServiceAddress().getPort()+"/targetPath";
-    sourceBaseUri = "http://localhost:0/proxyMe";//localhost:0 is hard-coded in ServletUnitHttpRequest
+    params.setProperty("targetUri",targetBaseUri);
     params.setProperty(ProxyServlet.P_LOG, "true");
     servletRunner.registerServlet("/proxyMe/*", ProxyServlet.class.getName(), params);//also matches /proxyMe (no path info)
+    sourceBaseUri = "http://localhost/proxyMe";//localhost:0 is hard-coded in ServletUnitHttpRequest
     sc = servletRunner.newClient();
     sc.getClientProperties().setAutoRedirect(false);//don't want httpunit itself to redirect
   }
@@ -93,8 +91,7 @@ public class ProxyServletTest
         response.setStatusCode(HttpStatus.SC_MOVED_TEMPORARILY);
       }
     });//matches /targetPath and /targetPath/blahblah
-    GetMethodWebRequest request = makeGetMethodRequest("http://localhost/proxyMe");
-
+    GetMethodWebRequest request = makeGetMethodRequest(sourceBaseUri);
     assertRedirect(request, "/dummy", "/dummy");//TODO represents a bug to fix
     assertRedirect(request, targetBaseUri+"/dummy?a=b", sourceBaseUri+"/dummy?a=b");
   }
@@ -105,7 +102,8 @@ public class ProxyServletTest
 
     assertEquals(HttpStatus.SC_MOVED_TEMPORARILY,rsp.getResponseCode());
     assertEquals("",rsp.getText());
-    assertEquals(resultRedirect,rsp.getHeaderField(HttpHeaders.LOCATION));
+    String gotLocation = rsp.getHeaderField(HttpHeaders.LOCATION);
+    assertEquals(resultRedirect, gotLocation);
   }
 
   @Test
@@ -118,8 +116,7 @@ public class ProxyServletTest
   }
 
   private WebResponse execGetAndAssert(GetMethodWebRequest request) throws IOException, SAXException {
-    WebResponse rsp = execAndAssert(request);
-    return rsp;
+    return execAndAssert(request);
   }
 
   private WebResponse execPostAndAssert(PostMethodWebRequest request) throws IOException, SAXException {
@@ -157,6 +154,7 @@ public class ProxyServletTest
 
   //Fixes problems in HttpUnit in which I can't specify the query string via the url. I don't want to use
   // setParam on a get request.
+  @SuppressWarnings({"unchecked"})
   private static <M> M makeMethodRequest(final String url, Class<M> clazz) {
     String urlNoQuery;
     final String queryString;
