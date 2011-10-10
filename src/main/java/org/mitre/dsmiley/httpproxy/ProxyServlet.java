@@ -18,11 +18,15 @@ package org.mitre.dsmiley.httpproxy; //originally net.edwardstx
 
 import org.apache.http.*;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.AbortableHttpRequest;
 import org.apache.http.client.params.ClientPNames;
 import org.apache.http.client.utils.URIUtils;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.message.BasicHttpEntityEnclosingRequest;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 
 import javax.servlet.ServletConfig;
@@ -49,6 +53,8 @@ import java.util.Enumeration;
  * <p>
  *   Inspiration: http://httpd.apache.org/docs/2.0/mod/mod_proxy.html
  * </p>
+ *
+ * @author David Smiley dsmiley@mitre.org>
  */
 public class ProxyServlet extends HttpServlet
 {
@@ -84,21 +90,39 @@ public class ProxyServlet extends HttpServlet
       throw new RuntimeException("Trying to process targetUri init parameter: "+e,e);
     }
 
-    proxyClient = createHttpClient();
+    HttpParams hcParams = new BasicHttpParams();
+    readConfigParam(hcParams, ClientPNames.HANDLE_REDIRECTS, Boolean.class);
+    proxyClient = createHttpClient(hcParams);
   }
 
-  /** Called from {@link #init(javax.servlet.ServletConfig)}. HttpClient offers many opportunities for customization. */
-  protected HttpClient createHttpClient() {
-    HttpClient hc = new DefaultHttpClient();
-    String scParam = getServletConfig().getInitParameter(ClientPNames.HANDLE_REDIRECTS);
-    hc.getParams().setBooleanParameter(ClientPNames.HANDLE_REDIRECTS, scParam == null ? true : Boolean.valueOf(scParam));
-    return hc;
+  /** Called from {@link #init(javax.servlet.ServletConfig)}. HttpClient offers many opportunities for customization.
+   * @param hcParams*/
+  protected HttpClient createHttpClient(HttpParams hcParams) {
+    return new DefaultHttpClient(new ThreadSafeClientConnManager(),hcParams);
+  }
+
+  private void readConfigParam(HttpParams hcParams, String hcParamName, Class type) {
+    String val_str = getServletConfig().getInitParameter(hcParamName);
+    if (val_str == null)
+      return;
+    Object val_obj;
+    if (type == String.class) {
+      val_obj = val_str;
+    } else {
+      try {
+        val_obj = type.getMethod("valueOf",String.class).invoke(type,val_str);
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+    hcParams.setParameter(hcParamName,val_obj);
   }
 
   @Override
   public void destroy() {
     //shutdown() must be called according to documentation.
-    proxyClient.getConnectionManager().shutdown();
+    if (proxyClient != null)
+      proxyClient.getConnectionManager().shutdown();
     super.destroy();
   }
 
@@ -115,20 +139,51 @@ public class ProxyServlet extends HttpServlet
     HttpResponse proxyResponse = null;
     InputStream servletRequestInputStream = servletRequest.getInputStream();
     try {
-      proxyRequest.setEntity(new InputStreamEntity(servletRequestInputStream, servletRequest.getContentLength()));
+      try {
+        proxyRequest.setEntity(new InputStreamEntity(servletRequestInputStream, servletRequest.getContentLength()));
 
-      // Execute the request
-      if (doLog) {
-        log("proxy " + servletRequest.getMethod() + " uri: " + servletRequest.getRequestURI() + " -- " + proxyRequest.getRequestLine().getUri());
+        // Execute the request
+        if (doLog) {
+          log("proxy " + servletRequest.getMethod() + " uri: " + servletRequest.getRequestURI() + " -- " + proxyRequest.getRequestLine().getUri());
+        }
+        proxyResponse = proxyClient.execute(URIUtils.extractHost(targetUri), proxyRequest);
+      } finally {
+        closeQuietly(servletRequestInputStream);
       }
-      proxyResponse = proxyClient.execute(URIUtils.extractHost(targetUri), proxyRequest);
-    } finally {
-      closeQuietly(servletRequestInputStream);
+
+      // Process the response
+      int statusCode = proxyResponse.getStatusLine().getStatusCode();
+
+      if (doResponseRedirectOrNotModifiedLogic(servletRequest, servletResponse, proxyResponse, statusCode)) {
+        EntityUtils.consume(proxyResponse.getEntity());
+        return;
+      }
+
+      // Pass the response code. This method with the "reason phrase" is deprecated but it's the only way to pass the
+      //  reason along too.
+      //noinspection deprecation
+      servletResponse.setStatus(statusCode, proxyResponse.getStatusLine().getReasonPhrase());
+
+      copyResponseHeaders(proxyResponse, servletResponse);
+
+      // Send the content to the client
+      copyResponseEntity(proxyResponse, servletResponse);
+
+    } catch (Exception e) {
+      //abort request, according to best practice with HttpClient
+      if (proxyRequest instanceof AbortableHttpRequest) {
+        AbortableHttpRequest abortableHttpRequest = (AbortableHttpRequest) proxyRequest;
+        abortableHttpRequest.abort();
+      }
+      if (e instanceof RuntimeException)
+        throw (RuntimeException)e;
+      if (e instanceof ServletException)
+        throw (ServletException)e;
+      throw new RuntimeException(e);
     }
+  }
 
-    // Process the response
-    int statusCode = proxyResponse.getStatusLine().getStatusCode();
-
+  private boolean doResponseRedirectOrNotModifiedLogic(HttpServletRequest servletRequest, HttpServletResponse servletResponse, HttpResponse proxyResponse, int statusCode) throws ServletException, IOException {
     // Check if the proxy response is a redirect
     // The following code is adapted from org.tigris.noodle.filters.CheckForRedirect
     if (statusCode >= HttpServletResponse.SC_MULTIPLE_CHOICES /* 300 */
@@ -142,30 +197,20 @@ public class ProxyServlet extends HttpServlet
       String locStr = rewriteUrlFromResponse(servletRequest, locationHeader.getValue());
 
       servletResponse.sendRedirect(locStr);
-      EntityUtils.consume(proxyResponse.getEntity());
-      return;
-    } else if (statusCode == HttpServletResponse.SC_NOT_MODIFIED) {
-      // 304 needs special handling.  See:
-      // http://www.ics.uci.edu/pub/ietf/http/rfc1945.html#Code304
-      // We get a 304 whenever passed an 'If-Modified-Since'
-      // header and the data on disk has not changed; server
-      // responds w/ a 304 saying I'm not going to send the
-      // body because the file has not changed.
+      return true;
+    }
+    // 304 needs special handling.  See:
+    // http://www.ics.uci.edu/pub/ietf/http/rfc1945.html#Code304
+    // We get a 304 whenever passed an 'If-Modified-Since'
+    // header and the data on disk has not changed; server
+    // responds w/ a 304 saying I'm not going to send the
+    // body because the file has not changed.
+    if (statusCode == HttpServletResponse.SC_NOT_MODIFIED) {
       servletResponse.setIntHeader(HttpHeaders.CONTENT_LENGTH, 0);
       servletResponse.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
-      EntityUtils.consume(proxyResponse.getEntity());
-      return;
+      return true;
     }
-
-    // Pass the response code. This method with the "reason phrase" is deprecated but it's the only way to pass the
-    //  reason along too.
-    //noinspection deprecation
-    servletResponse.setStatus(statusCode, proxyResponse.getStatusLine().getReasonPhrase());
-
-    copyResponseHeaders(proxyResponse, servletResponse);
-
-    // Send the content to the client
-    copyResponseEntity(proxyResponse, servletResponse);
+    return false;
   }
 
   protected void closeQuietly(Closeable closeable) {
