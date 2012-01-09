@@ -39,7 +39,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
+import java.util.BitSet;
 import java.util.Enumeration;
+import java.util.Formatter;
 
 /**
  * An HTTP reverse proxy/gateway servlet. It is designed to be extended for customization
@@ -275,12 +277,20 @@ public class ProxyServlet extends HttpServlet
     StringBuilder uri = new StringBuilder(500);
     uri.append(this.targetUri.toString());
     // Handle the path given to the servlet
-    if (servletRequest.getPathInfo() != null) {
+    if (servletRequest.getPathInfo() != null) {//ex: /my/path.html
       uri.append(servletRequest.getPathInfo());
     }
     // Handle the query string
-    if (servletRequest.getQueryString() != null) {
-      uri.append('?').append(servletRequest.getQueryString());
+    String queryString = servletRequest.getQueryString();//ex:(following '?'): name=value&foo=bar#fragment
+    if (queryString != null && queryString.length() > 0) {
+      uri.append('?');
+      int fragIdx = queryString.indexOf('#');
+      String queryNoFrag = (fragIdx < 0 ? queryString : queryString.substring(0,fragIdx));
+      uri.append(encodeUriQuery(queryNoFrag));
+      if (fragIdx >= 0) {
+        uri.append('#');
+        uri.append(encodeUriQuery(queryString.substring(fragIdx + 1)));
+      }
     }
     return uri.toString();
   }
@@ -299,4 +309,60 @@ public class ProxyServlet extends HttpServlet
     return theUrl;
   }
 
+  /**
+   * <p>Encodes characters in the query or fragment part of the URI.
+   *
+   * <p>Unfortunately, an incoming URI sometimes has characters disallowed by the spec.  HttpClient
+   * insists that the outgoing proxied request has a valid URI because it uses Java's {@link URI}. To be more
+   * forgiving, we must escape the problematic characters.  See the URI class for the spec.
+   *
+   * @param in example: name=value&foo=bar#fragment
+   */
+  static CharSequence encodeUriQuery(CharSequence in) {
+    //Note that I can't simply use URI.java to encode because it will escape pre-existing escaped things.
+    StringBuilder outBuf = null;
+    Formatter formatter = null;
+    for(int i = 0; i < in.length(); i++) {
+      char c = in.charAt(i);
+      boolean escape = true;
+      if (c < 128) {
+        if (asciiQueryChars.get((int)c)) {
+          escape = false;
+        }
+      } else if (!Character.isISOControl(c) && !Character.isSpaceChar(c)) {//not-ascii
+        escape = false;
+      }
+      if (!escape) {
+        if (outBuf != null)
+          outBuf.append(c);
+      } else {
+        //escape
+        if (outBuf == null) {
+          outBuf = new StringBuilder(in.length() + 5*3);
+          outBuf.append(in,0,i);
+          formatter = new Formatter(outBuf);
+        }
+        //leading %, 0 padded, width 2, capital hex
+        formatter.format("%%%02X",(int)c);//TODO
+      }
+    }
+    return outBuf != null ? outBuf : in;
+  }
+
+
+  static final BitSet asciiQueryChars;
+  static {
+    char[] c_unreserved = "_-!.~'()*".toCharArray();//plus alphanum
+    char[] c_punct = ",;:$&+=".toCharArray();
+    char[] c_reserved = "?/[]@".toCharArray();//plus punct
+
+    asciiQueryChars = new BitSet(128);
+    for(char c = 'a'; c <= 'z'; c++) asciiQueryChars.set((int)c);
+    for(char c = 'A'; c <= 'Z'; c++) asciiQueryChars.set((int)c);
+    for(char c = '0'; c <= '9'; c++) asciiQueryChars.set((int)c);
+    for(char c : c_unreserved) asciiQueryChars.set((int)c);
+    for(char c : c_punct) asciiQueryChars.set((int)c);
+    for(char c : c_reserved) asciiQueryChars.set((int)c);
+  }
+  
 }

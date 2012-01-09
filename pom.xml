@@ -14,6 +14,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <httpclient.version>4.1.2</httpclient.version>
   </properties>
 
   <dependencies>
@@ -29,7 +30,7 @@
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
-      <version>4.1.2</version>
+      <version>${httpclient.version}</version>
     </dependency>
     
     <dependency>
@@ -42,7 +43,7 @@
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
-      <version>4.1.2</version>
+      <version>${httpclient.version}</version>
       <classifier>tests</classifier>
       <scope>test</scope>
     </dependency>
@@ -75,6 +76,17 @@
         </configuration>
       </plugin>
 
+      <!-- TODO add an assembly with the dependencies -->
+
     </plugins>
   </build>
+
+  <distributionManagement>
+    <repository>
+      <id>maven-proxy</id>
+      <name>maven-proxy-releases</name>
+      <url>http://maven-proxy.mitre.org/artifactory/libs-releases-local</url>
+    </repository>
+  </distributionManagement>
+  
 </project>

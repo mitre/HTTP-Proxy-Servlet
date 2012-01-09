@@ -6,6 +6,8 @@ import com.meterware.httpunit.WebRequest;
 import com.meterware.httpunit.WebResponse;
 import com.meterware.servletunit.ServletRunner;
 import com.meterware.servletunit.ServletUnitClient;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.http.*;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.localserver.LocalTestServer;
@@ -14,10 +16,12 @@ import org.apache.http.protocol.HttpRequestHandler;
 import org.apache.http.util.EntityUtils;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
 import java.io.*;
+import java.net.URI;
 import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
@@ -28,7 +32,8 @@ import static org.junit.Assert.assertTrue;
  */
 public class ProxyServletTest
 {
-
+  private static final Log log = LogFactory.getLog(ProxyServletTest.class);
+  
   /**
    * From Apache httpcomponents/httpclient. Note httpunit has a similar thing called PseudoServlet but it is
    * not as good since you can't even make it echo the request back.
@@ -66,19 +71,27 @@ public class ProxyServletTest
    localTestServer.stop();
   }
 
-  private static String[] testUrlSuffixes = new String[]{"","/pathInfo","?def=DEF","/pathInfo?def=DEF"};
+  private static String[] testUrlSuffixes = new String[]{"","/pathInfo","?q=v","/p?q=v","/p?#f","/p?#"};
 
   @Test
   public void testGet() throws Exception {
     for (String urlSuffix : testUrlSuffixes) {
-      execGetAndAssert(makeGetMethodRequest(sourceBaseUri +urlSuffix));
+      execAssert(makeGetMethodRequest(sourceBaseUri + urlSuffix));
     }
+  }
+
+  @Test @Ignore
+  public void testOnlyFragment() throws Exception {
+    //TODO These fail; should they?  Do they fail because of the test infrastructure? Maybe we should switch to Jetty.
+    execAssert(makeGetMethodRequest(sourceBaseUri + "/p#f"));
+    execAssert(makeGetMethodRequest(sourceBaseUri + "#f"));
+    execAssert(makeGetMethodRequest(sourceBaseUri + "/#f"));
   }
 
   @Test
   public void testPost() throws Exception {
     for (String urlSuffix : testUrlSuffixes) {
-      execPostAndAssert(makePostMethodRequest(sourceBaseUri + urlSuffix));
+      execAndAssert(makePostMethodRequest(sourceBaseUri + urlSuffix));
     }
   }
 
@@ -111,24 +124,33 @@ public class ProxyServletTest
     final PostMethodWebRequest request = new PostMethodWebRequest("http://localhost/proxyMe",true);//true: mime encoded
     InputStream data = new ByteArrayInputStream("testFileData".getBytes("UTF-8"));
     request.selectFile("fileNameParam", "fileName", data, "text/plain");
-    WebResponse rsp = execPostAndAssert(request);
+    WebResponse rsp = execAndAssert(request);
     assertTrue(rsp.getText().contains("Content-Type: multipart/form-data; boundary="));
   }
 
-  private WebResponse execGetAndAssert(GetMethodWebRequest request) throws IOException, SAXException {
-    return execAndAssert(request);
+  @Test
+  public void testProxyWithUnescapedChars() throws Exception {
+    execAssert(makeGetMethodRequest(sourceBaseUri + "?fq={!f=field}"), "?fq=%7B!f=field%7D");//has squiggly brackets
   }
 
-  private WebResponse execPostAndAssert(PostMethodWebRequest request) throws IOException, SAXException {
+  private WebResponse execAssert(GetMethodWebRequest request, String expectedUri) throws Exception {
+    return execAndAssert(request, expectedUri);
+  }
+
+  private WebResponse execAssert(GetMethodWebRequest request) throws Exception {
+    return execAndAssert(request,null);
+  }
+
+  private WebResponse execAndAssert(PostMethodWebRequest request) throws Exception {
     request.setParameter("abc","ABC");
 
-    WebResponse rsp = execAndAssert(request);
+    WebResponse rsp = execAndAssert(request, null);
 
     assertTrue(rsp.getText().contains("ABC"));
     return rsp;
   }
 
-  private WebResponse execAndAssert(WebRequest request) throws IOException, SAXException {
+  private WebResponse execAndAssert(WebRequest request, String expectedUri) throws Exception {
     WebResponse rsp = sc.getResponse( request );
 
     assertEquals(HttpStatus.SC_OK,rsp.getResponseCode());
@@ -137,9 +159,15 @@ public class ProxyServletTest
     final String text = rsp.getText();
     assertTrue(text.startsWith("REQUESTLINE:"));
 
-    final String query = request.getURL().getQuery();
-    if (query != null)
-      assertTrue(text.contains(query));
+    if (expectedUri == null)
+      expectedUri = request.getURL().toString().substring(sourceBaseUri.length());
+    
+    String firstTextLine = text.substring(0,text.indexOf('\n'));
+    
+    String expectedTargetUri = new URI(this.targetBaseUri).getPath() + expectedUri;
+    String expectedFirstLine = "REQUESTLINE: "+(request instanceof GetMethodWebRequest ? "GET" : "POST");
+    expectedFirstLine += " " + expectedTargetUri + " HTTP/1.1";
+    assertEquals(expectedFirstLine,firstTextLine);
 
     return rsp;
   }
@@ -156,6 +184,7 @@ public class ProxyServletTest
   // setParam on a get request.
   @SuppressWarnings({"unchecked"})
   private static <M> M makeMethodRequest(final String url, Class<M> clazz) {
+    log.info("Making request to url "+url);
     String urlNoQuery;
     final String queryString;
     int qIdx = url.indexOf('?');

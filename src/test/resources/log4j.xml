@@ -15,6 +15,10 @@
     <level value="debug" />
   </logger>
 
+  <logger name="org.apache.http.wire">
+    <level value="info" />
+  </logger>
+
   <!-- Root Logger -->
   <root>
     <priority value="info" />
