@@ -363,6 +363,8 @@ public class ProxyServlet extends HttpServlet
     for(char c : c_unreserved) asciiQueryChars.set((int)c);
     for(char c : c_punct) asciiQueryChars.set((int)c);
     for(char c : c_reserved) asciiQueryChars.set((int)c);
+
+    asciiQueryChars.set((int)'%');//leave existing percent escapes in place
   }
   
 }

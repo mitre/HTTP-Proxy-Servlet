@@ -131,6 +131,7 @@ public class ProxyServletTest
   @Test
   public void testProxyWithUnescapedChars() throws Exception {
     execAssert(makeGetMethodRequest(sourceBaseUri + "?fq={!f=field}"), "?fq=%7B!f=field%7D");//has squiggly brackets
+    execAssert(makeGetMethodRequest(sourceBaseUri + "?fq=%7B!f=field%7D"));//already escaped; don't escape twice
   }
 
   private WebResponse execAssert(GetMethodWebRequest request, String expectedUri) throws Exception {
