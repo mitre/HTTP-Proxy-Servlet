@@ -835,6 +835,7 @@
     <option name="PER_PROJECT_SETTINGS">
       <value>
         <option name="USE_SAME_INDENTS" value="true" />
+        <option name="IGNORE_SAME_INDENTS_FOR_LANGUAGES" value="true" />
         <option name="OTHER_INDENT_OPTIONS">
           <value>
             <option name="INDENT_SIZE" value="2" />
@@ -863,6 +864,28 @@
             <option name="CONTINUATION_INDENT_SIZE" value="4" />
           </indentOptions>
         </codeStyleSettings>
+        <codeStyleSettings language="ECMA Script Level 4">
+          <option name="CLASS_BRACE_STYLE" value="2" />
+          <option name="PARENT_SETTINGS_INSTALLED" value="true" />
+          <indentOptions>
+            <option name="INDENT_SIZE" value="2" />
+            <option name="CONTINUATION_INDENT_SIZE" value="4" />
+            <option name="TAB_SIZE" value="2" />
+          </indentOptions>
+        </codeStyleSettings>
+        <codeStyleSettings language="GSP">
+          <indentOptions>
+            <option name="INDENT_SIZE" value="2" />
+            <option name="CONTINUATION_INDENT_SIZE" value="4" />
+            <option name="TAB_SIZE" value="2" />
+          </indentOptions>
+        </codeStyleSettings>
+        <codeStyleSettings language="Gherkin">
+          <indentOptions>
+            <option name="CONTINUATION_INDENT_SIZE" value="4" />
+            <option name="TAB_SIZE" value="2" />
+          </indentOptions>
+        </codeStyleSettings>
         <codeStyleSettings language="Groovy">
           <option name="CLASS_BRACE_STYLE" value="2" />
           <option name="PARENT_SETTINGS_INSTALLED" value="true" />
@@ -881,9 +904,28 @@
             <option name="TAB_SIZE" value="2" />
           </indentOptions>
         </codeStyleSettings>
+        <codeStyleSettings language="JSP">
+          <indentOptions>
+            <option name="INDENT_SIZE" value="2" />
+            <option name="CONTINUATION_INDENT_SIZE" value="4" />
+            <option name="TAB_SIZE" value="2" />
+          </indentOptions>
+        </codeStyleSettings>
         <codeStyleSettings language="JavaScript">
           <indentOptions>
             <option name="INDENT_SIZE" value="2" />
+            <option name="TAB_SIZE" value="2" />
+          </indentOptions>
+        </codeStyleSettings>
+        <codeStyleSettings language="SASS">
+          <indentOptions>
+            <option name="CONTINUATION_INDENT_SIZE" value="4" />
+            <option name="TAB_SIZE" value="2" />
+          </indentOptions>
+        </codeStyleSettings>
+        <codeStyleSettings language="SCSS">
+          <indentOptions>
+            <option name="CONTINUATION_INDENT_SIZE" value="4" />
             <option name="TAB_SIZE" value="2" />
           </indentOptions>
         </codeStyleSettings>
@@ -896,6 +938,12 @@
         <codeStyleSettings language="XML">
           <indentOptions>
             <option name="INDENT_SIZE" value="2" />
+            <option name="CONTINUATION_INDENT_SIZE" value="4" />
+            <option name="TAB_SIZE" value="2" />
+          </indentOptions>
+        </codeStyleSettings>
+        <codeStyleSettings language="yaml">
+          <indentOptions>
             <option name="CONTINUATION_INDENT_SIZE" value="4" />
             <option name="TAB_SIZE" value="2" />
           </indentOptions>
