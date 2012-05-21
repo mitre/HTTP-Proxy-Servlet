@@ -163,7 +163,7 @@ public class ProxyServletTest
     if (expectedUri == null)
       expectedUri = request.getURL().toString().substring(sourceBaseUri.length());
     
-    String firstTextLine = text.substring(0,text.indexOf('\n'));
+    String firstTextLine = text.substring(0,text.indexOf(System.getProperty("line.separator")));
     
     String expectedTargetUri = new URI(this.targetBaseUri).getPath() + expectedUri;
     String expectedFirstLine = "REQUESTLINE: "+(request instanceof GetMethodWebRequest ? "GET" : "POST");
