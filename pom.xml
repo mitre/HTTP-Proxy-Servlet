@@ -112,6 +112,11 @@
       <name>maven-proxy-releases</name>
       <url>http://maven-proxy.mitre.org/artifactory/libs-releases-local</url>
     </repository>
+    <snapshotRepository>
+      <id>maven-proxy</id>
+      <name>maven-proxy-releases</name>
+      <url>http://maven-proxy.mitre.org/artifactory/libs-snapshots-local</url>
+    </snapshotRepository>
   </distributionManagement>
   
 </project>
