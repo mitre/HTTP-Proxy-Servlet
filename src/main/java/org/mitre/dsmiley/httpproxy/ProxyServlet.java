@@ -24,7 +24,9 @@ import org.apache.http.client.utils.URIUtils;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
+import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpEntityEnclosingRequest;
+import org.apache.http.message.HeaderGroup;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
@@ -192,7 +194,7 @@ public class ProxyServlet extends HttpServlet
         && statusCode < HttpServletResponse.SC_NOT_MODIFIED /* 304 */) {
       Header locationHeader = proxyResponse.getLastHeader(HttpHeaders.LOCATION);
       if (locationHeader == null) {
-        throw new ServletException("Recieved status code: " + statusCode
+        throw new ServletException("Received status code: " + statusCode
             + " but no " + HttpHeaders.LOCATION + " header was found in the response");
       }
       // Modify the redirect to go to this proxy servlet rather that the proxied host
@@ -223,13 +225,32 @@ public class ProxyServlet extends HttpServlet
     }
   }
 
+  /** These are the "hop-by-hop" headers that should not be copied.
+   * http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html
+   * I use an HttpClient HeaderGroup class instead of Set<String> because this
+   * approach does case insensitive lookup faster.
+   */
+  private static final HeaderGroup hopByHopHeaders;
+  static {
+    hopByHopHeaders = new HeaderGroup();
+    String[] headers = new String[] {
+        "Connection", "Keep-Alive", "Proxy-Authenticate", "Proxy-Authorization",
+        "TE", "Trailers", "Transfer-Encoding", "Upgrade" };
+    for (String header : headers) {
+      hopByHopHeaders.addHeader(new BasicHeader(header, null));
+    }
+  }
+
   /** Copy request headers from the servlet client to the proxy request. */
   protected void copyRequestHeaders(HttpServletRequest servletRequest, HttpRequest proxyRequest) {
     // Get an Enumeration of all of the header names sent by the client
     Enumeration enumerationOfHeaderNames = servletRequest.getHeaderNames();
     while (enumerationOfHeaderNames.hasMoreElements()) {
       String headerName = (String) enumerationOfHeaderNames.nextElement();
+      //TODO why?
       if (headerName.equalsIgnoreCase(HttpHeaders.CONTENT_LENGTH))
+        continue;
+      if (hopByHopHeaders.containsHeader(headerName))
         continue;
       // As per the Java Servlet API 2.5 documentation:
       //		Some headers, such as Accept-Language can be sent by clients
@@ -256,6 +277,8 @@ public class ProxyServlet extends HttpServlet
   /** Copy proxied response headers back to the servlet client. */
   protected void copyResponseHeaders(HttpResponse proxyResponse, HttpServletResponse servletResponse) {
     for (Header header : proxyResponse.getAllHeaders()) {
+      if (hopByHopHeaders.containsHeader(header.getName()))
+        continue;
       servletResponse.addHeader(header.getName(), header.getValue());
     }
   }

@@ -716,7 +716,9 @@
   <component name="DependencyValidationManager">
     <option name="SKIP_IMPORT_STATEMENTS" value="false" />
   </component>
-  <component name="Encoding" useUTFGuessing="true" native2AsciiForPropertiesFiles="false" />
+  <component name="Encoding" useUTFGuessing="true" native2AsciiForPropertiesFiles="false">
+    <file url="file://$PROJECT_DIR$" charset="UTF-8" />
+  </component>
   <component name="EntryPointsManager">
     <entry_points version="2.0" />
   </component>
@@ -848,6 +850,7 @@
             <option name="USE_RELATIVE_INDENTS" value="false" />
           </value>
         </option>
+        <option name="RIGHT_MARGIN" value="80" />
         <option name="CLASS_BRACE_STYLE" value="2" />
         <XML>
           <option name="XML_LEGACY_SETTINGS_IMPORTED" value="true" />
@@ -1077,6 +1080,7 @@
       </JAVADOC>
       <SOURCES>
         <root url="jar://$MAVEN_REPOSITORY$/org/apache/httpcomponents/httpclient/4.1.2/httpclient-4.1.2-test-sources.jar!/" />
+        <root url="intellijad://intellijad" />
       </SOURCES>
     </library>
     <library name="Maven: org.apache.httpcomponents:httpcore:4.1.2">

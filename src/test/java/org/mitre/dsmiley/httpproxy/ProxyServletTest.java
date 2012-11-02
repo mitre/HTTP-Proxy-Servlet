@@ -24,8 +24,7 @@ import java.io.*;
 import java.net.URI;
 import java.util.Properties;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * @author David Smiley - dsmiley@mitre.org
@@ -132,6 +131,25 @@ public class ProxyServletTest
   public void testProxyWithUnescapedChars() throws Exception {
     execAssert(makeGetMethodRequest(sourceBaseUri + "?fq={!f=field}"), "?fq=%7B!f=field%7D");//has squiggly brackets
     execAssert(makeGetMethodRequest(sourceBaseUri + "?fq=%7B!f=field%7D"));//already escaped; don't escape twice
+  }
+
+  /** http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html */
+  @Test
+  public void testHopByHopHeadersOnSource() throws Exception {
+    //"Proxy-Authenticate" is a hop-by-hop header
+    final String HEADER = "Proxy-Authenticate";
+    localTestServer.register("/targetPath*", new RequestInfoHandler() {
+      public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
+        assertNull(request.getFirstHeader(HEADER));
+        response.setHeader(HEADER, "from-server");
+        super.handle(request, response, context);
+      }
+    });
+
+    GetMethodWebRequest req = makeGetMethodRequest(sourceBaseUri);
+    req.getHeaders().put(HEADER, "from-client");
+    WebResponse rsp = execAndAssert(req, "");
+    assertNull(rsp.getHeaderField(HEADER));
   }
 
   private WebResponse execAssert(GetMethodWebRequest request, String expectedUri) throws Exception {
