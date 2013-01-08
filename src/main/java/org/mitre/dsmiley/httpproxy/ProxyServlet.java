@@ -1,4 +1,4 @@
-package org.mitre.dsmiley.httpproxy; //originally net.edwardstx
+package org.mitre.dsmiley.httpproxy;
 
 /**
  * Copyright MITRE
@@ -26,6 +26,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpEntityEnclosingRequest;
+import org.apache.http.message.BasicHttpRequest;
 import org.apache.http.message.HeaderGroup;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpParams;
@@ -38,7 +39,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.util.BitSet;
@@ -134,31 +134,34 @@ public class ProxyServlet extends HttpServlet
   protected void service(HttpServletRequest servletRequest, HttpServletResponse servletResponse) throws ServletException, IOException {
     // Make the Request
     //note: we won't transfer the protocol version because I'm not sure it would truly be compatible
-    BasicHttpEntityEnclosingRequest proxyRequest =
-        new BasicHttpEntityEnclosingRequest(servletRequest.getMethod(), rewriteUrlFromRequest(servletRequest));
-    
+    String method = servletRequest.getMethod();
+    String proxyRequestUri = rewriteUrlFromRequest(servletRequest);
+    HttpRequest proxyRequest;
+    //spec: RFC 2616, sec 4.3: either these two headers signal that there is a message body.
+    if (servletRequest.getHeader(HttpHeaders.CONTENT_LENGTH) != null ||
+        servletRequest.getHeader(HttpHeaders.TRANSFER_ENCODING) != null) {
+      HttpEntityEnclosingRequest eProxyRequest = new BasicHttpEntityEnclosingRequest(method, proxyRequestUri);
+      // Add the input entity (streamed)
+      //  note: we don't bother ensuring we close the servletInputStream since the container handles it
+      eProxyRequest.setEntity(new InputStreamEntity(servletRequest.getInputStream(), servletRequest.getContentLength()));
+      proxyRequest = eProxyRequest;
+    } else
+      proxyRequest = new BasicHttpRequest(method, proxyRequestUri);
+
     copyRequestHeaders(servletRequest, proxyRequest);
 
-    // Add the input entity (streamed) then execute the request.
-    HttpResponse proxyResponse = null;
-    InputStream servletRequestInputStream = servletRequest.getInputStream();
     try {
-      try {
-        proxyRequest.setEntity(new InputStreamEntity(servletRequestInputStream, servletRequest.getContentLength()));
-
-        // Execute the request
-        if (doLog) {
-          log("proxy " + servletRequest.getMethod() + " uri: " + servletRequest.getRequestURI() + " -- " + proxyRequest.getRequestLine().getUri());
-        }
-        proxyResponse = proxyClient.execute(URIUtils.extractHost(targetUri), proxyRequest);
-      } finally {
-        closeQuietly(servletRequestInputStream);
+      // Execute the request
+      if (doLog) {
+        log("proxy " + method + " uri: " + servletRequest.getRequestURI() + " -- " + proxyRequest.getRequestLine().getUri());
       }
+      HttpResponse proxyResponse = proxyClient.execute(URIUtils.extractHost(targetUri), proxyRequest);
 
       // Process the response
       int statusCode = proxyResponse.getStatusLine().getStatusCode();
 
       if (doResponseRedirectOrNotModifiedLogic(servletRequest, servletResponse, proxyResponse, statusCode)) {
+        //just to be sure, but is probably a no-op
         EntityUtils.consume(proxyResponse.getEntity());
         return;
       }
@@ -183,6 +186,8 @@ public class ProxyServlet extends HttpServlet
         throw (RuntimeException)e;
       if (e instanceof ServletException)
         throw (ServletException)e;
+      if (e instanceof IOException)
+        throw (IOException) e;
       throw new RuntimeException(e);
     }
   }
@@ -247,7 +252,7 @@ public class ProxyServlet extends HttpServlet
     Enumeration enumerationOfHeaderNames = servletRequest.getHeaderNames();
     while (enumerationOfHeaderNames.hasMoreElements()) {
       String headerName = (String) enumerationOfHeaderNames.nextElement();
-      //TODO why?
+      //Instead the content-length is effectively set via InputStreamEntity
       if (headerName.equalsIgnoreCase(HttpHeaders.CONTENT_LENGTH))
         continue;
       if (hopByHopHeaders.containsHeader(headerName))
@@ -295,7 +300,7 @@ public class ProxyServlet extends HttpServlet
       }
     }
   }
-  
+
   private String rewriteUrlFromRequest(HttpServletRequest servletRequest) {
     StringBuilder uri = new StringBuilder(500);
     uri.append(this.targetUri.toString());
@@ -389,5 +394,5 @@ public class ProxyServlet extends HttpServlet
 
     asciiQueryChars.set((int)'%');//leave existing percent escapes in place
   }
-  
+
 }
