@@ -1,3 +1,6 @@
 /target
 /.clover
 *.iws
+*.ipr
+*.iml
+/.idea/
