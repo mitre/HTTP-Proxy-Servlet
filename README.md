@@ -20,6 +20,11 @@ This proxy depends on [Apache HttpClient](http://hc.apache.org/httpcomponents-cl
         |  +- commons-logging:commons-logging:jar:1.1.1:compile
         |  \- commons-codec:commons-codec:jar:1.4:compile
  
+Build & Installation
+------------
+
+Simply build the jar using "mvn package" at the command line. The jar is built to "target/smiley-http-proxy-servlet-VERSION.jar".  It is not yet in Maven Central.
+
 
 Configuration
 -------------
