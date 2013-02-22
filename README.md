@@ -23,7 +23,19 @@ This proxy depends on [Apache HttpClient](http://hc.apache.org/httpcomponents-cl
 Build & Installation
 ------------
 
-Simply build the jar using "mvn package" at the command line. The jar is built to "target/smiley-http-proxy-servlet-VERSION.jar".  It is not yet in Maven Central.
+Simply build the jar using "mvn package" at the command line.
+The jar is built to "target/smiley-http-proxy-servlet-VERSION.jar".
+You don't have to build the jar if you aren't modifying the code, since released
+versions are deployed to maven-central.  If you are using maven then you can
+add this to your dependencies in your pom like so:
+
+    <dependency>
+        <groupId>org.mitre.dsmiley.httpproxy</groupId>
+        <artifactId>smiley-http-proxy-servlet</artifactId>
+        <version>1.2</version>
+    </dependency>
+
+Ivy and other dependency managers can be used as well.
 
 
 Configuration
