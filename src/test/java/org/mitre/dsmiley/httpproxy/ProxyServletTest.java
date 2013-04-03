@@ -70,7 +70,10 @@ public class ProxyServletTest
    localTestServer.stop();
   }
 
-  private static String[] testUrlSuffixes = new String[]{"","/pathInfo","?q=v","/p?q=v","/p?#f","/p?#"};
+  private static String[] testUrlSuffixes = new String[]{
+          "","/pathInfo","?q=v","/p?q=v","/p?#f","/p?#",
+          "/p?id=p%20i", "/p%20i" // encoded space in param then in path
+  };
 
   @Test
   public void testGet() throws Exception {

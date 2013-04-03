@@ -306,7 +306,7 @@ public class ProxyServlet extends HttpServlet
     uri.append(this.targetUri.toString());
     // Handle the path given to the servlet
     if (servletRequest.getPathInfo() != null) {//ex: /my/path.html
-      uri.append(servletRequest.getPathInfo());
+      uri.append(encodeUriQuery(servletRequest.getPathInfo()));
     }
     // Handle the query string
     String queryString = servletRequest.getQueryString();//ex:(following '?'): name=value&foo=bar#fragment
