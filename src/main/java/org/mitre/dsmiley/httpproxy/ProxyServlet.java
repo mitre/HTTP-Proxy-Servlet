@@ -68,9 +68,13 @@ public class ProxyServlet extends HttpServlet
   /** A boolean parameter then when enabled will log input and target URLs to the servlet log. */
   public static final String P_LOG = "log";
 
+  /** A boolean parameter then when enabled will disables gzip compression (disables ACCEPT-ENCODING header). */
+  public static final String P_GZIP = "gzip";
+
   /* MISC */
 
   protected boolean doLog = false;
+  protected boolean doGzip = true;
   protected URI targetUri;
   protected HttpClient proxyClient;
 
@@ -86,6 +90,11 @@ public class ProxyServlet extends HttpServlet
     String doLogStr = servletConfig.getInitParameter(P_LOG);
     if (doLogStr != null) {
       this.doLog = Boolean.parseBoolean(doLogStr);
+    }
+
+    String doGzipStr = servletConfig.getInitParameter(P_GZIP);
+    if (doGzipStr != null) {
+      this.doGzip = Boolean.parseBoolean(doGzipStr);
     }
 
     try {
@@ -264,17 +273,19 @@ public class ProxyServlet extends HttpServlet
       // Thus, we get an Enumeration of the header values sent by the client
       Enumeration headers = servletRequest.getHeaders(headerName);
       while (headers.hasMoreElements()) {
-        String headerValue = (String) headers.nextElement();
-        // In case the proxy host is running multiple virtual servers,
-        // rewrite the Host header to ensure that we get content from
-        // the correct virtual server
-        if (headerName.equalsIgnoreCase(HttpHeaders.HOST)) {
-          HttpHost host = URIUtils.extractHost(this.targetUri);
-          headerValue = host.getHostName();
-          if (host.getPort() != -1)
-            headerValue += ":"+host.getPort();
+        if (this.doGzip || !headerName.equalsIgnoreCase(HttpHeaders.ACCEPT_ENCODING)) {
+            String headerValue = (String) headers.nextElement();
+            // In case the proxy host is running multiple virtual servers,
+            // rewrite the Host header to ensure that we get content from
+            // the correct virtual server
+            if (headerName.equalsIgnoreCase(HttpHeaders.HOST)) {
+              HttpHost host = URIUtils.extractHost(this.targetUri);
+              headerValue = host.getHostName();
+              if (host.getPort() != -1)
+                headerValue += ":"+host.getPort();
+            }
+            proxyRequest.addHeader(headerName, headerValue);
         }
-        proxyRequest.addHeader(headerName, headerValue);
       }
     }
   }
