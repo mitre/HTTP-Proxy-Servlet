@@ -58,15 +58,17 @@ import java.util.Formatter;
  *   Inspiration: http://httpd.apache.org/docs/2.0/mod/mod_proxy.html
  * </p>
  *
- * @author David Smiley dsmiley@mitre.org>
+ * @author David Smiley dsmiley@mitre.org
  */
-public class ProxyServlet extends HttpServlet
-{
+public class ProxyServlet extends HttpServlet {
 
   /* INIT PARAMETER NAME CONSTANTS */
 
-  /** A boolean parameter then when enabled will log input and target URLs to the servlet log. */
+  /** A boolean parameter name to enable logging of input and target URLs to the servlet log. */
   public static final String P_LOG = "log";
+
+  /** The parameter name for the target (destination) URI to proxy to. */
+  private static final String P_TARGET_URI = "targetUri";
 
   /* MISC */
 
@@ -89,7 +91,7 @@ public class ProxyServlet extends HttpServlet
     }
 
     try {
-      targetUri = new URI(servletConfig.getInitParameter("targetUri"));
+      targetUri = new URI(servletConfig.getInitParameter(P_TARGET_URI));
     } catch (Exception e) {
       throw new RuntimeException("Trying to process targetUri init parameter: "+e,e);
     }
@@ -99,13 +101,13 @@ public class ProxyServlet extends HttpServlet
     proxyClient = createHttpClient(hcParams);
   }
 
-  /** Called from {@link #init(javax.servlet.ServletConfig)}. HttpClient offers many opportunities for customization.
-   * @param hcParams*/
+  /** Called from {@link #init(javax.servlet.ServletConfig)}. HttpClient offers many opportunities
+   * for customization.*/
   protected HttpClient createHttpClient(HttpParams hcParams) {
     return new DefaultHttpClient(new ThreadSafeClientConnManager(),hcParams);
   }
 
-  private void readConfigParam(HttpParams hcParams, String hcParamName, Class type) {
+  protected void readConfigParam(HttpParams hcParams, String hcParamName, Class type) {
     String val_str = getServletConfig().getInitParameter(hcParamName);
     if (val_str == null)
       return;
@@ -114,6 +116,7 @@ public class ProxyServlet extends HttpServlet
       val_obj = val_str;
     } else {
       try {
+        //noinspection unchecked
         val_obj = type.getMethod("valueOf",String.class).invoke(type,val_str);
       } catch (Exception e) {
         throw new RuntimeException(e);
@@ -137,7 +140,7 @@ public class ProxyServlet extends HttpServlet
     String method = servletRequest.getMethod();
     String proxyRequestUri = rewriteUrlFromRequest(servletRequest);
     HttpRequest proxyRequest;
-    //spec: RFC 2616, sec 4.3: either these two headers signal that there is a message body.
+    //spec: RFC 2616, sec 4.3: either of these two headers signal that there is a message body.
     if (servletRequest.getHeader(HttpHeaders.CONTENT_LENGTH) != null ||
         servletRequest.getHeader(HttpHeaders.TRANSFER_ENCODING) != null) {
       HttpEntityEnclosingRequest eProxyRequest = new BasicHttpEntityEnclosingRequest(method, proxyRequestUri);
@@ -186,13 +189,17 @@ public class ProxyServlet extends HttpServlet
         throw (RuntimeException)e;
       if (e instanceof ServletException)
         throw (ServletException)e;
+      //noinspection ConstantConditions
       if (e instanceof IOException)
         throw (IOException) e;
       throw new RuntimeException(e);
     }
   }
 
-  private boolean doResponseRedirectOrNotModifiedLogic(HttpServletRequest servletRequest, HttpServletResponse servletResponse, HttpResponse proxyResponse, int statusCode) throws ServletException, IOException {
+  protected boolean doResponseRedirectOrNotModifiedLogic(
+          HttpServletRequest servletRequest, HttpServletResponse servletResponse,
+          HttpResponse proxyResponse, int statusCode)
+          throws ServletException, IOException {
     // Check if the proxy response is a redirect
     // The following code is adapted from org.tigris.noodle.filters.CheckForRedirect
     if (statusCode >= HttpServletResponse.SC_MULTIPLE_CHOICES /* 300 */
@@ -235,7 +242,7 @@ public class ProxyServlet extends HttpServlet
    * I use an HttpClient HeaderGroup class instead of Set<String> because this
    * approach does case insensitive lookup faster.
    */
-  private static final HeaderGroup hopByHopHeaders;
+  protected static final HeaderGroup hopByHopHeaders;
   static {
     hopByHopHeaders = new HeaderGroup();
     String[] headers = new String[] {
@@ -257,13 +264,9 @@ public class ProxyServlet extends HttpServlet
         continue;
       if (hopByHopHeaders.containsHeader(headerName))
         continue;
-      // As per the Java Servlet API 2.5 documentation:
-      //		Some headers, such as Accept-Language can be sent by clients
-      //		as several headers each with a different value rather than
-      //		sending the header as a comma separated list.
-      // Thus, we get an Enumeration of the header values sent by the client
+
       Enumeration headers = servletRequest.getHeaders(headerName);
-      while (headers.hasMoreElements()) {
+      while (headers.hasMoreElements()) {//sometimes more than one value
         String headerValue = (String) headers.nextElement();
         // In case the proxy host is running multiple virtual servers,
         // rewrite the Host header to ensure that we get content from
@@ -289,7 +292,7 @@ public class ProxyServlet extends HttpServlet
   }
 
   /** Copy response body data (the entity) from the proxy to the servlet client. */
-  private void copyResponseEntity(HttpResponse proxyResponse, HttpServletResponse servletResponse) throws IOException {
+  protected void copyResponseEntity(HttpResponse proxyResponse, HttpServletResponse servletResponse) throws IOException {
     HttpEntity entity = proxyResponse.getEntity();
     if (entity != null) {
       OutputStream servletOutputStream = servletResponse.getOutputStream();
@@ -301,7 +304,10 @@ public class ProxyServlet extends HttpServlet
     }
   }
 
-  private String rewriteUrlFromRequest(HttpServletRequest servletRequest) {
+  /** Reads the request URI from {@code servletRequest} and rewrites it, considering {@link
+   * #targetUri}. It's used to make the new request.
+   */
+  protected String rewriteUrlFromRequest(HttpServletRequest servletRequest) {
     StringBuilder uri = new StringBuilder(500);
     uri.append(this.targetUri.toString());
     // Handle the path given to the servlet
@@ -323,7 +329,9 @@ public class ProxyServlet extends HttpServlet
     return uri.toString();
   }
 
-  private String rewriteUrlFromResponse(HttpServletRequest servletRequest, String theUrl) {
+  /** For a redirect response from the target server, this translates {@code theUrl} to redirect to
+   * and translates it to one the original client can use. */
+  protected String rewriteUrlFromResponse(HttpServletRequest servletRequest, String theUrl) {
     //TODO document example paths
     if (theUrl.startsWith(this.targetUri.toString())) {
       String curUrl = servletRequest.getRequestURL().toString();//no query
@@ -338,15 +346,16 @@ public class ProxyServlet extends HttpServlet
   }
 
   /**
-   * <p>Encodes characters in the query or fragment part of the URI.
+   * Encodes characters in the query or fragment part of the URI.
    *
    * <p>Unfortunately, an incoming URI sometimes has characters disallowed by the spec.  HttpClient
-   * insists that the outgoing proxied request has a valid URI because it uses Java's {@link URI}. To be more
-   * forgiving, we must escape the problematic characters.  See the URI class for the spec.
+   * insists that the outgoing proxied request has a valid URI because it uses Java's {@link URI}.
+   * To be more forgiving, we must escape the problematic characters.  See the URI class for the
+   * spec.
    *
    * @param in example: name=value&foo=bar#fragment
    */
-  static CharSequence encodeUriQuery(CharSequence in) {
+  protected static CharSequence encodeUriQuery(CharSequence in) {
     //Note that I can't simply use URI.java to encode because it will escape pre-existing escaped things.
     StringBuilder outBuf = null;
     Formatter formatter = null;
@@ -377,8 +386,7 @@ public class ProxyServlet extends HttpServlet
     return outBuf != null ? outBuf : in;
   }
 
-
-  static final BitSet asciiQueryChars;
+  protected static final BitSet asciiQueryChars;
   static {
     char[] c_unreserved = "_-!.~'()*".toCharArray();//plus alphanum
     char[] c_punct = ",;:$&+=".toCharArray();
