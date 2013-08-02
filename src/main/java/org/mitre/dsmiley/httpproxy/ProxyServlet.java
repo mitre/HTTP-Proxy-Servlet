@@ -73,7 +73,9 @@ public class ProxyServlet extends HttpServlet {
   /* MISC */
 
   protected boolean doLog = false;
-  protected URI targetUri;
+  protected URI targetUriObj;
+  /** targetUriObj.toString() */
+  protected String targetUri;
   protected HttpClient proxyClient;
 
   @Override
@@ -91,10 +93,11 @@ public class ProxyServlet extends HttpServlet {
     }
 
     try {
-      targetUri = new URI(servletConfig.getInitParameter(P_TARGET_URI));
+      targetUriObj = new URI(servletConfig.getInitParameter(P_TARGET_URI));
     } catch (Exception e) {
       throw new RuntimeException("Trying to process targetUri init parameter: "+e,e);
     }
+    targetUri = targetUriObj.toString();
 
     HttpParams hcParams = new BasicHttpParams();
     readConfigParam(hcParams, ClientPNames.HANDLE_REDIRECTS, Boolean.class);
@@ -158,7 +161,7 @@ public class ProxyServlet extends HttpServlet {
       if (doLog) {
         log("proxy " + method + " uri: " + servletRequest.getRequestURI() + " -- " + proxyRequest.getRequestLine().getUri());
       }
-      HttpResponse proxyResponse = proxyClient.execute(URIUtils.extractHost(targetUri), proxyRequest);
+      HttpResponse proxyResponse = proxyClient.execute(URIUtils.extractHost(targetUriObj), proxyRequest);
 
       // Process the response
       int statusCode = proxyResponse.getStatusLine().getStatusCode();
@@ -272,7 +275,7 @@ public class ProxyServlet extends HttpServlet {
         // rewrite the Host header to ensure that we get content from
         // the correct virtual server
         if (headerName.equalsIgnoreCase(HttpHeaders.HOST)) {
-          HttpHost host = URIUtils.extractHost(this.targetUri);
+          HttpHost host = URIUtils.extractHost(this.targetUriObj);
           headerValue = host.getHostName();
           if (host.getPort() != -1)
             headerValue += ":"+host.getPort();
@@ -305,11 +308,11 @@ public class ProxyServlet extends HttpServlet {
   }
 
   /** Reads the request URI from {@code servletRequest} and rewrites it, considering {@link
-   * #targetUri}. It's used to make the new request.
+   * #targetUriObj}. It's used to make the new request.
    */
   protected String rewriteUrlFromRequest(HttpServletRequest servletRequest) {
     StringBuilder uri = new StringBuilder(500);
-    uri.append(this.targetUri.toString());
+    uri.append(targetUri);
     // Handle the path given to the servlet
     if (servletRequest.getPathInfo() != null) {//ex: /my/path.html
       uri.append(encodeUriQuery(servletRequest.getPathInfo()));
@@ -333,14 +336,14 @@ public class ProxyServlet extends HttpServlet {
    * and translates it to one the original client can use. */
   protected String rewriteUrlFromResponse(HttpServletRequest servletRequest, String theUrl) {
     //TODO document example paths
-    if (theUrl.startsWith(this.targetUri.toString())) {
+    if (theUrl.startsWith(targetUri)) {
       String curUrl = servletRequest.getRequestURL().toString();//no query
       String pathInfo = servletRequest.getPathInfo();
       if (pathInfo != null) {
         assert curUrl.endsWith(pathInfo);
         curUrl = curUrl.substring(0,curUrl.length()-pathInfo.length());//take pathInfo off
       }
-      theUrl = curUrl+theUrl.substring(this.targetUri.toString().length());
+      theUrl = curUrl+theUrl.substring(targetUri.length());
     }
     return theUrl;
   }
