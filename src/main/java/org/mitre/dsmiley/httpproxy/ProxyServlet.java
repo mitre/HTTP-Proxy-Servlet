@@ -40,6 +40,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.Constructor;
 import java.net.URI;
 import java.util.BitSet;
 import java.util.Enumeration;
@@ -114,9 +115,24 @@ public class ProxyServlet extends HttpServlet {
   }
 
   /** Called from {@link #init(javax.servlet.ServletConfig)}. HttpClient offers many opportunities
-   * for customization.*/
+   * for customization. By default, SystemDefaultHttpClient is used available, otherwise it falls
+   * back to:
+   * <pre>new DefaultHttpClient(new ThreadSafeClientConnManager(),hcParams)</pre>*/
   protected HttpClient createHttpClient(HttpParams hcParams) {
-    return new DefaultHttpClient(new ThreadSafeClientConnManager(),hcParams);
+    try {
+      //as of HttpComponents v4.2, this class is better since it uses System
+      // Properties:
+      Class clientClazz = Class.forName("org.apache.http.impl.client.SystemDefaultHttpClient");
+      Constructor constructor = clientClazz.getConstructor(HttpParams.class);
+      return (HttpClient) constructor.newInstance(hcParams);
+    } catch (ClassNotFoundException e) {
+      //no problem; use v4.1 below
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+
+    //Fallback on using older client:
+    return new DefaultHttpClient(new ThreadSafeClientConnManager(), hcParams);
   }
 
   protected void readConfigParam(HttpParams hcParams, String hcParamName, Class type) {
@@ -139,14 +155,24 @@ public class ProxyServlet extends HttpServlet {
 
   @Override
   public void destroy() {
-    //shutdown() must be called according to documentation.
-    if (proxyClient != null)
-      proxyClient.getConnectionManager().shutdown();
+    //As of HttpComponents v4.3, clients implement closeable
+    if (proxyClient instanceof Closeable) {//TODO AutoCloseable in Java 1.6
+      try {
+        ((Closeable) proxyClient).close();
+      } catch (IOException e) {
+        log("While destroying servlet, shutting down httpclient: "+e, e);
+      }
+    } else {
+      //Older releases require we do this:
+      if (proxyClient != null)
+        proxyClient.getConnectionManager().shutdown();
+    }
     super.destroy();
   }
 
   @Override
-  protected void service(HttpServletRequest servletRequest, HttpServletResponse servletResponse) throws ServletException, IOException {
+  protected void service(HttpServletRequest servletRequest, HttpServletResponse servletResponse)
+      throws ServletException, IOException {
     // Make the Request
     //note: we won't transfer the protocol version because I'm not sure it would truly be compatible
     String method = servletRequest.getMethod();
