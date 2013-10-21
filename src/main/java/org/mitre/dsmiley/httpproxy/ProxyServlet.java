@@ -66,6 +66,7 @@ public class ProxyServlet extends HttpServlet {
 
   /** A boolean parameter name to enable logging of input and target URLs to the servlet log. */
   public static final String P_LOG = "log";
+
   /** A boolean parameter name to enable forwarding of the client IP  */
   public static final String P_FORWARDEDFOR = "forwardip";
 
@@ -75,7 +76,7 @@ public class ProxyServlet extends HttpServlet {
   /* MISC */
 
   protected boolean doLog = false;
-  protected boolean doForwardIP = false;
+  protected boolean doForwardIP = true;
   protected URI targetUriObj;
   /** targetUriObj.toString() */
   protected String targetUri;
@@ -209,20 +210,6 @@ public class ProxyServlet extends HttpServlet {
     }
   }
 
-private void setXForwardedForHeader(HttpServletRequest servletRequest,
-		HttpRequest proxyRequest) {
-	String headerName = "X-Forwarded-For"; 
-	if (doForwardIP) {
-		StringBuilder stringBuilder = new StringBuilder(servletRequest.getRemoteAddr());
-		String existingHeader = servletRequest.getHeader(headerName);
-		if (null != existingHeader) {
-			stringBuilder.insert(0, ", ");
-			stringBuilder.insert(0, existingHeader);
-		}
-    	proxyRequest.setHeader(headerName, stringBuilder.toString());
-    }
-}
-
   protected boolean doResponseRedirectOrNotModifiedLogic(
           HttpServletRequest servletRequest, HttpServletResponse servletResponse,
           HttpResponse proxyResponse, int statusCode)
@@ -306,6 +293,19 @@ private void setXForwardedForHeader(HttpServletRequest servletRequest,
         }
         proxyRequest.addHeader(headerName, headerValue);
       }
+    }
+  }
+
+  private void setXForwardedForHeader(HttpServletRequest servletRequest,
+                                      HttpRequest proxyRequest) {
+    String headerName = "X-Forwarded-For";
+    if (doForwardIP) {
+      String newHeader = servletRequest.getRemoteAddr();
+      String existingHeader = servletRequest.getHeader(headerName);
+      if (existingHeader != null) {
+        newHeader = existingHeader + ", " + newHeader;
+      }
+      proxyRequest.setHeader(headerName, newHeader);
     }
   }
 

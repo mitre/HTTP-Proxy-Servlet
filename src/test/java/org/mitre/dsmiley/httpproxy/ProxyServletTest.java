@@ -157,12 +157,12 @@ public class ProxyServletTest
   }
   
   @Test
-  public void testEnabledXForwardedFor() throws Exception {
+  public void testWithExistingXForwardedFor() throws Exception {
     final String HEADER = "X-Forwarded-For";
     
     localTestServer.register("/targetPath*", new RequestInfoHandler() {
       public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
-    	Header xForwardedForHeader = request.getFirstHeader("X-Forwarded-For");
+    	Header xForwardedForHeader = request.getFirstHeader(HEADER);
     	assertEquals("192.168.1.1, 127.0.0.1", xForwardedForHeader.getValue()); 
         super.handle(request, response, context);
       }
@@ -174,12 +174,12 @@ public class ProxyServletTest
   }
   
   @Test
-  public void testWithExistingXForwardedFor() throws Exception {
+  public void testEnabledXForwardedFor() throws Exception {
     final String HEADER = "X-Forwarded-For";
     
     localTestServer.register("/targetPath*", new RequestInfoHandler() {
       public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
-    	Header xForwardedForHeader = request.getFirstHeader("X-Forwarded-For");
+    	Header xForwardedForHeader = request.getFirstHeader(HEADER);
     	assertEquals("127.0.0.1", xForwardedForHeader.getValue()); 
         super.handle(request, response, context);
       }
