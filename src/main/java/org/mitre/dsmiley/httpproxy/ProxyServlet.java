@@ -78,6 +78,8 @@ public class ProxyServlet extends HttpServlet {
 
   protected boolean doLog = false;
   protected boolean doForwardIP = true;
+  /** User agents shouldn't send the url fragment but what if it does? */
+  protected boolean doSendUrlFragment = true;
   protected URI targetUriObj;
   /** targetUriObj.toString() */
   protected String targetUri;
@@ -374,7 +376,7 @@ public class ProxyServlet extends HttpServlet {
       int fragIdx = queryString.indexOf('#');
       String queryNoFrag = (fragIdx < 0 ? queryString : queryString.substring(0,fragIdx));
       uri.append(encodeUriQuery(queryNoFrag));
-      if (fragIdx >= 0) {
+      if (doSendUrlFragment && fragIdx >= 0) {
         uri.append('#');
         uri.append(encodeUriQuery(queryString.substring(fragIdx + 1)));
       }

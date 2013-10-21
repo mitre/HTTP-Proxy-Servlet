@@ -16,7 +16,6 @@ import org.apache.http.protocol.HttpRequestHandler;
 import org.apache.http.util.EntityUtils;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
@@ -71,8 +70,11 @@ public class ProxyServletTest
    localTestServer.stop();
   }
 
+  //note: we don't include fragments:   "/p?#f","/p?#" because
+  //  user agents aren't supposed to send them. HttpComponents has behaved
+  //  differently on sending them vs not sending them.
   private static String[] testUrlSuffixes = new String[]{
-          "","/pathInfo","?q=v","/p?q=v","/p?#f","/p?#",
+          "","/pathInfo","?q=v","/p?q=v",
           "/p?id=p%20i", "/p%20i" // encoded space in param then in path
   };
 
@@ -81,14 +83,6 @@ public class ProxyServletTest
     for (String urlSuffix : testUrlSuffixes) {
       execAssert(makeGetMethodRequest(sourceBaseUri + urlSuffix));
     }
-  }
-
-  @Test @Ignore
-  public void testOnlyFragment() throws Exception {
-    //TODO These fail; should they?  Do they fail because of the test infrastructure? Maybe we should switch to Jetty.
-    execAssert(makeGetMethodRequest(sourceBaseUri + "/p#f"));
-    execAssert(makeGetMethodRequest(sourceBaseUri + "#f"));
-    execAssert(makeGetMethodRequest(sourceBaseUri + "/#f"));
   }
 
   @Test
