@@ -15,11 +15,17 @@ I have seen many quick'n'dirty proxies posted in source form on the web such as 
 
 This proxy depends on [Apache HttpClient](http://hc.apache.org/httpcomponents-client-ga/), which offers another point of extension for this proxy.  At some point I may write an alternative that uses the JDK and thus doesn't have any dependencies, which is desirable. In the mean time, you'll have to add the jar files for this and its dependencies:
 
-     +- org.apache.httpcomponents:httpclient:jar:4.1.2:compile
-        +- org.apache.httpcomponents:httpcore:jar:4.1.2:compile
+     +- org.apache.httpcomponents:httpclient:jar:4.2.5:compile
+        +- org.apache.httpcomponents:httpcore:jar:4.2.4:compile
         |  +- commons-logging:commons-logging:jar:1.1.1:compile
-        |  \- commons-codec:commons-codec:jar:1.4:compile
- 
+        |  \- commons-codec:commons-codec:jar:1.6:compile
+
+As of version 1.4 of the proxy, it will by default recognize "http.proxy" and
+ most other standard Java system properties. This is inherited from HC's
+ new [SystemDefaultHttpClient](http://hc.apache.org/httpcomponents-client-ga/httpclient/apidocs/org/apache/http/impl/client/SystemDefaultHttpClient.html). You can still use HC 4.1, however, as java
+ reflection is used to support both 4.1, which doesn't have that class, and 4.2+.
+ Tests pass with 4.3 too.
+
 Build & Installation
 ------------
 
