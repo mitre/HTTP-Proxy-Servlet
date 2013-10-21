@@ -75,6 +75,7 @@ public class ProxyServletTest
   //  differently on sending them vs not sending them.
   private static String[] testUrlSuffixes = new String[]{
           "","/pathInfo","?q=v","/p?q=v",
+          "/p?query=note:Leitbild",//colon  Issue#4
           "/p?id=p%20i", "/p%20i" // encoded space in param then in path
   };
 
