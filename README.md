@@ -32,7 +32,7 @@ add this to your dependencies in your pom like so:
     <dependency>
         <groupId>org.mitre.dsmiley.httpproxy</groupId>
         <artifactId>smiley-http-proxy-servlet</artifactId>
-        <version>1.2</version>
+        <version>1.3</version>
     </dependency>
 
 Ivy and other dependency managers can be used as well.
@@ -59,3 +59,8 @@ Here's an example excerpt of a web.xml file to communicate to a Solr server:
       <servlet-name>solr</servlet-name>
       <url-pattern>/solr/*</url-pattern>
     </servlet-mapping>
+
+If you are using SpringMVC, then an alternative is to use its
+[ServletWrappingController](http://static.springsource.org/spring/docs/3.0.x/api/org/springframework/web/servlet/mvc/ServletWrappingController.html)
+so that you can configure this servlet via Spring, which is supremely flexible, instead of having to modify your web.xml. However, note that some
+customization may be needed to divide the URL at the proxied portion; see [Issue#15](/dsmiley/HTTP-Proxy-Servlet/issues/15).
