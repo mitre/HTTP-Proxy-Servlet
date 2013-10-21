@@ -58,6 +58,7 @@ public class ProxyServletTest
     params.setProperty("http.protocol.handle-redirects", "false");
     params.setProperty("targetUri",targetBaseUri);
     params.setProperty(ProxyServlet.P_LOG, "true");
+    params.setProperty(ProxyServlet.P_FORWARDEDFOR, "true");
     servletRunner.registerServlet("/proxyMe/*", ProxyServlet.class.getName(), params);//also matches /proxyMe (no path info)
     sourceBaseUri = "http://localhost/proxyMe";//localhost:0 is hard-coded in ServletUnitHttpRequest
     sc = servletRunner.newClient();
@@ -154,6 +155,41 @@ public class ProxyServletTest
     WebResponse rsp = execAndAssert(req, "");
     assertNull(rsp.getHeaderField(HEADER));
   }
+  
+  @Test
+  public void testEnabledXForwardedFor() throws Exception {
+    final String HEADER = "X-Forwarded-For";
+    
+    localTestServer.register("/targetPath*", new RequestInfoHandler() {
+      public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
+    	Header xForwardedForHeader = request.getFirstHeader("X-Forwarded-For");
+    	assertEquals("192.168.1.1, 127.0.0.1", xForwardedForHeader.getValue()); 
+        super.handle(request, response, context);
+      }
+    });
+
+    GetMethodWebRequest req = makeGetMethodRequest(sourceBaseUri);
+    req.setHeaderField(HEADER, "192.168.1.1");
+    WebResponse rsp = execAndAssert(req, "");
+  }
+  
+  @Test
+  public void testWithExistingXForwardedFor() throws Exception {
+    final String HEADER = "X-Forwarded-For";
+    
+    localTestServer.register("/targetPath*", new RequestInfoHandler() {
+      public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
+    	Header xForwardedForHeader = request.getFirstHeader("X-Forwarded-For");
+    	assertEquals("127.0.0.1", xForwardedForHeader.getValue()); 
+        super.handle(request, response, context);
+      }
+    });
+
+    GetMethodWebRequest req = makeGetMethodRequest(sourceBaseUri);
+    WebResponse rsp = execAndAssert(req, "");
+  }
+  
+  
 
   private WebResponse execAssert(GetMethodWebRequest request, String expectedUri) throws Exception {
     return execAndAssert(request, expectedUri);
