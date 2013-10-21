@@ -66,6 +66,8 @@ public class ProxyServlet extends HttpServlet {
 
   /** A boolean parameter name to enable logging of input and target URLs to the servlet log. */
   public static final String P_LOG = "log";
+  /** A boolean parameter name to enable forwarding of the client IP  */
+  public static final String P_FORWARDEDFOR = "forwardip";
 
   /** The parameter name for the target (destination) URI to proxy to. */
   private static final String P_TARGET_URI = "targetUri";
@@ -73,6 +75,7 @@ public class ProxyServlet extends HttpServlet {
   /* MISC */
 
   protected boolean doLog = false;
+  protected boolean doForwardIP = false;
   protected URI targetUriObj;
   /** targetUriObj.toString() */
   protected String targetUri;
@@ -90,6 +93,11 @@ public class ProxyServlet extends HttpServlet {
     String doLogStr = servletConfig.getInitParameter(P_LOG);
     if (doLogStr != null) {
       this.doLog = Boolean.parseBoolean(doLogStr);
+    }
+    
+    String doForwardIPString = servletConfig.getInitParameter(P_FORWARDEDFOR);
+    if (doForwardIPString != null) {
+    	this.doForwardIP = Boolean.parseBoolean(doForwardIPString);
     }
 
     try {
@@ -155,6 +163,8 @@ public class ProxyServlet extends HttpServlet {
       proxyRequest = new BasicHttpRequest(method, proxyRequestUri);
 
     copyRequestHeaders(servletRequest, proxyRequest);
+    
+    setXForwardedForHeader(servletRequest, proxyRequest);
 
     try {
       // Execute the request
@@ -198,6 +208,20 @@ public class ProxyServlet extends HttpServlet {
       throw new RuntimeException(e);
     }
   }
+
+private void setXForwardedForHeader(HttpServletRequest servletRequest,
+		HttpRequest proxyRequest) {
+	String headerName = "X-Forwarded-For"; 
+	if (doForwardIP) {
+		StringBuilder stringBuilder = new StringBuilder(servletRequest.getRemoteAddr());
+		String existingHeader = servletRequest.getHeader(headerName);
+		if (null != existingHeader) {
+			stringBuilder.insert(0, ", ");
+			stringBuilder.insert(0, existingHeader);
+		}
+    	proxyRequest.setHeader(headerName, stringBuilder.toString());
+    }
+}
 
   protected boolean doResponseRedirectOrNotModifiedLogic(
           HttpServletRequest servletRequest, HttpServletResponse servletResponse,
