@@ -34,11 +34,12 @@ The jar is built to "target/smiley-http-proxy-servlet-VERSION.jar".
 You don't have to build the jar if you aren't modifying the code, since released
 versions are deployed to maven-central.  If you are using maven then you can
 add this to your dependencies in your pom like so:
+(Note: the version below is not necessarily the latest.)
 
     <dependency>
         <groupId>org.mitre.dsmiley.httpproxy</groupId>
         <artifactId>smiley-http-proxy-servlet</artifactId>
-        <version>1.3</version>
+        <version>1.4</version>
     </dependency>
 
 Ivy and other dependency managers can be used as well.
