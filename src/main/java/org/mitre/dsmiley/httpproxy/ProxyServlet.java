@@ -336,6 +336,11 @@ public class ProxyServlet extends HttpServlet
     }
     return theUrl;
   }
+  
+  
+  public URI getTargetUri() {
+    return targetUri;
+  }
 
   /**
    * <p>Encodes characters in the query or fragment part of the URI.
