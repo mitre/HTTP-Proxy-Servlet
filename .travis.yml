@@ -1,0 +1,7 @@
+language: java
+script: mvn clean verify
+jdk:
+  - openjdk6
+notifications:
+  email:
+    - dsmiley@mitre.org

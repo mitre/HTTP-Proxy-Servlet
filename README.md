@@ -6,7 +6,7 @@ This is an HTTP Proxy (aka gateway) in the form of a Java servlet.  An HTTP prox
 This is hardly the first proxy, so why did I write it and thus why might you use it?
 
  * It's simple -- a single source file implementation
- * It's tested -- have confidence it works
+ * It's tested -- have confidence it works [![Build Status](https://travis-ci.org/mitre/HTTP-Proxy-Servlet.png)](https://travis-ci.org/mitre/HTTP-Proxy-Servlet)
  * It's securable -- via Java EE web.xml or via a servlet filter such as [Spring-Security]([http://static.springsource.org/spring-security/site/)
  * It's extendible -- via simple class extension
  * It's embeddable -- into your Java web application making testing your app easier
