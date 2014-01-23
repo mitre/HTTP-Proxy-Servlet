@@ -195,12 +195,13 @@ public class ProxyServlet extends HttpServlet {
     
     setXForwardedForHeader(servletRequest, proxyRequest);
 
+    HttpResponse proxyResponse = null;
     try {
       // Execute the request
       if (doLog) {
         log("proxy " + method + " uri: " + servletRequest.getRequestURI() + " -- " + proxyRequest.getRequestLine().getUri());
       }
-      HttpResponse proxyResponse = proxyClient.execute(URIUtils.extractHost(targetUriObj), proxyRequest);
+      proxyResponse = proxyClient.execute(URIUtils.extractHost(targetUriObj), proxyRequest);
 
       // Process the response
       int statusCode = proxyResponse.getStatusLine().getStatusCode();
@@ -226,6 +227,12 @@ public class ProxyServlet extends HttpServlet {
       if (proxyRequest instanceof AbortableHttpRequest) {
         AbortableHttpRequest abortableHttpRequest = (AbortableHttpRequest) proxyRequest;
         abortableHttpRequest.abort();
+      }
+      // make sure we do not care about aborted client requests (from our caller)
+      if (proxyResponse != null) {
+        if (proxyResponse.getEntity() != null) {
+          EntityUtils.consumeQuietly(proxyResponse.getEntity());
+        }
       }
       if (e instanceof RuntimeException)
         throw (RuntimeException)e;
@@ -354,6 +361,8 @@ public class ProxyServlet extends HttpServlet {
       try {
         entity.writeTo(servletOutputStream);
       } finally {
+        // make sure the entire entity was consumed, so the connection is released
+        EntityUtils.consumeQuietly(entity);
         closeQuietly(servletOutputStream);
       }
     }
