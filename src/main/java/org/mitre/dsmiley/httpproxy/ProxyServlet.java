@@ -207,8 +207,8 @@ public class ProxyServlet extends HttpServlet {
       int statusCode = proxyResponse.getStatusLine().getStatusCode();
 
       if (doResponseRedirectOrNotModifiedLogic(servletRequest, servletResponse, proxyResponse, statusCode)) {
-        //just to be sure, but is probably a no-op
-        EntityUtils.consume(proxyResponse.getEntity());
+        //the response is already "committed" now without any body to send
+        //TODO copy response headers?
         return;
       }
 
@@ -228,12 +228,6 @@ public class ProxyServlet extends HttpServlet {
         AbortableHttpRequest abortableHttpRequest = (AbortableHttpRequest) proxyRequest;
         abortableHttpRequest.abort();
       }
-      // make sure we do not care about aborted client requests (from our caller)
-      if (proxyResponse != null) {
-        if (proxyResponse.getEntity() != null) {
-          EntityUtils.consumeQuietly(proxyResponse.getEntity());
-        }
-      }
       if (e instanceof RuntimeException)
         throw (RuntimeException)e;
       if (e instanceof ServletException)
@@ -242,6 +236,11 @@ public class ProxyServlet extends HttpServlet {
       if (e instanceof IOException)
         throw (IOException) e;
       throw new RuntimeException(e);
+
+    } finally {
+      // make sure the entire entity was consumed, so the connection is released
+      consumeQuietly(proxyResponse.getEntity());
+      closeQuietly(servletResponse.getOutputStream());
     }
   }
 
@@ -282,7 +281,17 @@ public class ProxyServlet extends HttpServlet {
     try {
       closeable.close();
     } catch (IOException e) {
-      log(e.getMessage(),e);
+      log(e.getMessage(), e);
+    }
+  }
+
+  /** HttpClient v4.1 doesn't have the
+   * {@link org.apache.http.util.EntityUtils#consumeQuietly(org.apache.http.HttpEntity)} method. */
+  protected void consumeQuietly(HttpEntity entity) {
+    try {
+      EntityUtils.consume(entity);
+    } catch (IOException e) {//ignore
+      log(e.getMessage(), e);
     }
   }
 
@@ -358,13 +367,7 @@ public class ProxyServlet extends HttpServlet {
     HttpEntity entity = proxyResponse.getEntity();
     if (entity != null) {
       OutputStream servletOutputStream = servletResponse.getOutputStream();
-      try {
-        entity.writeTo(servletOutputStream);
-      } finally {
-        // make sure the entire entity was consumed, so the connection is released
-        EntityUtils.consumeQuietly(entity);
-        closeQuietly(servletOutputStream);
-      }
+      entity.writeTo(servletOutputStream);
     }
   }
 
