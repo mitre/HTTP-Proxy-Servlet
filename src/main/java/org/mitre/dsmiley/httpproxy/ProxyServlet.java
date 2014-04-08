@@ -112,6 +112,7 @@ public class ProxyServlet extends HttpServlet {
     targetUri = targetUriObj.toString();
 
     HttpParams hcParams = new BasicHttpParams();
+    hcParams.setParameter(ClientPNames.COOKIE_POLICY, CookiePolicy.IGNORE_COOKIES);
     readConfigParam(hcParams, ClientPNames.HANDLE_REDIRECTS, Boolean.class);
     proxyClient = createHttpClient(hcParams);
   }
