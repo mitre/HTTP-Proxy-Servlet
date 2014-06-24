@@ -16,7 +16,13 @@ package org.mitre.dsmiley.httpproxy;
  * limitations under the License.
  */
 
-import org.apache.http.*;
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpEntityEnclosingRequest;
+import org.apache.http.HttpHeaders;
+import org.apache.http.HttpHost;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.AbortableHttpRequest;
 import org.apache.http.client.params.ClientPNames;
@@ -120,6 +126,7 @@ public class ProxyServlet extends HttpServlet {
    * for customization. By default, SystemDefaultHttpClient is used available, otherwise it falls
    * back to:
    * <pre>new DefaultHttpClient(new ThreadSafeClientConnManager(),hcParams)</pre>*/
+  @SuppressWarnings({"unchecked", "deprecation"})
   protected HttpClient createHttpClient(HttpParams hcParams) {
     try {
       //as of HttpComponents v4.2, this class is better since it uses System
@@ -239,8 +246,10 @@ public class ProxyServlet extends HttpServlet {
 
     } finally {
       // make sure the entire entity was consumed, so the connection is released
-      consumeQuietly(proxyResponse.getEntity());
-      closeQuietly(servletResponse.getOutputStream());
+      if (proxyResponse != null)
+        consumeQuietly(proxyResponse.getEntity());
+      //Note: Don't need to close servlet outputStream:
+      // http://stackoverflow.com/questions/1159168/should-one-call-close-on-httpservletresponse-getoutputstream-getwriter
     }
   }
 
