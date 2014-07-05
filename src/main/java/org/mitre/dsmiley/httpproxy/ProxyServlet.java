@@ -43,14 +43,20 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.StringReader;
 import java.lang.reflect.Constructor;
 import java.net.URI;
 import java.util.BitSet;
 import java.util.Enumeration;
 import java.util.Formatter;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * An HTTP reverse proxy/gateway servlet. It is designed to be extended for customization
@@ -79,6 +85,8 @@ public class ProxyServlet extends HttpServlet {
 
   /** The parameter name for the target (destination) URI to proxy to. */
   private static final String P_TARGET_URI = "targetUri";
+  
+  private static final Pattern URL_ARG_PATTERN = Pattern.compile("[$][1-9]");
 
   /* MISC */
 
@@ -110,13 +118,16 @@ public class ProxyServlet extends HttpServlet {
     	this.doForwardIP = Boolean.parseBoolean(doForwardIPString);
     }
 
-    try {
-      targetUriObj = new URI(servletConfig.getInitParameter(P_TARGET_URI));
-    } catch (Exception e) {
-      throw new RuntimeException("Trying to process targetUri init parameter: "+e,e);
+    targetUri = servletConfig.getInitParameter(P_TARGET_URI);
+    if (!targetUri.contains("$")) {
+      try {
+        targetUriObj = new URI(targetUri);
+      } catch (Exception e) {
+        throw new RuntimeException("Trying to process targetUri init parameter: "+e,e);
+      }
+      targetUri = targetUriObj.toString();
     }
-    targetUri = targetUriObj.toString();
-
+  
     HttpParams hcParams = new BasicHttpParams();
     readConfigParam(hcParams, ClientPNames.HANDLE_REDIRECTS, Boolean.class);
     proxyClient = createHttpClient(hcParams);
@@ -185,7 +196,35 @@ public class ProxyServlet extends HttpServlet {
     // Make the Request
     //note: we won't transfer the protocol version because I'm not sure it would truly be compatible
     String method = servletRequest.getMethod();
-    String proxyRequestUri = rewriteUrlFromRequest(servletRequest);
+    
+    String targetUriThisRequest;
+    URI targetUriObjThisRequest;
+    if (targetUriObj != null) {
+    	targetUriObjThisRequest = targetUriObj;
+      targetUriThisRequest = targetUri;
+    } else {
+    	Matcher args = URL_ARG_PATTERN.matcher(targetUri);
+      StringBuffer sb = new StringBuffer();
+      while (args.find()) {
+        String arg = args.group();
+        String replacement = servletRequest.getParameter("proxyArg"+arg.charAt(1));
+      	args.appendReplacement(sb, replacement);
+      }
+      args.appendTail(sb);
+      targetUriThisRequest = sb.toString();
+      try {
+        targetUriObjThisRequest = new URI(targetUriThisRequest);
+      } catch (Exception e) {
+        throw new ServletException("Trying to process targetUri "+targetUri+" with args from request params '"+servletRequest.getQueryString()+"': "+e,e);
+      }
+    }
+    
+    String proxyRequestUri;
+    if (targetUriObj == null) {
+      proxyRequestUri = rewriteUrlFromRequest(servletRequest, targetUriThisRequest);
+    } else { // for backward compatibility with possible subclass extension
+      proxyRequestUri = rewriteUrlFromRequest(servletRequest);
+    }
     HttpRequest proxyRequest;
     //spec: RFC 2616, sec 4.3: either of these two headers signal that there is a message body.
     if (servletRequest.getHeader(HttpHeaders.CONTENT_LENGTH) != null ||
@@ -198,7 +237,11 @@ public class ProxyServlet extends HttpServlet {
     } else
       proxyRequest = new BasicHttpRequest(method, proxyRequestUri);
 
-    copyRequestHeaders(servletRequest, proxyRequest);
+    if (targetUriObj == null) {
+      copyRequestHeaders(servletRequest, proxyRequest, targetUriObjThisRequest);
+    } else { // for backward compatibility with possible subclass extension
+      copyRequestHeaders(servletRequest, proxyRequest);
+    }
     
     setXForwardedForHeader(servletRequest, proxyRequest);
 
@@ -208,16 +251,25 @@ public class ProxyServlet extends HttpServlet {
       if (doLog) {
         log("proxy " + method + " uri: " + servletRequest.getRequestURI() + " -- " + proxyRequest.getRequestLine().getUri());
       }
-      proxyResponse = proxyClient.execute(URIUtils.extractHost(targetUriObj), proxyRequest);
+      proxyResponse = proxyClient.execute(URIUtils.extractHost(targetUriObjThisRequest), proxyRequest);
 
       // Process the response
       int statusCode = proxyResponse.getStatusLine().getStatusCode();
+System.err.println("proxy "+servletRequest.getRequestURI()+", status="+proxyResponse.getStatusLine().getStatusCode());
 
+    if (targetUriObj == null) {
+      if (doResponseRedirectOrNotModifiedLogic(servletRequest, servletResponse, proxyResponse, statusCode, targetUriThisRequest)) {
+        //the response is already "committed" now without any body to send
+        //TODO copy response headers?
+        return;
+      }
+    } else { // for backward compatibility with possible subclass extension
       if (doResponseRedirectOrNotModifiedLogic(servletRequest, servletResponse, proxyResponse, statusCode)) {
         //the response is already "committed" now without any body to send
         //TODO copy response headers?
         return;
       }
+    }
 
       // Pass the response code. This method with the "reason phrase" is deprecated but it's the only way to pass the
       //  reason along too.
@@ -257,6 +309,13 @@ public class ProxyServlet extends HttpServlet {
           HttpServletRequest servletRequest, HttpServletResponse servletResponse,
           HttpResponse proxyResponse, int statusCode)
           throws ServletException, IOException {
+    return doResponseRedirectOrNotModifiedLogic(servletRequest, servletResponse, proxyResponse, statusCode, targetUri);
+  }
+
+  protected boolean doResponseRedirectOrNotModifiedLogic(
+          HttpServletRequest servletRequest, HttpServletResponse servletResponse,
+          HttpResponse proxyResponse, int statusCode, String targetUriThisRequest)
+          throws ServletException, IOException {
     // Check if the proxy response is a redirect
     // The following code is adapted from org.tigris.noodle.filters.CheckForRedirect
     if (statusCode >= HttpServletResponse.SC_MULTIPLE_CHOICES /* 300 */
@@ -267,7 +326,7 @@ public class ProxyServlet extends HttpServlet {
             + " but no " + HttpHeaders.LOCATION + " header was found in the response");
       }
       // Modify the redirect to go to this proxy servlet rather that the proxied host
-      String locStr = rewriteUrlFromResponse(servletRequest, locationHeader.getValue());
+      String locStr = rewriteUrlFromResponse(servletRequest, locationHeader.getValue(), targetUriThisRequest);
 
       servletResponse.sendRedirect(locStr);
       return true;
@@ -320,8 +379,12 @@ public class ProxyServlet extends HttpServlet {
     }
   }
 
-  /** Copy request headers from the servlet client to the proxy request. */
   protected void copyRequestHeaders(HttpServletRequest servletRequest, HttpRequest proxyRequest) {
+    copyRequestHeaders(servletRequest, proxyRequest, targetUriObj);
+  }
+  
+  /** Copy request headers from the servlet client to the proxy request. */
+  protected void copyRequestHeaders(HttpServletRequest servletRequest, HttpRequest proxyRequest, URI targetUriObjThisRequest) {
     // Get an Enumeration of all of the header names sent by the client
     Enumeration enumerationOfHeaderNames = servletRequest.getHeaderNames();
     while (enumerationOfHeaderNames.hasMoreElements()) {
@@ -339,7 +402,7 @@ public class ProxyServlet extends HttpServlet {
         // rewrite the Host header to ensure that we get content from
         // the correct virtual server
         if (headerName.equalsIgnoreCase(HttpHeaders.HOST)) {
-          HttpHost host = URIUtils.extractHost(this.targetUriObj);
+          HttpHost host = URIUtils.extractHost(targetUriObjThisRequest);
           headerValue = host.getHostName();
           if (host.getPort() != -1)
             headerValue += ":"+host.getPort();
@@ -380,12 +443,16 @@ public class ProxyServlet extends HttpServlet {
     }
   }
 
-  /** Reads the request URI from {@code servletRequest} and rewrites it, considering {@link
-   * #targetUriObj}. It's used to make the new request.
-   */
   protected String rewriteUrlFromRequest(HttpServletRequest servletRequest) {
+    return rewriteUrlFromRequest(servletRequest, targetUri);
+  }
+  
+  /** Reads the request URI from {@code servletRequest} and rewrites it, considering {@link
+   * #gargetUriObi}. It's used to make the new request.
+   */
+  protected String rewriteUrlFromRequest(HttpServletRequest servletRequest, String targetUriThisRequest) {
     StringBuilder uri = new StringBuilder(500);
-    uri.append(targetUri);
+    uri.append(targetUriThisRequest);
     // Handle the path given to the servlet
     if (servletRequest.getPathInfo() != null) {//ex: /my/path.html
       uri.append(encodeUriQuery(servletRequest.getPathInfo()));
@@ -404,19 +471,23 @@ public class ProxyServlet extends HttpServlet {
     }
     return uri.toString();
   }
+  
+  protected String rewriteUrlFromResponse(HttpServletRequest servletRequest, String theUrl) {
+    return rewriteUrlFromResponse(servletRequest, theUrl, targetUri);
+  }
 
   /** For a redirect response from the target server, this translates {@code theUrl} to redirect to
    * and translates it to one the original client can use. */
-  protected String rewriteUrlFromResponse(HttpServletRequest servletRequest, String theUrl) {
+  protected String rewriteUrlFromResponse(HttpServletRequest servletRequest, String theUrl, String targetUriThisRequest) {
     //TODO document example paths
-    if (theUrl.startsWith(targetUri)) {
+    if (theUrl.startsWith(targetUriThisRequest)) {
       String curUrl = servletRequest.getRequestURL().toString();//no query
       String pathInfo = servletRequest.getPathInfo();
       if (pathInfo != null) {
         assert curUrl.endsWith(pathInfo);
         curUrl = curUrl.substring(0,curUrl.length()-pathInfo.length());//take pathInfo off
       }
-      theUrl = curUrl+theUrl.substring(targetUri.length());
+      theUrl = curUrl+theUrl.substring(targetUriThisRequest.length());
     }
     return theUrl;
   }
