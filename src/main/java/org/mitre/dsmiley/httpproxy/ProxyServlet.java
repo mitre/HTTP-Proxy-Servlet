@@ -23,10 +23,12 @@ import org.apache.http.HttpHeaders;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.AbortableHttpRequest;
 import org.apache.http.client.params.ClientPNames;
 import org.apache.http.client.utils.URIUtils;
+import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
@@ -45,16 +47,24 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.lang.reflect.Constructor;
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.util.BitSet;
 import java.util.Enumeration;
 import java.util.Formatter;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -204,11 +214,39 @@ public class ProxyServlet extends HttpServlet {
       targetUriThisRequest = targetUri;
     } else {
     	Matcher args = URL_ARG_PATTERN.matcher(targetUri);
+      Map<String,String> params = null;
       StringBuffer sb = new StringBuffer();
+      int i = 1;
       while (args.find()) {
+        
+        /**
+         * Do not use servletRequest.getParameter(arg) because that will
+         * typically read and consume the servlet InputStream (where our
+         * form data is stored for POST). We need the InputStream later on.
+         * So we'll parse the query string ourselves. A side benefit is
+         * we can keep the proxy parameters in the query string and not
+         * have to add them to a URL encoded form attachment.
+         */
+        if (params == null) {
+          String queryString = servletRequest.getQueryString();
+          int hash = queryString.indexOf('#');
+          if (hash >= 0) {
+          	queryString = queryString.substring(0, hash);
+          }
+        	List<NameValuePair> pairs = URLEncodedUtils.parse(queryString, Charset.defaultCharset());
+          params = new HashMap<String,String>();
+          for (NameValuePair pair : pairs) {
+          	params.put(pair.getName(), pair.getValue());
+          }
+        }
         String arg = args.group();
-        String replacement = servletRequest.getParameter("proxyArg"+arg.charAt(1));
+        //String replacement = servletRequest.getParameter("proxyArg"+arg.charAt(1));
+        String replacement = params.get("proxyArg"+arg.charAt(1));
+        if (replacement == null) {
+          throw new RuntimeException("Missing HTTP paramater for proxy argument $"+i);
+        }
       	args.appendReplacement(sb, replacement);
+        i++;
       }
       args.appendTail(sb);
       targetUriThisRequest = sb.toString();
@@ -255,22 +293,21 @@ public class ProxyServlet extends HttpServlet {
 
       // Process the response
       int statusCode = proxyResponse.getStatusLine().getStatusCode();
-System.err.println("proxy "+servletRequest.getRequestURI()+", status="+proxyResponse.getStatusLine().getStatusCode());
 
-    if (targetUriObj == null) {
-      if (doResponseRedirectOrNotModifiedLogic(servletRequest, servletResponse, proxyResponse, statusCode, targetUriThisRequest)) {
-        //the response is already "committed" now without any body to send
-        //TODO copy response headers?
-        return;
+      if (targetUriObj == null) {
+        if (doResponseRedirectOrNotModifiedLogic(servletRequest, servletResponse, proxyResponse, statusCode, targetUriThisRequest)) {
+          //the response is already "committed" now without any body to send
+          //TODO copy response headers?
+          return;
+        }
+      } else { // for backward compatibility with possible subclass extension
+        if (doResponseRedirectOrNotModifiedLogic(servletRequest, servletResponse, proxyResponse, statusCode)) {
+          //the response is already "committed" now without any body to send
+          //TODO copy response headers?
+          return;
+        }
       }
-    } else { // for backward compatibility with possible subclass extension
-      if (doResponseRedirectOrNotModifiedLogic(servletRequest, servletResponse, proxyResponse, statusCode)) {
-        //the response is already "committed" now without any body to send
-        //TODO copy response headers?
-        return;
-      }
-    }
-
+  
       // Pass the response code. This method with the "reason phrase" is deprecated but it's the only way to pass the
       //  reason along too.
       //noinspection deprecation
@@ -461,6 +498,7 @@ System.err.println("proxy "+servletRequest.getRequestURI()+", status="+proxyResp
     String queryString = servletRequest.getQueryString();//ex:(following '?'): name=value&foo=bar#fragment
     if (queryString != null && queryString.length() > 0) {
       uri.append('?');
+      uri.append(queryString);
       int fragIdx = queryString.indexOf('#');
       String queryNoFrag = (fragIdx < 0 ? queryString : queryString.substring(0,fragIdx));
       uri.append(encodeUriQuery(queryNoFrag));
