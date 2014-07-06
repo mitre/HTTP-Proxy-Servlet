@@ -1,6 +1,6 @@
 language: java
 
-script: mvn -Dhttpclient.version=HTTPCLIENT_VERSION clean verify
+script: mvn -Dhttpclient.version=$HTTPCLIENT_VERSION clean verify
 
 jdk:
   - openjdk6
