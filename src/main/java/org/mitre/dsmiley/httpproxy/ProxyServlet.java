@@ -498,7 +498,6 @@ public class ProxyServlet extends HttpServlet {
     String queryString = servletRequest.getQueryString();//ex:(following '?'): name=value&foo=bar#fragment
     if (queryString != null && queryString.length() > 0) {
       uri.append('?');
-      uri.append(queryString);
       int fragIdx = queryString.indexOf('#');
       String queryNoFrag = (fragIdx < 0 ? queryString : queryString.substring(0,fragIdx));
       uri.append(encodeUriQuery(queryNoFrag));
