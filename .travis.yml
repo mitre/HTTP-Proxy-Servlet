@@ -1,7 +1,15 @@
 language: java
-script: mvn clean verify
+
+script: mvn -Dhttpclient.version=HTTPCLIENT_VERSION clean verify
+
 jdk:
   - openjdk6
+
+env:
+  - HTTPCLIENT_VERSION=4.1
+  - HTTPCLIENT_VERSION=4.2
+  - HTTPCLIENT_VERSION=4.3.4
+
 notifications:
   email:
-    - dsmiley@mitre.org
+    - dsmiley@apache.org
