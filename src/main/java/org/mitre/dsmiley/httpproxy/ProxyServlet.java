@@ -125,7 +125,7 @@ public class ProxyServlet extends HttpServlet {
     
     String doForwardIPString = servletConfig.getInitParameter(P_FORWARDEDFOR);
     if (doForwardIPString != null) {
-    	this.doForwardIP = Boolean.parseBoolean(doForwardIPString);
+      this.doForwardIP = Boolean.parseBoolean(doForwardIPString);
     }
 
     targetUri = servletConfig.getInitParameter(P_TARGET_URI);
@@ -210,10 +210,10 @@ public class ProxyServlet extends HttpServlet {
     String targetUriThisRequest;
     URI targetUriObjThisRequest;
     if (targetUriObj != null) {
-    	targetUriObjThisRequest = targetUriObj;
+      targetUriObjThisRequest = targetUriObj;
       targetUriThisRequest = targetUri;
     } else {
-    	Matcher args = URL_ARG_PATTERN.matcher(targetUri);
+      Matcher args = URL_ARG_PATTERN.matcher(targetUri);
       Map<String,String> params = null;
       StringBuffer sb = new StringBuffer();
       int i = 1;
@@ -231,12 +231,12 @@ public class ProxyServlet extends HttpServlet {
           String queryString = servletRequest.getQueryString();
           int hash = queryString.indexOf('#');
           if (hash >= 0) {
-          	queryString = queryString.substring(0, hash);
+            queryString = queryString.substring(0, hash);
           }
-        	List<NameValuePair> pairs = URLEncodedUtils.parse(queryString, Charset.defaultCharset());
+          List<NameValuePair> pairs = URLEncodedUtils.parse(queryString, Charset.defaultCharset());
           params = new HashMap<String,String>();
           for (NameValuePair pair : pairs) {
-          	params.put(pair.getName(), pair.getValue());
+            params.put(pair.getName(), pair.getValue());
           }
         }
         String arg = args.group();
@@ -245,7 +245,7 @@ public class ProxyServlet extends HttpServlet {
         if (replacement == null) {
           throw new RuntimeException("Missing HTTP paramater for proxy argument $"+i);
         }
-      	args.appendReplacement(sb, replacement);
+        args.appendReplacement(sb, replacement);
         i++;
       }
       args.appendTail(sb);
