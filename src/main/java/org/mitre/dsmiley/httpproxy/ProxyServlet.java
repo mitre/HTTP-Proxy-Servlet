@@ -16,6 +16,27 @@ package org.mitre.dsmiley.httpproxy;
  * limitations under the License.
  */
 
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.lang.reflect.Constructor;
+import java.net.URI;
+import java.util.BitSet;
+import java.util.Enumeration;
+import java.util.Formatter;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.http.Consts;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
@@ -39,34 +60,6 @@ import org.apache.http.message.HeaderGroup;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
-
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.lang.reflect.Constructor;
-import java.net.URI;
-import java.nio.charset.Charset;
-import java.util.BitSet;
-import java.util.Enumeration;
-import java.util.Formatter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * An HTTP reverse proxy/gateway servlet. It is designed to be extended for customization
@@ -96,7 +89,7 @@ public class ProxyServlet extends HttpServlet {
   /** The parameter name for the target (destination) URI to proxy to. */
   private static final String P_TARGET_URI = "targetUri";
   
-  private static final Pattern URL_ARG_PATTERN = Pattern.compile("[$][1-9]");
+  private static final Pattern URL_ARG_PATTERN = Pattern.compile("(?:[$][1-9])|(?:\\{[a-zA-Z]\\w*\\})");
 
   /* MISC */
 
@@ -129,7 +122,7 @@ public class ProxyServlet extends HttpServlet {
     }
 
     targetUri = servletConfig.getInitParameter(P_TARGET_URI);
-    if (!targetUri.contains("$")) {
+    if (!(targetUri.contains("$") || targetUri.contains("{"))) {
       try {
         targetUriObj = new URI(targetUri);
       } catch (Exception e) {
@@ -216,7 +209,6 @@ public class ProxyServlet extends HttpServlet {
       Matcher args = URL_ARG_PATTERN.matcher(targetUri);
       Map<String,String> params = null;
       StringBuffer sb = new StringBuffer();
-      int i = 1;
       while (args.find()) {
         
         /**
@@ -233,20 +225,35 @@ public class ProxyServlet extends HttpServlet {
           if (hash >= 0) {
             queryString = queryString.substring(0, hash);
           }
-          List<NameValuePair> pairs = URLEncodedUtils.parse(queryString, Charset.defaultCharset());
+          List<NameValuePair> pairs = URLEncodedUtils.parse(queryString, Consts.UTF_8);
           params = new HashMap<String,String>();
           for (NameValuePair pair : pairs) {
             params.put(pair.getName(), pair.getValue());
           }
         }
         String arg = args.group();
-        //String replacement = servletRequest.getParameter("proxyArg"+arg.charAt(1));
-        String replacement = params.get("proxyArg"+arg.charAt(1));
+        String replacement;
+        String proxyArgName;
+        if (arg.charAt(0) == '$') {
+          proxyArgName = "proxyArg"+arg.charAt(1);
+          replacement = params.get(proxyArgName);
+        } else {
+          proxyArgName = arg.substring(1, arg.length()-1)+"ProxyArg";
+          replacement = params.get(proxyArgName);
+            // Trying to implement a small subset of http://tools.ietf.org/html/rfc6570.
+            // It might be a nice addition to have some syntax that allowed a proxy arg to be "optional", that is,
+            // don't fail if not present, just return the empty string or a given default. But I don't see
+            // anything in the spec that supports this kind of construct.
+            // Notionally, it might look like {?host:google.com} would return the value of
+            // the URL parameter "?hostProxyArg=somehost.com" if defined, but if not defined, return "google.com".
+            // Similarly, {?host} could return the value of hostProxyArg or empty string if not present.
+            // But that's not how the spec works. So for now we will require a proxy arg to be present
+            // if defined for this proxy URL.
+        }
         if (replacement == null) {
-          throw new RuntimeException("Missing HTTP paramater for proxy argument $"+i);
+          throw new RuntimeException("Missing HTTP paramater "+proxyArgName+" for proxy argument "+arg);
         }
         args.appendReplacement(sb, replacement);
-        i++;
       }
       args.appendTail(sb);
       targetUriThisRequest = sb.toString();
