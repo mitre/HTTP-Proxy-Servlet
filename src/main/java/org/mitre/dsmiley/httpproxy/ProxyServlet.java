@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.Constructor;
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.util.BitSet;
 import java.util.Enumeration;
 import java.util.Formatter;
@@ -36,7 +37,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.http.Consts;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
@@ -90,6 +90,8 @@ public class ProxyServlet extends HttpServlet {
   private static final String P_TARGET_URI = "targetUri";
   
   private static final Pattern URL_ARG_PATTERN = Pattern.compile("(?:[$][1-9])|(?:\\{[a-zA-Z]\\w*\\})");
+
+  private static final Charset UTF_8 = Charset.forName("UTF-8");
 
   /* MISC */
 
@@ -225,7 +227,7 @@ public class ProxyServlet extends HttpServlet {
           if (hash >= 0) {
             queryString = queryString.substring(0, hash);
           }
-          List<NameValuePair> pairs = URLEncodedUtils.parse(queryString, Consts.UTF_8);
+          List<NameValuePair> pairs = URLEncodedUtils.parse(queryString, UTF_8);
           params = new HashMap<String,String>();
           for (NameValuePair pair : pairs) {
             params.put(pair.getName(), pair.getValue());
