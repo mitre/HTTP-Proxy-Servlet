@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.Constructor;
 import java.net.URI;
-import java.nio.charset.Charset;
+import java.net.URISyntaxException;
 import java.util.BitSet;
 import java.util.Enumeration;
 import java.util.Formatter;
@@ -91,7 +91,7 @@ public class ProxyServlet extends HttpServlet {
   
   private static final Pattern URL_ARG_PATTERN = Pattern.compile("(?:[$][1-9])|(?:\\{[a-zA-Z]\\w*\\})");
 
-  private static final Charset UTF_8 = Charset.forName("UTF-8");
+  private static final String UTF_8 = "UTF-8";
 
   /* MISC */
 
@@ -222,12 +222,17 @@ public class ProxyServlet extends HttpServlet {
          * have to add them to a URL encoded form attachment.
          */
         if (params == null) {
-          String queryString = servletRequest.getQueryString();
+          String queryString = "?"+servletRequest.getQueryString();
           int hash = queryString.indexOf('#');
           if (hash >= 0) {
             queryString = queryString.substring(0, hash);
           }
-          List<NameValuePair> pairs = URLEncodedUtils.parse(queryString, UTF_8);
+          List<NameValuePair> pairs;
+          try {
+            pairs = URLEncodedUtils.parse(new URI(queryString), UTF_8);
+          } catch (URISyntaxException e) {
+            throw new RuntimeException("Unexpected URI parsing error on "+queryString, e);
+          }
           params = new HashMap<String,String>();
           for (NameValuePair pair : pairs) {
             params.put(pair.getName(), pair.getValue());
