@@ -6,7 +6,6 @@ import com.meterware.httpunit.WebRequest;
 import com.meterware.httpunit.WebResponse;
 import com.meterware.servletunit.ServletRunner;
 import com.meterware.servletunit.ServletUnitClient;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.Header;
@@ -55,15 +54,14 @@ public class ProxyServletTest
 
   /** From Meterware httpunit. */
   private ServletRunner servletRunner;
-  private ServletRunner parameterizedServletRunner;
   private ServletUnitClient sc;
-  private ServletUnitClient psc;
 
   private String targetBaseUri;
-  private String parameterizedTargetBaseUri;
   private String sourceBaseUri;
+
+  //For parameterized:
+  private String parameterizedTargetBaseUri;
   private String parameterizedSourceBaseUri;
-  
   private String hostParam;
   private String portParam;
   private String pathParam;
@@ -73,41 +71,41 @@ public class ProxyServletTest
     localTestServer = new LocalTestServer(null, null);
     localTestServer.start();
     localTestServer.register("/targetPath*", new RequestInfoHandler());//matches /targetPath and /targetPath/blahblah
-    targetBaseUri = "http://localhost:"+localTestServer.getServiceAddress().getPort()+"/targetPath";
-    
-    localTestServer.register("/parameterizedTargetPath*", new RequestInfoHandler());
-    parameterizedTargetBaseUri = "http://{host}:$2/{path}";
-    // for the test, host should be localhost, $2 should be localTestServer port, and path should be parameterizedTargetPath
-    hostParam = "localhost";
-    portParam = String.valueOf(localTestServer.getServiceAddress().getPort());
-    pathParam = "parameterizedTargetPath";
 
     servletRunner = new ServletRunner();
-    Properties params = new Properties();
-    params.setProperty("http.protocol.handle-redirects", "false");
-    params.setProperty("targetUri",targetBaseUri);
-    params.setProperty(ProxyServlet.P_LOG, "true");
-    params.setProperty(ProxyServlet.P_FORWARDEDFOR, "true");
-    servletRunner.registerServlet("/proxyMe/*", ProxyServlet.class.getName(), params);//also matches /proxyMe (no path info)
+
+    Properties defServletProps = new Properties();
+    defServletProps.setProperty("http.protocol.handle-redirects", "false");
+    defServletProps.setProperty(ProxyServlet.P_LOG, "true");
+    defServletProps.setProperty(ProxyServlet.P_FORWARDEDFOR, "true");
+
+    //Register the proxy servlet. This is the one we do most tests with.
+
+    Properties servletProps = new Properties();
+    servletProps.putAll(defServletProps);
+    targetBaseUri = "http://localhost:"+localTestServer.getServiceAddress().getPort()+"/targetPath";
+    servletProps.setProperty("targetUri", targetBaseUri);
+    servletRunner.registerServlet("/proxyMe/*", ProxyServlet.class.getName(), servletProps);//also matches /proxyMe (no path info)
     sourceBaseUri = "http://localhost/proxyMe";//localhost:0 is hard-coded in ServletUnitHttpRequest
+
+    //Register a parameterized proxy servlet.
+    // for the test, host should be localhost, $2 should be localTestServer port, and path should be targetPath
+    hostParam = "localhost";
+    portParam = String.valueOf(localTestServer.getServiceAddress().getPort());
+    pathParam = "targetPath";
+    servletProps = new Properties();
+    servletProps.putAll(defServletProps);
+    parameterizedTargetBaseUri = "http://{host}:$2/{path}";
+    servletProps.setProperty("targetUri", parameterizedTargetBaseUri);
+    servletRunner.registerServlet("/proxyParamMe/*", ProxyServlet.class.getName(), servletProps);
+    parameterizedSourceBaseUri = "http://localhost/proxyParamMe";//localhost:0 is hard-coded in ServletUnitHttpRequest
+
     sc = servletRunner.newClient();
     sc.getClientProperties().setAutoRedirect(false);//don't want httpunit itself to redirect
-
-    parameterizedServletRunner = new ServletRunner();
-    params = new Properties();
-    params.setProperty("http.protocol.handle-redirects", "false");
-    params.setProperty("targetUri",parameterizedTargetBaseUri);
-    params.setProperty(ProxyServlet.P_LOG, "true");
-    params.setProperty(ProxyServlet.P_FORWARDEDFOR, "true");
-    parameterizedServletRunner.registerServlet("/proxyParamMe/*", ProxyServlet.class.getName(), params);//also matches /proxyMe (no path info)
-    parameterizedSourceBaseUri = "http://localhost/proxyParamMe";//localhost:0 is hard-coded in ServletUnitHttpRequest
-    psc = parameterizedServletRunner.newClient();
-    psc.getClientProperties().setAutoRedirect(false);//don't want httpunit itself to redirect
   }
 
   @After
   public void tearDown() throws Exception {
-   parameterizedServletRunner.shutDown();
    servletRunner.shutDown();
    localTestServer.stop();
   }
@@ -324,7 +322,7 @@ public class ProxyServletTest
   }
 
   private WebResponse execAndAssertParam(WebRequest request, String params, String expectedUri) throws Exception {
-    WebResponse rsp = psc.getResponse( request );
+    WebResponse rsp = sc.getResponse( request );
 
     assertEquals(HttpStatus.SC_OK,rsp.getResponseCode());
     //HttpUnit doesn't pass the message; not a big deal
