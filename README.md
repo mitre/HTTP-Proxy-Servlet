@@ -26,6 +26,15 @@ As of version 1.4 of the proxy, it will by default recognize "http.proxy" and
  reflection is used to support both 4.1, which doesn't have that class, and 4.2+.
  Tests pass with 4.3 too.
 
+Rich Kadel added the ability to parameterize your proxy URL, allowing you to use
+the same web.xml servlet specification for multiple target servers. Special query 
+parameters (see the examples below) sent from the client to the ProxyServlet will 
+map to the matching URL template, replacing arguments in the proxy's targetUri as
+specified in the web.xml.
+IMPORTANT! The proxy query params must be placed in the query string, event when using
+HTTP POST. Other application parameters can be in your POSTed url-encoded-form string; just not
+proxyArgs.
+
 Build & Installation
 ------------
 
@@ -65,6 +74,50 @@ Here's an example excerpt of a web.xml file to communicate to a Solr server:
     <servlet-mapping>
       <servlet-name>solr</servlet-name>
       <url-pattern>/solr/*</url-pattern>
+    </servlet-mapping>
+
+Here's an example with a parameterized proxy URL matching query parameters
+proxyArg1, proxyArg2, and proxyArg3 such as 
+"http://mywebapp/cluster/subpath?proxyArg1=namenode&proxyArg2=8080&proxyArg2=monitor":
+
+    <servlet>
+      <servlet-name>clusterProxy</servlet-name>
+      <servlet-class>org.mitre.dsmiley.httpproxy.ProxyServlet</servlet-class>
+      <init-param>
+        <param-name>targetUri</param-name>
+        <param-value>http://$1.behindfirewall.mycompany.com:$2/$3</param-value>
+      </init-param>
+      <init-param>
+        <param-name>log</param-name>
+        <param-value>true</param-value>
+      </init-param>
+    </servlet>
+    
+    <servlet-mapping>
+      <servlet-name>clusterProxy</servlet-name>
+      <url-pattern>/mywebapp/cluster/*</url-pattern>
+    </servlet-mapping>
+
+Here's another example with a parameterized proxy URL matching query parameters
+hostProxyArg, portProxyArg, and pathProxyArg such as:
+"http://mywebapp/cluster/subpath?hostProxyArg=namenode&portProxyArg=8080&pathProxyArg=monitor":
+
+    <servlet>
+      <servlet-name>clusterProxy</servlet-name>
+      <servlet-class>org.mitre.dsmiley.httpproxy.ProxyServlet</servlet-class>
+      <init-param>
+        <param-name>targetUri</param-name>
+        <param-value>http://{host}.behindfirewall.mycompany.com:{port}/{path}</param-value>
+      </init-param>
+      <init-param>
+        <param-name>log</param-name>
+        <param-value>true</param-value>
+      </init-param>
+    </servlet>
+    
+    <servlet-mapping>
+      <servlet-name>clusterProxy</servlet-name>
+      <url-pattern>/mywebapp/cluster/*</url-pattern>
     </servlet-mapping>
 
 If you are using SpringMVC, then an alternative is to use its
