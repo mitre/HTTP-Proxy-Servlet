@@ -22,6 +22,7 @@ import java.io.OutputStream;
 import java.lang.reflect.Constructor;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Enumeration;
 import java.util.Formatter;
@@ -204,12 +205,14 @@ public class ProxyServlet extends HttpServlet {
     
     String targetUriThisRequest;
     URI targetUriObjThisRequest;
+    List<String> proxyArgList = null;
     if (targetUriObj != null) {
       targetUriObjThisRequest = targetUriObj;
       targetUriThisRequest = targetUri;
     } else {
       Matcher args = URL_ARG_PATTERN.matcher(targetUri);
       Map<String,String> params = null;
+      proxyArgList = new ArrayList<String>();
       StringBuffer sb = new StringBuffer();
       while (args.find()) {
         
@@ -257,6 +260,7 @@ public class ProxyServlet extends HttpServlet {
             // But that's not how the spec works. So for now we will require a proxy arg to be present
             // if defined for this proxy URL.
         }
+        proxyArgList.add(proxyArgName+"="+replacement);
         if (replacement == null) {
           throw new RuntimeException("Missing HTTP paramater "+proxyArgName+" for proxy argument "+arg);
         }
@@ -273,7 +277,7 @@ public class ProxyServlet extends HttpServlet {
     
     String proxyRequestUri;
     if (targetUriObj == null) {
-      proxyRequestUri = rewriteUrlFromRequest(servletRequest, targetUriThisRequest);
+      proxyRequestUri = rewriteUrlFromRequest(servletRequest, targetUriThisRequest, proxyArgList);
     } else { // for backward compatibility with possible subclass extension
       proxyRequestUri = rewriteUrlFromRequest(servletRequest);
     }
@@ -495,13 +499,14 @@ public class ProxyServlet extends HttpServlet {
   }
 
   protected String rewriteUrlFromRequest(HttpServletRequest servletRequest) {
-    return rewriteUrlFromRequest(servletRequest, targetUri);
+    return rewriteUrlFromRequest(servletRequest, targetUri, null);
   }
   
   /** Reads the request URI from {@code servletRequest} and rewrites it, considering {@link
    * #gargetUriObi}. It's used to make the new request.
    */
-  protected String rewriteUrlFromRequest(HttpServletRequest servletRequest, String targetUriThisRequest) {
+  protected String rewriteUrlFromRequest(HttpServletRequest servletRequest,
+      String targetUriThisRequest, List<String> proxyArgList) {
     StringBuilder uri = new StringBuilder(500);
     uri.append(targetUriThisRequest);
     // Handle the path given to the servlet
@@ -511,10 +516,17 @@ public class ProxyServlet extends HttpServlet {
     // Handle the query string
     String queryString = servletRequest.getQueryString();//ex:(following '?'): name=value&foo=bar#fragment
     if (queryString != null && queryString.length() > 0) {
-      uri.append('?');
       int fragIdx = queryString.indexOf('#');
       String queryNoFrag = (fragIdx < 0 ? queryString : queryString.substring(0,fragIdx));
-      uri.append(encodeUriQuery(queryNoFrag));
+      if (proxyArgList != null) {
+        for (String proxyArg : proxyArgList) {
+          queryNoFrag = queryNoFrag.replaceFirst("[&]*"+proxyArg, "");
+        }
+      }
+      if (queryNoFrag.length() > 0) {
+        uri.append('?');
+        uri.append(encodeUriQuery(queryNoFrag));
+      }
       if (doSendUrlFragment && fragIdx >= 0) {
         uri.append('#');
         uri.append(encodeUriQuery(queryString.substring(fragIdx + 1)));
