@@ -32,7 +32,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
@@ -50,21 +52,14 @@ public class ProxyServletTest
    * From Apache httpcomponents/httpclient. Note httpunit has a similar thing called PseudoServlet but it is
    * not as good since you can't even make it echo the request back.
    */
-  private LocalTestServer localTestServer;
+  protected LocalTestServer localTestServer;
 
   /** From Meterware httpunit. */
-  private ServletRunner servletRunner;
+  protected ServletRunner servletRunner;
   private ServletUnitClient sc;
 
-  private String targetBaseUri;
-  private String sourceBaseUri;
-
-  //For parameterized:
-  private String parameterizedTargetBaseUri;
-  private String parameterizedSourceBaseUri;
-  private String hostParam;
-  private String portParam;
-  private String pathParam;
+  protected String targetBaseUri;
+  protected String sourceBaseUri;
 
   @Before
   public void setUp() throws Exception {
@@ -74,34 +69,22 @@ public class ProxyServletTest
 
     servletRunner = new ServletRunner();
 
-    Properties defServletProps = new Properties();
-    defServletProps.setProperty("http.protocol.handle-redirects", "false");
-    defServletProps.setProperty(ProxyServlet.P_LOG, "true");
-    defServletProps.setProperty(ProxyServlet.P_FORWARDEDFOR, "true");
-
-    //Register the proxy servlet. This is the one we do most tests with.
-
     Properties servletProps = new Properties();
-    servletProps.putAll(defServletProps);
+    servletProps.setProperty("http.protocol.handle-redirects", "false");
+    servletProps.setProperty(ProxyServlet.P_LOG, "true");
+    servletProps.setProperty(ProxyServlet.P_FORWARDEDFOR, "true");
+    setUpServlet(servletProps);
+
+    sc = servletRunner.newClient();
+    sc.getClientProperties().setAutoRedirect(false);//don't want httpunit itself to redirect
+  }
+
+  protected void setUpServlet(Properties servletProps) {
+    servletProps.putAll(servletProps);
     targetBaseUri = "http://localhost:"+localTestServer.getServiceAddress().getPort()+"/targetPath";
     servletProps.setProperty("targetUri", targetBaseUri);
     servletRunner.registerServlet("/proxyMe/*", ProxyServlet.class.getName(), servletProps);//also matches /proxyMe (no path info)
     sourceBaseUri = "http://localhost/proxyMe";//localhost:0 is hard-coded in ServletUnitHttpRequest
-
-    //Register a parameterized proxy servlet.
-    // for the test, host should be localhost, $2 should be localTestServer port, and path should be targetPath
-    hostParam = "localhost";
-    portParam = String.valueOf(localTestServer.getServiceAddress().getPort());
-    pathParam = "targetPath";
-    servletProps = new Properties();
-    servletProps.putAll(defServletProps);
-    parameterizedTargetBaseUri = "http://{host}:$2/{path}";
-    servletProps.setProperty("targetUri", parameterizedTargetBaseUri);
-    servletRunner.registerServlet("/proxyParamMe/*", ProxyServlet.class.getName(), servletProps);
-    parameterizedSourceBaseUri = "http://localhost/proxyParamMe";//localhost:0 is hard-coded in ServletUnitHttpRequest
-
-    sc = servletRunner.newClient();
-    sc.getClientProperties().setAutoRedirect(false);//don't want httpunit itself to redirect
   }
 
   @After
@@ -135,47 +118,6 @@ public class ProxyServletTest
   }
 
   @Test
-  public void testGetParameterized() throws Exception {
-    for (String urlSuffix : testUrlSuffixes) {
-      String url = parameterizedSourceBaseUri + urlSuffix;
-      String params = makeParams(url);
-      execAssertParam(makeGetMethodRequest(url+params.toString()), params.toString());
-    }
-  }
-
-  @Test
-  public void testPostParameterized() throws Exception {
-    for (String urlSuffix : testUrlSuffixes) {
-      String url = parameterizedSourceBaseUri + urlSuffix;
-      String params = makeParams(url);
-      execAndAssertParam(makePostMethodRequest(url+params.toString()), params.toString());
-    }
-  }
-
-  /**
-   * @param url
-   * @return
-   */
-  private String makeParams(String url) {
-    StringBuffer params = new StringBuffer();
-    if (url.indexOf("?") < 0) {
-      params.append('?');
-    } else {
-      params.append('&');
-    }
-    params
-      .append("hostProxyArg=")
-      .append(hostParam)
-      .append('&')
-      .append("proxyArg2=")
-      .append(portParam)
-      .append('&')
-      .append("pathProxyArg=")
-      .append(pathParam);
-    return params.toString();
-  }
-
-  @Test
   public void testRedirect() throws IOException, SAXException {
     localTestServer.register("/targetPath*",new HttpRequestHandler()
     {
@@ -201,7 +143,9 @@ public class ProxyServletTest
 
   @Test
   public void testSendFile() throws Exception {
-    final PostMethodWebRequest request = new PostMethodWebRequest("http://localhost/proxyMe",true);//true: mime encoded
+    //TODO test with url parameters (i.e. a=b); but HttpUnit is faulty so we can't
+    final PostMethodWebRequest request = new PostMethodWebRequest(
+            rewriteMakeMethodUrl("http://localhost/proxyMe"), true);//true: mime encoded
     InputStream data = new ByteArrayInputStream("testFileData".getBytes("UTF-8"));
     request.selectFile("fileNameParam", "fileName", data, "text/plain");
     WebResponse rsp = execAndAssert(request);
@@ -276,23 +220,10 @@ public class ProxyServletTest
     return execAndAssert(request,null);
   }
 
-  private WebResponse execAssertParam(GetMethodWebRequest request, String params) throws Exception {
-    return execAndAssertParam(request, params, null);
-  }
-
   private WebResponse execAndAssert(PostMethodWebRequest request) throws Exception {
     request.setParameter("abc","ABC");
 
     WebResponse rsp = execAndAssert(request, null);
-
-    assertTrue(rsp.getText().contains("ABC"));
-    return rsp;
-  }
-
-  private WebResponse execAndAssertParam(PostMethodWebRequest request, String params) throws Exception {
-    request.setParameter("abc","ABC");
-
-    WebResponse rsp = execAndAssertParam(request, params, null);
 
     assertTrue(rsp.getText().contains("ABC"));
     return rsp;
@@ -307,43 +238,21 @@ public class ProxyServletTest
     final String text = rsp.getText();
     assertTrue(text.startsWith("REQUESTLINE:"));
 
-    if (expectedUri == null)
-      expectedUri = request.getURL().toString().substring(sourceBaseUri.length());
-    
-    String firstTextLine = text.substring(0,text.indexOf(System.getProperty("line.separator")));
-    
-    String expectedTargetUri = new URI(this.targetBaseUri).getPath() + expectedUri;
-    
+    String expectedTargetUri = getExpectedTargetUri(request, expectedUri);
     String expectedFirstLine = "REQUESTLINE: "+(request instanceof GetMethodWebRequest ? "GET" : "POST");
     expectedFirstLine += " " + expectedTargetUri + " HTTP/1.1";
-    assertEquals(expectedFirstLine,firstTextLine);
+
+    String firstTextLine = text.substring(0,text.indexOf(System.getProperty("line.separator")));
+
+    assertEquals(expectedFirstLine, firstTextLine);
 
     return rsp;
   }
 
-  private WebResponse execAndAssertParam(WebRequest request, String params, String expectedUri) throws Exception {
-    WebResponse rsp = sc.getResponse( request );
-
-    assertEquals(HttpStatus.SC_OK,rsp.getResponseCode());
-    //HttpUnit doesn't pass the message; not a big deal
-    //assertEquals("TESTREASON",rsp.getResponseMessage());
-    final String text = rsp.getText();
-    assertTrue(text.startsWith("REQUESTLINE:"));
-
+  protected String getExpectedTargetUri(WebRequest request, String expectedUri) throws MalformedURLException, URISyntaxException {
     if (expectedUri == null)
-      expectedUri = request.getURL().toString()
-        .substring(parameterizedSourceBaseUri.length())
-        .replace(params,  "");
-    
-    String firstTextLine = text.substring(0,text.indexOf(System.getProperty("line.separator")));
-    
-    String expectedTargetUri = "/" + pathParam + expectedUri;
-    
-    String expectedFirstLine = "REQUESTLINE: "+(request instanceof GetMethodWebRequest ? "GET" : "POST");
-    expectedFirstLine += " " + expectedTargetUri + " HTTP/1.1";
-    assertEquals(expectedFirstLine,firstTextLine);
-
-    return rsp;
+      expectedUri = request.getURL().toString().substring(sourceBaseUri.length());
+    return new URI(this.targetBaseUri).getPath() + expectedUri;
   }
 
   private GetMethodWebRequest makeGetMethodRequest(final String url) {
@@ -357,8 +266,9 @@ public class ProxyServletTest
   //Fixes problems in HttpUnit in which I can't specify the query string via the url. I don't want to use
   // setParam on a get request.
   @SuppressWarnings({"unchecked"})
-  private static <M> M makeMethodRequest(final String url, Class<M> clazz) {
-    log.info("Making request to url "+url);
+  private <M> M makeMethodRequest(String incomingUrl, Class<M> clazz) {
+    log.info("Making request to url "+incomingUrl);
+    final String url = rewriteMakeMethodUrl(incomingUrl);
     String urlNoQuery;
     final String queryString;
     int qIdx = url.indexOf('?');
@@ -395,6 +305,11 @@ public class ProxyServletTest
       };
     }
     throw new IllegalArgumentException(clazz.toString());
+  }
+
+  //subclass extended
+  protected String rewriteMakeMethodUrl(String url) {
+    return url;
   }
 
   /**
