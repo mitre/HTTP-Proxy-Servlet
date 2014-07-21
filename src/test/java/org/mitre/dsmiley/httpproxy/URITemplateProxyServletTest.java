@@ -9,7 +9,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Properties;
 
-public class ParameterizedTest extends ProxyServletTest {
+public class URITemplateProxyServletTest extends ProxyServletTest {
 
   String urlParams;
 
