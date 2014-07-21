@@ -29,15 +29,12 @@ public class ParameterizedTest extends ProxyServletTest {
     String hostParam = "localhost";
     String portParam = String.valueOf(localTestServer.getServiceAddress().getPort());
     String pathParam = "targetPath";
-    urlParams = "hostProxyArg=" + hostParam + "&proxyArg2=" + portParam + "&pathProxyArg=" + pathParam;
+    urlParams = "_host=" + hostParam + "&_port=" + portParam + "&_path=" + pathParam;
     targetBaseUri = "http://" + hostParam + ":" + portParam + "/" + pathParam;
-    servletProps.setProperty("targetUri", "http://{host}:$2/{path}");//template
-    servletRunner.registerServlet("/proxyParameterized/*", ProxyServlet.class.getName(), servletProps);
+    servletProps.setProperty("targetUri", "http://{_host}:{_port}/{_path}");//template
+    servletRunner.registerServlet("/proxyParameterized/*", URITemplateProxyServlet.class.getName(), servletProps);
     sourceBaseUri = "http://localhost/proxyParameterized";//localhost:0 is hard-coded in ServletUnitHttpRequest
   }
-
-
-
 
   @Override
   protected String rewriteMakeMethodUrl(String url) {

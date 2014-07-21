@@ -38,7 +38,6 @@ import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 
-import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -78,7 +77,11 @@ public class ProxyServlet extends HttpServlet {
   public static final String P_FORWARDEDFOR = "forwardip";
 
   /** The parameter name for the target (destination) URI to proxy to. */
-  private static final String P_TARGET_URI = "targetUri";
+  protected static final String P_TARGET_URI = "targetUri";
+  protected static final String ATTR_TARGET_URI =
+          ProxyServlet.class.getSimpleName() + ".targetUri";
+  protected static final String ATTR_TARGET_HOST =
+          ProxyServlet.class.getSimpleName() + ".targetHost";
 
   /* MISC */
 
@@ -86,40 +89,60 @@ public class ProxyServlet extends HttpServlet {
   protected boolean doForwardIP = true;
   /** User agents shouldn't send the url fragment but what if it does? */
   protected boolean doSendUrlFragment = true;
-  protected URI targetUriObj;
-  /** targetUriObj.toString() */
+
+  //These next 3 are cached here, and should only be referred to in initialization logic. See the
+  // ATTR_* parameters.
+  /** From the configured parameter "targetUri". */
   protected String targetUri;
+  protected URI targetUriObj;//new URI(targetUri)
+  protected HttpHost targetHost;//URIUtils.extractHost(targetUriObj);
+
   protected HttpClient proxyClient;
 
   @Override
   public String getServletInfo() {
-    return "A proxy servlet by David Smiley, dsmiley@mitre.org";
+    return "A proxy servlet by David Smiley, dsmiley@apache.org";
+  }
+
+
+  protected String getTargetUri(HttpServletRequest servletRequest) {
+    return (String) servletRequest.getAttribute(ATTR_TARGET_URI);
+  }
+
+  private HttpHost getTargetHost(HttpServletRequest servletRequest) {
+    return (HttpHost) servletRequest.getAttribute(ATTR_TARGET_HOST);
   }
 
   @Override
-  public void init(ServletConfig servletConfig) throws ServletException {
-    super.init(servletConfig);
-
-    String doLogStr = servletConfig.getInitParameter(P_LOG);
+  public void init() throws ServletException {
+    String doLogStr = getServletConfig().getInitParameter(P_LOG);
     if (doLogStr != null) {
       this.doLog = Boolean.parseBoolean(doLogStr);
     }
     
-    String doForwardIPString = servletConfig.getInitParameter(P_FORWARDEDFOR);
+    String doForwardIPString = getServletConfig().getInitParameter(P_FORWARDEDFOR);
     if (doForwardIPString != null) {
     	this.doForwardIP = Boolean.parseBoolean(doForwardIPString);
     }
 
-    try {
-      targetUriObj = new URI(servletConfig.getInitParameter(P_TARGET_URI));
-    } catch (Exception e) {
-      throw new RuntimeException("Trying to process targetUri init parameter: "+e,e);
-    }
-    targetUri = targetUriObj.toString();
+    initTarget();//sets target*
 
     HttpParams hcParams = new BasicHttpParams();
     readConfigParam(hcParams, ClientPNames.HANDLE_REDIRECTS, Boolean.class);
     proxyClient = createHttpClient(hcParams);
+  }
+
+  protected void initTarget() throws ServletException {
+    targetUri = getServletConfig().getInitParameter(P_TARGET_URI);
+    if (targetUri == null)
+      throw new ServletException(P_TARGET_URI+" is required.");
+    //test it's valid
+    try {
+      targetUriObj = new URI(targetUri);
+    } catch (Exception e) {
+      throw new ServletException("Trying to process targetUri init parameter: "+e,e);
+    }
+    targetHost = URIUtils.extractHost(targetUriObj);
   }
 
   /** Called from {@link #init(javax.servlet.ServletConfig)}. HttpClient offers many opportunities
@@ -144,6 +167,9 @@ public class ProxyServlet extends HttpServlet {
     return new DefaultHttpClient(new ThreadSafeClientConnManager(), hcParams);
   }
 
+  /** Reads a servlet config parameter by the name {@code hcParamName} of type {@code type}, and
+   * set it in {@code hcParams}.
+   */
   protected void readConfigParam(HttpParams hcParams, String hcParamName, Class type) {
     String val_str = getServletConfig().getInitParameter(hcParamName);
     if (val_str == null)
@@ -169,7 +195,7 @@ public class ProxyServlet extends HttpServlet {
       try {
         ((Closeable) proxyClient).close();
       } catch (IOException e) {
-        log("While destroying servlet, shutting down httpclient: "+e, e);
+        log("While destroying servlet, shutting down HttpClient: "+e, e);
       }
     } else {
       //Older releases require we do this:
@@ -182,6 +208,14 @@ public class ProxyServlet extends HttpServlet {
   @Override
   protected void service(HttpServletRequest servletRequest, HttpServletResponse servletResponse)
       throws ServletException, IOException {
+    //initialize request attributes from caches if unset by a subclass by this point
+    if (servletRequest.getAttribute(ATTR_TARGET_URI) == null) {
+      servletRequest.setAttribute(ATTR_TARGET_URI, targetUri);
+    }
+    if (servletRequest.getAttribute(ATTR_TARGET_HOST) == null) {
+      servletRequest.setAttribute(ATTR_TARGET_HOST, targetHost);
+    }
+
     // Make the Request
     //note: we won't transfer the protocol version because I'm not sure it would truly be compatible
     String method = servletRequest.getMethod();
@@ -208,7 +242,7 @@ public class ProxyServlet extends HttpServlet {
       if (doLog) {
         log("proxy " + method + " uri: " + servletRequest.getRequestURI() + " -- " + proxyRequest.getRequestLine().getUri());
       }
-      proxyResponse = proxyClient.execute(URIUtils.extractHost(targetUriObj), proxyRequest);
+      proxyResponse = proxyClient.execute(getTargetHost(servletRequest), proxyRequest);
 
       // Process the response
       int statusCode = proxyResponse.getStatusLine().getStatusCode();
@@ -339,7 +373,7 @@ public class ProxyServlet extends HttpServlet {
         // rewrite the Host header to ensure that we get content from
         // the correct virtual server
         if (headerName.equalsIgnoreCase(HttpHeaders.HOST)) {
-          HttpHost host = URIUtils.extractHost(this.targetUriObj);
+          HttpHost host = getTargetHost(servletRequest);
           headerValue = host.getHostName();
           if (host.getPort() != -1)
             headerValue += ":"+host.getPort();
@@ -380,35 +414,50 @@ public class ProxyServlet extends HttpServlet {
     }
   }
 
-  /** Reads the request URI from {@code servletRequest} and rewrites it, considering {@link
-   * #targetUriObj}. It's used to make the new request.
+  /** Reads the request URI from {@code servletRequest} and rewrites it, considering targetUri.
+   * It's used to make the new request.
    */
   protected String rewriteUrlFromRequest(HttpServletRequest servletRequest) {
     StringBuilder uri = new StringBuilder(500);
-    uri.append(targetUri);
+    uri.append(getTargetUri(servletRequest));
     // Handle the path given to the servlet
     if (servletRequest.getPathInfo() != null) {//ex: /my/path.html
       uri.append(encodeUriQuery(servletRequest.getPathInfo()));
     }
-    // Handle the query string
+    // Handle the query string & fragment
     String queryString = servletRequest.getQueryString();//ex:(following '?'): name=value&foo=bar#fragment
-    if (queryString != null && queryString.length() > 0) {
-      uri.append('?');
+    String fragment = null;
+    //split off fragment from queryString, updating queryString if found
+    if (queryString != null) {
       int fragIdx = queryString.indexOf('#');
-      String queryNoFrag = (fragIdx < 0 ? queryString : queryString.substring(0,fragIdx));
-      uri.append(encodeUriQuery(queryNoFrag));
-      if (doSendUrlFragment && fragIdx >= 0) {
-        uri.append('#');
-        uri.append(encodeUriQuery(queryString.substring(fragIdx + 1)));
+      if (fragIdx >= 0) {
+        fragment = queryString.substring(fragIdx + 1);
+        queryString = queryString.substring(0,fragIdx);
       }
     }
+
+    queryString = rewriteQueryStringFromRequest(servletRequest, queryString);
+    if (queryString != null && queryString.length() > 0) {
+      uri.append('?');
+      uri.append(encodeUriQuery(queryString));
+    }
+
+    if (doSendUrlFragment && fragment != null) {
+      uri.append('#');
+      uri.append(encodeUriQuery(fragment));
+    }
     return uri.toString();
+  }
+
+  protected String rewriteQueryStringFromRequest(HttpServletRequest servletRequest, String queryString) {
+    return queryString;
   }
 
   /** For a redirect response from the target server, this translates {@code theUrl} to redirect to
    * and translates it to one the original client can use. */
   protected String rewriteUrlFromResponse(HttpServletRequest servletRequest, String theUrl) {
     //TODO document example paths
+    final String targetUri = getTargetUri(servletRequest);
     if (theUrl.startsWith(targetUri)) {
       String curUrl = servletRequest.getRequestURL().toString();//no query
       String pathInfo = servletRequest.getPathInfo();
