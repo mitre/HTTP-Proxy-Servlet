@@ -46,7 +46,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <!-- works with v4.1 and forward -->
-    <httpclient.version>4.2.5</httpclient.version>
+    <httpclient.version>4.3.4</httpclient.version>
   </properties>
 
   <dependencies>
