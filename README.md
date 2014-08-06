@@ -26,7 +26,7 @@ As of version 1.4 of the proxy, it will by default recognize "http.proxy" and
  reflection is used to support both 4.1, which doesn't have that class, and 4.2+.
  Tests pass with 4.3 too.
 
-Additionally there is the ability to parameterize your proxy URL, allowing you to use
+As of version 1.5 of the proxy, there is the ability to parameterize your proxy URL, allowing you to use
 the same web.xml servlet specification for multiple target servers. It follows the
 [URI Template RFC, Level 1](http://tools.ietf.org/html/rfc6570). Special query 
 parameters (see the examples below) sent from the client to the ProxyServlet will 
@@ -49,7 +49,7 @@ add this to your dependencies in your pom like so:
     <dependency>
         <groupId>org.mitre.dsmiley.httpproxy</groupId>
         <artifactId>smiley-http-proxy-servlet</artifactId>
-        <version>1.4</version>
+        <version>1.5</version>
     </dependency>
 
 Ivy and other dependency managers can be used as well.
