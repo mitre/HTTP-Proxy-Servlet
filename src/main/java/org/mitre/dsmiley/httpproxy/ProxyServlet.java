@@ -113,14 +113,24 @@ public class ProxyServlet extends HttpServlet {
     return (HttpHost) servletRequest.getAttribute(ATTR_TARGET_HOST);
   }
 
+  /**
+   * Override this method to read configuration parameters from other sources.
+   * This method reads from init-param in the web.xml file.
+   * @param key
+   * @return
+   */
+  protected String getConfigParam(String key) {
+    return getServletConfig().getInitParameter(key);
+  }
+
   @Override
   public void init() throws ServletException {
-    String doLogStr = getServletConfig().getInitParameter(P_LOG);
+    String doLogStr = getConfigParam(P_LOG);
     if (doLogStr != null) {
       this.doLog = Boolean.parseBoolean(doLogStr);
     }
     
-    String doForwardIPString = getServletConfig().getInitParameter(P_FORWARDEDFOR);
+    String doForwardIPString = getConfigParam(P_FORWARDEDFOR);
     if (doForwardIPString != null) {
     	this.doForwardIP = Boolean.parseBoolean(doForwardIPString);
     }
@@ -133,7 +143,7 @@ public class ProxyServlet extends HttpServlet {
   }
 
   protected void initTarget() throws ServletException {
-    targetUri = getServletConfig().getInitParameter(P_TARGET_URI);
+    targetUri = getConfigParam(P_TARGET_URI);
     if (targetUri == null)
       throw new ServletException(P_TARGET_URI+" is required.");
     //test it's valid
@@ -171,7 +181,7 @@ public class ProxyServlet extends HttpServlet {
    * set it in {@code hcParams}.
    */
   protected void readConfigParam(HttpParams hcParams, String hcParamName, Class type) {
-    String val_str = getServletConfig().getInitParameter(hcParamName);
+    String val_str = getConfigParam(hcParamName);
     if (val_str == null)
       return;
     Object val_obj;
