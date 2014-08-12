@@ -114,10 +114,8 @@ public class ProxyServlet extends HttpServlet {
   }
 
   /**
-   * Override this method to read configuration parameters from other sources.
-   * This method reads from init-param in the web.xml file.
-   * @param key
-   * @return
+   * Reads a configuration parameter. By default it reads servlet init parameters but
+   * it can be overridden.
    */
   protected String getConfigParam(String key) {
     return getServletConfig().getInitParameter(key);
