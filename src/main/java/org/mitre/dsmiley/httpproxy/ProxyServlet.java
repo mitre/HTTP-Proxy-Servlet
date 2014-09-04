@@ -97,7 +97,7 @@ public class ProxyServlet extends HttpServlet {
   protected URI targetUriObj;//new URI(targetUri)
   protected HttpHost targetHost;//URIUtils.extractHost(targetUriObj);
 
-  protected HttpClient proxyClient;
+  private HttpClient proxyClient;
 
   @Override
   public String getServletInfo() {
@@ -154,9 +154,12 @@ public class ProxyServlet extends HttpServlet {
   }
 
   /** Called from {@link #init(javax.servlet.ServletConfig)}. HttpClient offers many opportunities
-   * for customization. By default, SystemDefaultHttpClient is used available, otherwise it falls
+   * for customization. By default,
+   * <a href="http://hc.apache.org/httpcomponents-client-ga/httpclient/apidocs/org/apache/http/impl/client/SystemDefaultHttpClient.html">
+   *   SystemDefaultHttpClient</a> is used if available, otherwise it falls
    * back to:
-   * <pre>new DefaultHttpClient(new ThreadSafeClientConnManager(),hcParams)</pre>*/
+   * <pre>new DefaultHttpClient(new ThreadSafeClientConnManager(),hcParams)</pre>
+   * SystemDefaultHttpClient uses PoolingClientConnectionManager. In any case, it should be thread-safe. */
   @SuppressWarnings({"unchecked", "deprecation"})
   protected HttpClient createHttpClient(HttpParams hcParams) {
     try {
@@ -173,6 +176,12 @@ public class ProxyServlet extends HttpServlet {
 
     //Fallback on using older client:
     return new DefaultHttpClient(new ThreadSafeClientConnManager(), hcParams);
+  }
+
+  /** The http client used.
+   * @see #createHttpClient(HttpParams) */
+  protected HttpClient getProxyClient() {
+    return proxyClient;
   }
 
   /** Reads a servlet config parameter by the name {@code hcParamName} of type {@code type}, and
