@@ -18,6 +18,8 @@ public class URITemplateProxyServletTest extends ProxyServletTest {
 
   @Override
   public void setUp() throws Exception {
+    servletName = URITemplateProxyServlet.class.getName();
+    servletPath = "/proxyParameterized";
     super.setUp();
     lastMakeMethodUrl = null;
   }
@@ -32,7 +34,7 @@ public class URITemplateProxyServletTest extends ProxyServletTest {
     urlParams = "_host=" + hostParam + "&_port=" + portParam + "&_path=" + pathParam;
     targetBaseUri = "http://" + hostParam + ":" + portParam + "/" + pathParam;
     servletProps.setProperty("targetUri", "http://{_host}:{_port}/{_path}");//template
-    servletRunner.registerServlet("/proxyParameterized/*", URITemplateProxyServlet.class.getName(), servletProps);
+    servletRunner.registerServlet(servletPath + "/*", servletName, servletProps);
     sourceBaseUri = "http://localhost/proxyParameterized";//localhost:0 is hard-coded in ServletUnitHttpRequest
   }
 
