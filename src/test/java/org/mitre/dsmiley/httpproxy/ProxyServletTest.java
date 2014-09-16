@@ -36,6 +36,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -47,7 +48,7 @@ import static org.junit.Assert.assertTrue;
 public class ProxyServletTest
 {
   private static final Log log = LogFactory.getLog(ProxyServletTest.class);
-  
+
   /**
    * From Apache httpcomponents/httpclient. Note httpunit has a similar thing called PseudoServlet but it is
    * not as good since you can't even make it echo the request back.
@@ -60,7 +61,7 @@ public class ProxyServletTest
 
   protected String targetBaseUri;
   protected String sourceBaseUri;
-  
+
   protected String servletName = ProxyServlet.class.getName();
   protected String servletPath = "/proxyMe";
 
@@ -80,7 +81,7 @@ public class ProxyServletTest
 
     sc = servletRunner.newClient();
     sc.getClientProperties().setAutoRedirect(false);//don't want httpunit itself to redirect
-    
+
   }
 
   protected void setUpServlet(Properties servletProps) {
@@ -180,15 +181,15 @@ public class ProxyServletTest
     WebResponse rsp = execAndAssert(req, "");
     assertNull(rsp.getHeaderField(HEADER));
   }
-  
+
   @Test
   public void testWithExistingXForwardedFor() throws Exception {
     final String HEADER = "X-Forwarded-For";
-    
+
     localTestServer.register("/targetPath*", new RequestInfoHandler() {
       public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
-    	Header xForwardedForHeader = request.getFirstHeader(HEADER);
-    	assertEquals("192.168.1.1, 127.0.0.1", xForwardedForHeader.getValue()); 
+        Header xForwardedForHeader = request.getFirstHeader(HEADER);
+        assertEquals("192.168.1.1, 127.0.0.1", xForwardedForHeader.getValue());
         super.handle(request, response, context);
       }
     });
@@ -197,15 +198,15 @@ public class ProxyServletTest
     req.setHeaderField(HEADER, "192.168.1.1");
     WebResponse rsp = execAndAssert(req, "");
   }
-  
+
   @Test
   public void testEnabledXForwardedFor() throws Exception {
     final String HEADER = "X-Forwarded-For";
-    
+
     localTestServer.register("/targetPath*", new RequestInfoHandler() {
       public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
-    	Header xForwardedForHeader = request.getFirstHeader(HEADER);
-    	assertEquals("127.0.0.1", xForwardedForHeader.getValue()); 
+        Header xForwardedForHeader = request.getFirstHeader(HEADER);
+        assertEquals("127.0.0.1", xForwardedForHeader.getValue());
         super.handle(request, response, context);
       }
     });
@@ -213,7 +214,7 @@ public class ProxyServletTest
     GetMethodWebRequest req = makeGetMethodRequest(sourceBaseUri);
     WebResponse rsp = execAndAssert(req, "");
   }
-  
+
   @Test
   public void testSetCookie() throws Exception {
     final String HEADER = "Set-Cookie";
@@ -229,7 +230,7 @@ public class ProxyServletTest
     // note httpunit doesn't set all cookie fields, ignores max-agent, secure, etc.
     assertEquals("!Proxy!" + servletName + "JSESSIONID=1234;path=" + servletPath, rsp.getHeaderField(HEADER));
   }
-  
+
   @Test
   public void testSetCookie2() throws Exception {
     final String HEADER = "Set-Cookie2";
@@ -246,7 +247,7 @@ public class ProxyServletTest
     // also doesn't support more than one header of same name so I can't test this working on two cookies
     assertEquals("!Proxy!" + servletName + "JSESSIONID=1234;path=" + servletPath, rsp.getHeaderField("Set-Cookie"));
   }
-  
+
   @Test
   public void testSendCookiesToProxy() throws Exception {
     final StringBuffer captureCookieValue = new StringBuffer();
@@ -262,6 +263,43 @@ public class ProxyServletTest
     req.setHeaderField(HEADER, "LOCALCOOKIE=ABC; !Proxy!" + servletName + "JSESSIONID=1234; !Proxy!" + servletName + "COOKIE2=567");
     WebResponse rsp = execAndAssert(req, "");
     assertEquals("JSESSIONID=1234; COOKIE2=567", captureCookieValue.toString());
+  }
+
+  /**
+   * If we're proxying a remote service that tries to set cookies, we need to make sure the cookies are not captured
+   * by the httpclient in the ProxyServlet, otherwise later requests from ALL users will all access the remote proxy
+   * with the same cookie as the first user
+   */
+  @Test
+  public void testMultipleRequestsWithDiffCookies() throws Exception {
+
+    final AtomicInteger requestCounter = new AtomicInteger(1);
+    final StringBuffer captureCookieValue = new StringBuffer();
+    localTestServer.register("/targetPath*", new RequestInfoHandler() {
+      public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
+        // there shouldn't be a cookie sent since each user request in this test is logging in for the first time
+        if (request.getFirstHeader("Cookie") != null) {
+            captureCookieValue.append(request.getFirstHeader("Cookie"));
+        }
+        else {
+            response.setHeader("Set-Cookie", "JSESSIONID=USER_" + requestCounter.getAndIncrement() + "_SESSION");
+        }
+        super.handle(request, response, context);
+      }
+    });
+
+    // user one logs in for the first time to a proxied web service
+    GetMethodWebRequest req = makeGetMethodRequest(sourceBaseUri);
+    WebResponse rsp = execAndAssert(req, "");
+    assertEquals("", captureCookieValue.toString());
+    assertEquals("USER_1_SESSION", sc.getCookieJar().getCookie("!Proxy!org.mitre.dsmiley.httpproxy.ProxyServletJSESSIONID").getValue());
+
+    // user two logs in for the first time to a proxied web service
+    sc.clearContents(); // clear httpunit cookies since we want to login as a different user
+    req = makeGetMethodRequest(sourceBaseUri);
+    rsp = execAndAssert(req, "");
+    assertEquals("", captureCookieValue.toString());
+    assertEquals("USER_2_SESSION", sc.getCookieJar().getCookie("!Proxy!org.mitre.dsmiley.httpproxy.ProxyServletJSESSIONID").getValue());
   }
 
   private WebResponse execAssert(GetMethodWebRequest request, String expectedUri) throws Exception {

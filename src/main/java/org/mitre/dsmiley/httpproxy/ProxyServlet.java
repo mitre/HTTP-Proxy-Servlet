@@ -26,6 +26,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.AbortableHttpRequest;
 import org.apache.http.client.params.ClientPNames;
+import org.apache.http.client.params.CookiePolicy;
 import org.apache.http.client.utils.URIUtils;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -130,15 +131,16 @@ public class ProxyServlet extends HttpServlet {
     if (doLogStr != null) {
       this.doLog = Boolean.parseBoolean(doLogStr);
     }
-    
+
     String doForwardIPString = getConfigParam(P_FORWARDEDFOR);
     if (doForwardIPString != null) {
-    	this.doForwardIP = Boolean.parseBoolean(doForwardIPString);
+        this.doForwardIP = Boolean.parseBoolean(doForwardIPString);
     }
 
     initTarget();//sets target*
 
     HttpParams hcParams = new BasicHttpParams();
+    hcParams.setParameter(ClientPNames.COOKIE_POLICY, CookiePolicy.IGNORE_COOKIES);
     readConfigParam(hcParams, ClientPNames.HANDLE_REDIRECTS, Boolean.class);
     proxyClient = createHttpClient(hcParams);
   }
@@ -253,7 +255,7 @@ public class ProxyServlet extends HttpServlet {
       proxyRequest = new BasicHttpRequest(method, proxyRequestUri);
 
     copyRequestHeaders(servletRequest, proxyRequest);
-    
+
     setXForwardedForHeader(servletRequest, proxyRequest);
 
     HttpResponse proxyResponse = null;
@@ -420,7 +422,7 @@ public class ProxyServlet extends HttpServlet {
     }
   }
 
-  /** Copy proxied response headers back to the servlet client. 
+  /** Copy proxied response headers back to the servlet client.
  * @param servletRequest */
   protected void copyResponseHeaders(HttpResponse proxyResponse, HttpServletRequest servletRequest, HttpServletResponse servletResponse) {
     for (Header header : proxyResponse.getAllHeaders()) {
@@ -449,7 +451,7 @@ public class ProxyServlet extends HttpServlet {
 
     for (HttpCookie cookie : cookies) {
       //set cookie name prefixed w/ a proxy value so it won't collide w/ other cookies
-      String proxyCookieName = getCookieNamePrefix() + cookie.getName(); 
+      String proxyCookieName = getCookieNamePrefix() + cookie.getName();
       Cookie servletCookie = new Cookie(proxyCookieName, cookie.getValue());
       servletCookie.setComment(cookie.getComment());
       servletCookie.setMaxAge((int) cookie.getMaxAge());
@@ -460,7 +462,7 @@ public class ProxyServlet extends HttpServlet {
       servletResponse.addCookie(servletCookie);
     }
   }
-  
+
   /** take any client cookies that were originally from the proxy and prepare them to send to the proxy
    *  this relies on cookie headers being set correctly according to RFC 6265 Sec 5.4
    *  this also blocks any local cookies from being sent to the proxy
@@ -480,7 +482,7 @@ public class ProxyServlet extends HttpServlet {
           }
         }
       }
-          
+
       cookieValue = escapedCookie.toString();
     }
     return cookieValue;
@@ -550,7 +552,7 @@ public class ProxyServlet extends HttpServlet {
     }
     return theUrl;
   }
-  
+
   /** The target URI as configured. Not null. */
   public String getTargetUri() { return targetUri; }
 
