@@ -292,14 +292,14 @@ public class ProxyServletTest
     GetMethodWebRequest req = makeGetMethodRequest(sourceBaseUri);
     WebResponse rsp = execAndAssert(req, "");
     assertEquals("", captureCookieValue.toString());
-    assertEquals("USER_1_SESSION", sc.getCookieJar().getCookie("!Proxy!org.mitre.dsmiley.httpproxy.ProxyServletJSESSIONID").getValue());
+    assertEquals("USER_1_SESSION", sc.getCookieJar().getCookie("!Proxy!" + servletName + "JSESSIONID").getValue());
 
     // user two logs in for the first time to a proxied web service
     sc.clearContents(); // clear httpunit cookies since we want to login as a different user
     req = makeGetMethodRequest(sourceBaseUri);
     rsp = execAndAssert(req, "");
     assertEquals("", captureCookieValue.toString());
-    assertEquals("USER_2_SESSION", sc.getCookieJar().getCookie("!Proxy!org.mitre.dsmiley.httpproxy.ProxyServletJSESSIONID").getValue());
+    assertEquals("USER_2_SESSION", sc.getCookieJar().getCookie("!Proxy!" + servletName + "JSESSIONID").getValue());
   }
 
   private WebResponse execAssert(GetMethodWebRequest request, String expectedUri) throws Exception {
