@@ -260,7 +260,11 @@ public class ProxyServletTest
     });
 
     GetMethodWebRequest req = makeGetMethodRequest(sourceBaseUri);
-    req.setHeaderField(HEADER, "LOCALCOOKIE=ABC; !Proxy!" + servletName + "JSESSIONID=1234; !Proxy!" + servletName + "COOKIE2=567");
+    req.setHeaderField(HEADER,
+            "LOCALCOOKIE=ABC; " +
+            "!Proxy!" + servletName + "JSESSIONID=1234; " +
+            "!Proxy!" + servletName + "COOKIE2=567; " +
+            "LOCALCOOKIELAST=ABCD");
     WebResponse rsp = execAndAssert(req, "");
     assertEquals("JSESSIONID=1234; COOKIE2=567", captureCookieValue.toString());
   }
@@ -272,7 +276,6 @@ public class ProxyServletTest
    */
   @Test
   public void testMultipleRequestsWithDiffCookies() throws Exception {
-
     final AtomicInteger requestCounter = new AtomicInteger(1);
     final StringBuffer captureCookieValue = new StringBuffer();
     localTestServer.register("/targetPath*", new RequestInfoHandler() {
@@ -280,8 +283,7 @@ public class ProxyServletTest
         // there shouldn't be a cookie sent since each user request in this test is logging in for the first time
         if (request.getFirstHeader("Cookie") != null) {
             captureCookieValue.append(request.getFirstHeader("Cookie"));
-        }
-        else {
+        } else {
             response.setHeader("Set-Cookie", "JSESSIONID=USER_" + requestCounter.getAndIncrement() + "_SESSION");
         }
         super.handle(request, response, context);

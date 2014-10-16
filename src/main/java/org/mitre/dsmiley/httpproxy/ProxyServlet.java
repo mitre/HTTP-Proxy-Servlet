@@ -399,15 +399,13 @@ public class ProxyServlet extends HttpServlet {
           headerValue = host.getHostName();
           if (host.getPort() != -1)
             headerValue += ":"+host.getPort();
-        }
-        else if (headerName.equalsIgnoreCase(org.apache.http.cookie.SM.COOKIE)) {
+        } else if (headerName.equalsIgnoreCase(org.apache.http.cookie.SM.COOKIE)) {
           headerValue = getRealCookie(headerValue);
         }
         proxyRequest.addHeader(headerName, headerValue);
       }
     }
   }
-
 
   private void setXForwardedForHeader(HttpServletRequest servletRequest,
                                       HttpRequest proxyRequest) {
@@ -422,26 +420,26 @@ public class ProxyServlet extends HttpServlet {
     }
   }
 
-  /** Copy proxied response headers back to the servlet client.
- * @param servletRequest */
-  protected void copyResponseHeaders(HttpResponse proxyResponse, HttpServletRequest servletRequest, HttpServletResponse servletResponse) {
+  /** Copy proxied response headers back to the servlet client. */
+  protected void copyResponseHeaders(HttpResponse proxyResponse, HttpServletRequest servletRequest,
+                                     HttpServletResponse servletResponse) {
     for (Header header : proxyResponse.getAllHeaders()) {
       if (hopByHopHeaders.containsHeader(header.getName()))
         continue;
       if (header.getName().equals(org.apache.http.cookie.SM.SET_COOKIE) ||
           header.getName().equals(org.apache.http.cookie.SM.SET_COOKIE2)) {
-          copyProxyCookie(servletRequest, servletResponse, header);
-      }
-      else {
+        copyProxyCookie(servletRequest, servletResponse, header);
+      } else {
         servletResponse.addHeader(header.getName(), header.getValue());
       }
     }
   }
 
-  /** Copy cookie from the proxy to the servlet client
-   *  replaces cookie path to local path and renames cookie to avoid collisions
+  /** Copy cookie from the proxy to the servlet client.
+   *  Replaces cookie path to local path and renames cookie to avoid collisions.
    */
-  protected void copyProxyCookie(HttpServletRequest servletRequest, HttpServletResponse servletResponse, Header header) {
+  protected void copyProxyCookie(HttpServletRequest servletRequest,
+                                 HttpServletResponse servletResponse, Header header) {
     List<HttpCookie> cookies = HttpCookie.parse(header.getValue());
     String path = getServletContext().getServletContextName();
     if (path == null) {
@@ -463,29 +461,34 @@ public class ProxyServlet extends HttpServlet {
     }
   }
 
-  /** take any client cookies that were originally from the proxy and prepare them to send to the proxy
-   *  this relies on cookie headers being set correctly according to RFC 6265 Sec 5.4
-   *  this also blocks any local cookies from being sent to the proxy
+  /** Take any client cookies that were originally from the proxy and prepare them to send to the
+   * proxy.  This relies on cookie headers being set correctly according to RFC 6265 Sec 5.4.
+   * This also blocks any local cookies from being sent to the proxy.
    */
   protected String getRealCookie(String cookieValue) {
-    StringBuffer escapedCookie = new StringBuffer();
+    StringBuilder escapedCookie = new StringBuilder();
     String cookies[] = cookieValue.split("; ");
-    for (int i = 0; i < cookies.length; i++) {
-      String cookieSplit[] = cookies[i].split("=");
+    for (String cookie : cookies) {
+      String cookieSplit[] = cookie.split("=");
       if (cookieSplit.length == 2) {
         String cookieName = cookieSplit[0];
         if (cookieName.startsWith(getCookieNamePrefix())) {
           cookieName = cookieName.substring(getCookieNamePrefix().length());
-          escapedCookie.append(cookieName).append("=").append(cookieSplit[1]);
-          if (i < cookies.length - 1) {
-              escapedCookie.append("; ");
+          if (escapedCookie.length() > 0) {
+            escapedCookie.append("; ");
           }
+          escapedCookie.append(cookieName).append("=").append(cookieSplit[1]);
         }
       }
 
       cookieValue = escapedCookie.toString();
     }
     return cookieValue;
+  }
+
+  /** The string prefixing rewritten cookies. */
+  protected String getCookieNamePrefix() {
+    return "!Proxy!" + getServletConfig().getServletName();
   }
 
   /** Copy response body data (the entity) from the proxy to the servlet client. */
@@ -614,7 +617,4 @@ public class ProxyServlet extends HttpServlet {
     asciiQueryChars.set((int)'%');//leave existing percent escapes in place
   }
 
-  protected String getCookieNamePrefix() {
-      return "!Proxy!" + getServletConfig().getServletName();
-  }
 }
