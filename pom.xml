@@ -31,8 +31,9 @@
   <developers>
     <developer>
       <name>David Smiley</name>
-      <email>dsmiley@mitre.org</email>
-      <organization>MITRE</organization>
+      <email>dsmiley@apache.org</email>
+      <!-- I used to work for MITRE for many years but I don't anymore. -->
+      <!--<organization>MITRE</organization>-->
     </developer>
   </developers>
 
