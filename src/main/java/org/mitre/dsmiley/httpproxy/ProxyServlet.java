@@ -455,6 +455,7 @@ public class ProxyServlet extends HttpServlet {
       }
       servletCookie.setPath(path); //prepend path of the proxy servlet
       // don't set cookie domain
+      servletCookie.setHttpOnly(cookie.isHttpOnly());
       servletCookie.setSecure(cookie.getSecure());
       servletCookie.setVersion(cookie.getVersion());
       servletResponse.addCookie(servletCookie);
