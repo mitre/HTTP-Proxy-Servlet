@@ -426,8 +426,8 @@ public class ProxyServlet extends HttpServlet {
     for (Header header : proxyResponse.getAllHeaders()) {
       if (hopByHopHeaders.containsHeader(header.getName()))
         continue;
-      if (header.getName().equals(org.apache.http.cookie.SM.SET_COOKIE) ||
-          header.getName().equals(org.apache.http.cookie.SM.SET_COOKIE2)) {
+      if (header.getName().equalsIgnoreCase(org.apache.http.cookie.SM.SET_COOKIE) ||
+          header.getName().equalsIgnoreCase(org.apache.http.cookie.SM.SET_COOKIE2)) {
         copyProxyCookie(servletRequest, servletResponse, header);
       } else {
         servletResponse.addHeader(header.getName(), header.getValue());
