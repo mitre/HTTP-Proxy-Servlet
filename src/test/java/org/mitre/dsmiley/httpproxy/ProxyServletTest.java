@@ -220,7 +220,7 @@ public class ProxyServletTest
     final String HEADER = "Set-Cookie";
     localTestServer.register("/targetPath*", new RequestInfoHandler() {
       public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
-        response.setHeader(HEADER, "JSESSIONID=1234; Path=/proxy/path/that/we/dont/want; Expires=Wed, 13 Jan 2021 22:23:01 GMT; Domain=.foo.bar.com; Secure");
+        response.setHeader(HEADER, "JSESSIONID=1234; Path=/proxy/path/that/we/dont/want; Expires=Wed, 13 Jan 2021 22:23:01 GMT; Domain=.foo.bar.com; HttpOnly");
         super.handle(request, response, context);
       }
     });
@@ -246,6 +246,22 @@ public class ProxyServletTest
     // note httpunit doesn't set all cookie fields, ignores max-agent, secure, etc.
     // also doesn't support more than one header of same name so I can't test this working on two cookies
     assertEquals("!Proxy!" + servletName + "JSESSIONID=1234;path=" + servletPath, rsp.getHeaderField("Set-Cookie"));
+  }
+
+  @Test
+  public void testSetCookieHttpOnly() throws Exception { //See GH #50
+    final String HEADER = "Set-Cookie";
+    localTestServer.register("/targetPath*", new RequestInfoHandler() {
+      public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
+        response.setHeader(HEADER, "JSESSIONID=1234; Path=/proxy/path/that/we/dont/want/; HttpOnly");
+        super.handle(request, response, context);
+      }
+    });
+
+    GetMethodWebRequest req = makeGetMethodRequest(sourceBaseUri);
+    WebResponse rsp = execAndAssert(req, "");
+    // note httpunit doesn't set all cookie fields, ignores max-agent, secure, etc.
+    assertEquals("!Proxy!" + servletName + "JSESSIONID=1234;path=" + servletPath, rsp.getHeaderField(HEADER));
   }
 
   @Test
