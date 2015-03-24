@@ -104,8 +104,10 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>2.3.2</version>
         <configuration>
-          <source>1.5</source>
-          <target>1.5</target>
+          <source>1.7</source>
+          <target>1.7</target>
+          <!-- Note: Java 1.6 has an issue parsing an HttpOnly flag in a Set-Cookie header, but
+          otherwise works. -->
         </configuration>
       </plugin>
 

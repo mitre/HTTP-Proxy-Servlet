@@ -3,7 +3,7 @@ language: java
 script: mvn -Dhttpclient.version=$HTTPCLIENT_VERSION clean verify
 
 jdk:
-  - openjdk6
+  - openjdk7
 
 env:
   - HTTPCLIENT_VERSION=4.1
