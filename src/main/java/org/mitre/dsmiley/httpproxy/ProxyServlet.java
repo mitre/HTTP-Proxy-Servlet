@@ -16,6 +16,23 @@ package org.mitre.dsmiley.httpproxy;
  * limitations under the License.
  */
 
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.lang.reflect.Constructor;
+import java.net.HttpCookie;
+import java.net.URI;
+import java.util.BitSet;
+import java.util.Enumeration;
+import java.util.Formatter;
+import java.util.List;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
@@ -36,24 +53,10 @@ import org.apache.http.message.BasicHttpEntityEnclosingRequest;
 import org.apache.http.message.BasicHttpRequest;
 import org.apache.http.message.HeaderGroup;
 import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.CoreConnectionPNames;
+import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.lang.reflect.Constructor;
-import java.net.HttpCookie;
-import java.net.URI;
-import java.util.BitSet;
-import java.util.Enumeration;
-import java.util.Formatter;
-import java.util.List;
 
 /**
  * An HTTP reverse proxy/gateway servlet. It is designed to be extended for customization
@@ -142,6 +145,7 @@ public class ProxyServlet extends HttpServlet {
     HttpParams hcParams = new BasicHttpParams();
     hcParams.setParameter(ClientPNames.COOKIE_POLICY, CookiePolicy.IGNORE_COOKIES);
     readConfigParam(hcParams, ClientPNames.HANDLE_REDIRECTS, Boolean.class);
+    readConfigParam(hcParams, CoreConnectionPNames.SO_TIMEOUT, Integer.class);
     proxyClient = createHttpClient(hcParams);
   }
 
@@ -170,15 +174,19 @@ public class ProxyServlet extends HttpServlet {
     try {
       //as of HttpComponents v4.2, this class is better since it uses System
       // Properties:
+    	
+      java.net.ProxySelector.getDefault();
+    	
       Class clientClazz = Class.forName("org.apache.http.impl.client.SystemDefaultHttpClient");
       Constructor constructor = clientClazz.getConstructor(HttpParams.class);
       return (HttpClient) constructor.newInstance(hcParams);
     } catch (ClassNotFoundException e) {
+    } catch (NoClassDefFoundError e) {
       //no problem; use v4.1 below
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
-
+	  
     //Fallback on using older client:
     return new DefaultHttpClient(new ThreadSafeClientConnManager(), hcParams);
   }
