@@ -124,10 +124,12 @@ public class ProxyServletTest
 
   @Test
   public void testRedirect() throws IOException, SAXException {
+    final String COOKIE_SET_HEADER = "Set-Cookie";
     localTestServer.register("/targetPath*",new HttpRequestHandler()
     {
       public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
         response.setHeader(HttpHeaders.LOCATION,request.getFirstHeader("xxTarget").getValue());
+        response.setHeader(COOKIE_SET_HEADER,"JSESSIONID=1234; path=/;");
         response.setStatusCode(HttpStatus.SC_MOVED_TEMPORARILY);
       }
     });//matches /targetPath and /targetPath/blahblah
@@ -138,12 +140,13 @@ public class ProxyServletTest
 
   private void assertRedirect(GetMethodWebRequest request, String origRedirect, String resultRedirect) throws IOException, SAXException {
     request.setHeaderField("xxTarget", origRedirect);
-    WebResponse rsp = sc.getResponse( request );
+    WebResponse rsp = sc.getResponse(request);
 
     assertEquals(HttpStatus.SC_MOVED_TEMPORARILY,rsp.getResponseCode());
     assertEquals("",rsp.getText());
     String gotLocation = rsp.getHeaderField(HttpHeaders.LOCATION);
     assertEquals(resultRedirect, gotLocation);
+    assertEquals("!Proxy!"+servletName+"JSESSIONID=1234;path="+servletPath,rsp.getHeaderField("Set-Cookie"));
   }
 
   @Test

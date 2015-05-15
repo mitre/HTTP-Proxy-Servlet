@@ -269,9 +269,13 @@ public class ProxyServlet extends HttpServlet {
       // Process the response
       int statusCode = proxyResponse.getStatusLine().getStatusCode();
 
+      // copying response headers to make sure SESSIONID or other Cookie which comes from remote server
+      // will be saved in client when the proxied url was redirected to another one.
+      // see issue [#51](https://github.com/mitre/HTTP-Proxy-Servlet/issues/51)
+      copyResponseHeaders(proxyResponse, servletRequest, servletResponse);
+
       if (doResponseRedirectOrNotModifiedLogic(servletRequest, servletResponse, proxyResponse, statusCode)) {
         //the response is already "committed" now without any body to send
-        //TODO copy response headers?
         return;
       }
 
@@ -279,8 +283,6 @@ public class ProxyServlet extends HttpServlet {
       //  reason along too.
       //noinspection deprecation
       servletResponse.setStatus(statusCode, proxyResponse.getStatusLine().getReasonPhrase());
-
-      copyResponseHeaders(proxyResponse, servletRequest, servletResponse);
 
       // Send the content to the client
       copyResponseEntity(proxyResponse, servletResponse);
