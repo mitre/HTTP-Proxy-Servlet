@@ -73,7 +73,7 @@ public class URITemplateProxyServlet extends ProxyServlet {
     List<NameValuePair> pairs;
     try {
       //note: HttpClient 4.2 lets you parse the string without building the URI
-      pairs = URLEncodedUtils.parse(new URI(queryString), null);
+      pairs = URLEncodedUtils.parse(new URI(queryString), "UTF-8");
     } catch (URISyntaxException e) {
       throw new ServletException("Unexpected URI parsing error on " + queryString, e);
     }
