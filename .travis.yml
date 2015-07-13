@@ -1,14 +1,18 @@
 language: java
 
-script: mvn -Dhttpclient.version=$HTTPCLIENT_VERSION clean verify
+script: mvn -Dhttpclient.version=$HTTPCLIENT_VERSION -Dhttpclient.test.version=$HTTPCLIENT_TEST_VERSION clean verify
 
 jdk:
   - openjdk7
 
+# We use httpclient test jar providing LocalTestServer.java; no longer in 4.4+.
+
 env:
-  - HTTPCLIENT_VERSION=4.1
-  - HTTPCLIENT_VERSION=4.2
-  - HTTPCLIENT_VERSION=4.3.4
+  - HTTPCLIENT_VERSION=4.1    HTTPCLIENT_TEST_VERSION=4.1
+  - HTTPCLIENT_VERSION=4.2    HTTPCLIENT_TEST_VERSION=4.2
+  - HTTPCLIENT_VERSION=4.3.5  HTTPCLIENT_TEST_VERSION=4.3.5
+  - HTTPCLIENT_VERSION=4.4.1  HTTPCLIENT_TEST_VERSION=4.3.5
+  - HTTPCLIENT_VERSION=4.5    HTTPCLIENT_TEST_VERSION=4.3.5
 
 notifications:
   email:

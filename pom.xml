@@ -46,8 +46,10 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-    <!-- works with v4.1 and forward -->
-    <httpclient.version>4.3.4</httpclient.version>
+    <!-- works with v4.1 and forward; see .travis.yml -->
+    <httpclient.version>4.5</httpclient.version>
+    <!-- the last version to provide LocalTestServer.java -->
+    <httpclient.test.version>4.3.5</httpclient.test.version>
   </properties>
 
   <dependencies>
@@ -76,7 +78,7 @@
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
-      <version>${httpclient.version}</version>
+      <version>${httpclient.test.version}</version>
       <classifier>tests</classifier>
       <scope>test</scope>
     </dependency>
