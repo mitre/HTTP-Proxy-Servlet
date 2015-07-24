@@ -40,12 +40,14 @@ import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 
 import javax.servlet.ServletException;
+import javax.servlet.ServletInputStream;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Constructor;
 import java.net.HttpCookie;
@@ -249,7 +251,8 @@ public class ProxyServlet extends HttpServlet {
       HttpEntityEnclosingRequest eProxyRequest = new BasicHttpEntityEnclosingRequest(method, proxyRequestUri);
       // Add the input entity (streamed)
       //  note: we don't bother ensuring we close the servletInputStream since the container handles it
-      eProxyRequest.setEntity(new InputStreamEntity(servletRequest.getInputStream(), servletRequest.getContentLength()));
+      InputStream is = HttpServletUtils.getInputStreamPostFormConsidered(servletRequest);
+      eProxyRequest.setEntity(new InputStreamEntity(is, servletRequest.getContentLength()));
       proxyRequest = eProxyRequest;
     } else
       proxyRequest = new BasicHttpRequest(method, proxyRequestUri);
