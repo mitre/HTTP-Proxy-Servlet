@@ -8,23 +8,26 @@ This is hardly the first proxy, so why did I write it and thus why might you use
  * It's simple -- a single source file implementation
  * It's tested -- have confidence it works [![Build Status](https://travis-ci.org/mitre/HTTP-Proxy-Servlet.png)](https://travis-ci.org/mitre/HTTP-Proxy-Servlet)
  * It's securable -- via Java EE web.xml or via a servlet filter such as [Spring-Security]([http://static.springsource.org/spring-security/site/)
- * It's extendible -- via simple class extension
+ * It's extendible -- via simple class extension with various override-able methods
  * It's embeddable -- into your Java web application making testing your app easier
 
 I have seen many quick'n'dirty proxies posted in source form on the web such as in a blog.  I've found such proxies to support a limited HTTP subset, such as only a GET request, or to suffer other implementation problems such as performance issues or URL escaping bugs.  Disappointed at the situation, I set out to create a simple one that works well and that is well tested so I know it works.  I suggest you use a well tested proxy instead of something non-tested that is perhaps better described as a proof-of-concept.
 
-This proxy depends on [Apache HttpClient](http://hc.apache.org/httpcomponents-client-ga/), which offers another point of extension for this proxy.  At some point I may write an alternative that uses the JDK and thus doesn't have any dependencies, which is desirable. In the mean time, you'll have to add the jar files for this and its dependencies:
+This proxy depends on [Apache HttpClient](http://hc.apache.org/httpcomponents-client-ga/), which 
+offers another point of extension for this proxy, plus it has extensive logging for diagnostic
+purposes.  HttpClient version 4.1 thru the latest (4.5 as of this writing) is supported.
+At some point I may write an alternative that
+uses the JDK and thus doesn't have any dependencies, which is desirable. In the mean time, you'll
+have to add the jar files for this and its dependencies:
 
-     +- org.apache.httpcomponents:httpclient:jar:4.2.5:compile
-        +- org.apache.httpcomponents:httpcore:jar:4.2.4:compile
-        |  +- commons-logging:commons-logging:jar:1.1.1:compile
-        |  \- commons-codec:commons-codec:jar:1.6:compile
+     +- org.apache.httpcomponents:httpclient:jar:4.5:compile
+        +- org.apache.httpcomponents:httpcore:jar:4.4.1:compile
+        |  +- commons-logging:commons-logging:jar:1.2:compile
+        |  \- commons-codec:commons-codec:jar:1.9:compile
 
-As of version 1.4 of the proxy, it will by default recognize "http.proxy" and
- most other standard Java system properties. This is inherited from HC's
- new [SystemDefaultHttpClient](http://hc.apache.org/httpcomponents-client-ga/httpclient/apidocs/org/apache/http/impl/client/SystemDefaultHttpClient.html). You can still use HC 4.1, however, as java
- reflection is used to support both 4.1, which doesn't have that class, and 4.2+.
- Tests pass with 4.3 too.
+A feature add-on in this proxy is to enable 
+[SSL/TLS SNI](https://en.wikipedia.org/wiki/Server_Name_Indication) support.  
+Not all Java JRE's vendors will necessarily work, however.
 
 As of version 1.5 of the proxy, there is the ability to parameterize your proxy URL, allowing you to use
 the same web.xml servlet specification for multiple target servers. It follows the
@@ -49,7 +52,7 @@ add this to your dependencies in your pom like so:
     <dependency>
         <groupId>org.mitre.dsmiley.httpproxy</groupId>
         <artifactId>smiley-http-proxy-servlet</artifactId>
-        <version>1.6</version>
+        <version>1.7</version>
     </dependency>
 
 Ivy and other dependency managers can be used as well.
@@ -105,3 +108,10 @@ If you are using SpringMVC, then an alternative is to use its
 [ServletWrappingController](http://static.springsource.org/spring/docs/3.0.x/api/org/springframework/web/servlet/mvc/ServletWrappingController.html)
 so that you can configure this servlet via Spring, which is supremely flexible, instead of having to modify your web.xml. However, note that some
 customization may be needed to divide the URL at the proxied portion; see [Issue#15](/dsmiley/HTTP-Proxy-Servlet/issues/15).
+
+By default, the proxy servlet configures HttpClient to use
+java system property based configuration settings (HttpClient 4.2+).  That means, for example, you
+can change the maximum connections per host in the internal connection pool by setting
+-Dhttp.maxConnections=5 at the piont when java is started.  See the 
+[HttpClientBulder](http://hc.apache.org/httpcomponents-client-ga/httpclient/apidocs/org/apache/http/impl/client/HttpClientBuilder.html)
+docs for the long list of other properties that can be used to configure the proxy.

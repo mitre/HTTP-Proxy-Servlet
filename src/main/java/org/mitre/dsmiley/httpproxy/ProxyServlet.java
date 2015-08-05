@@ -1,6 +1,6 @@
 package org.mitre.dsmiley.httpproxy;
 
-/**
+/*
  * Copyright MITRE
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +30,8 @@ import org.apache.http.client.params.CookiePolicy;
 import org.apache.http.client.utils.URIUtils;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.SystemDefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpEntityEnclosingRequest;
@@ -47,7 +49,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.lang.reflect.Constructor;
 import java.net.HttpCookie;
 import java.net.URI;
 import java.util.BitSet;
@@ -139,10 +140,7 @@ public class ProxyServlet extends HttpServlet {
 
     initTarget();//sets target*
 
-    HttpParams hcParams = new BasicHttpParams();
-    hcParams.setParameter(ClientPNames.COOKIE_POLICY, CookiePolicy.IGNORE_COOKIES);
-    readConfigParam(hcParams, ClientPNames.HANDLE_REDIRECTS, Boolean.class);
-    proxyClient = createHttpClient(hcParams);
+    proxyClient = createHttpClient();
   }
 
   protected void initTarget() throws ServletException {
@@ -156,64 +154,92 @@ public class ProxyServlet extends HttpServlet {
       throw new ServletException("Trying to process targetUri init parameter: "+e,e);
     }
     targetHost = URIUtils.extractHost(targetUriObj);
-  }
+}
 
   /** Called from {@link #init(javax.servlet.ServletConfig)}. HttpClient offers many opportunities
-   * for customization. By default,
-   * <a href="http://hc.apache.org/httpcomponents-client-ga/httpclient/apidocs/org/apache/http/impl/client/SystemDefaultHttpClient.html">
-   *   SystemDefaultHttpClient</a> is used if available, otherwise it falls
-   * back to:
-   * <pre>new DefaultHttpClient(new ThreadSafeClientConnManager(),hcParams)</pre>
-   * SystemDefaultHttpClient uses PoolingClientConnectionManager. In any case, it should be thread-safe. */
-  @SuppressWarnings({"unchecked", "deprecation"})
-  protected HttpClient createHttpClient(HttpParams hcParams) {
+   * for customization.  It's constructed with these settings (note HttpClient version numbers):
+   * <ul>
+   *   <li>system property configuration (e.g. http.maxConnections). Not supported before 4.2.</li>
+   *   <li>cookie management disabled.  It interferes with proxying.</li>
+   *   <li>redirects disabled.  It does not interfere with proxying, usually, but it's probably best
+   *    for the client to be aware of the redirection (?).</li>
+   *   <li>SSL SNI support (Not supported before 4.3)</li>
+   *   <li>pooling connection management</li>
+   * </ul>
+   * A single HttpClient instance is used by the servlet, which is thread-safe.  To modify the
+   * settings, subclass the servlet and return an HttpClient configured differently.
+   *
+   * @see HttpClientFactory
+   */
+  protected HttpClient createHttpClient() {
     try {
-      //as of HttpComponents v4.2, this class is better since it uses System
-      // Properties:
-      Class clientClazz = Class.forName("org.apache.http.impl.client.SystemDefaultHttpClient");
-      Constructor constructor = clientClazz.getConstructor(HttpParams.class);
-      return (HttpClient) constructor.newInstance(hcParams);
-    } catch (ClassNotFoundException e) {
-      //no problem; use v4.1 below
-    } catch (Exception e) {
-      throw new RuntimeException(e);
+      return HttpClientFactory.createHttpClient();
+    } catch (NoClassDefFoundError e) {
+      //ignore
+    }
+    try {
+      return HttpClient42Factory.createHttpClient();
+    } catch (NoClassDefFoundError e) {
+      //ignore
+    }
+    //fall-back; damn this is old
+    log("Warning: old HttpClient version is being used; consider upgrading");
+    return HttpClient41Factory.createHttpClient();
+  }
+
+  /** Public so that a subclass of the servlet that overrides
+   * {@link #createHttpClient()} can then call
+   * {@link #createHttpClientBuilder} to get a pre-configured builder.  The method is
+   * not directly on the servlet to aid back-ward compatibility to earlier HttpClient
+   * versions.  This is supported as of HttpClient 4.3. */
+  public static class HttpClientFactory {
+    public static HttpClient createHttpClient() {
+      return createHttpClientBuilder().build();
     }
 
-    //Fallback on using older client:
-    return new DefaultHttpClient(new ThreadSafeClientConnManager(), hcParams);
+    public static HttpClientBuilder createHttpClientBuilder() {
+      //note: the default is a pooling connection manager
+      return HttpClientBuilder.create()
+              .useSystemProperties()
+              .disableCookieManagement()
+              .disableRedirectHandling()
+              .setSSLSocketFactory(SNISSLSocketFactory.createFromSystem());
+    }
+  }
+
+  @SuppressWarnings({"deprecation"})
+  private static class HttpClient42Factory {
+    public static HttpClient createHttpClient() {
+      HttpParams hcParams = new BasicHttpParams();
+      hcParams.setParameter(ClientPNames.COOKIE_POLICY, CookiePolicy.IGNORE_COOKIES);
+      hcParams.setParameter(ClientPNames.HANDLE_REDIRECTS, false);
+      // introduced in v4.2
+      //note: the default is a pooling connection manager
+      return new SystemDefaultHttpClient(hcParams);
+    }
+  }
+
+  @SuppressWarnings({"deprecation"})
+  private static class HttpClient41Factory {
+    public static HttpClient createHttpClient() {
+      HttpParams hcParams = new BasicHttpParams();
+      hcParams.setParameter(ClientPNames.COOKIE_POLICY, CookiePolicy.IGNORE_COOKIES);
+      hcParams.setParameter(ClientPNames.HANDLE_REDIRECTS, false);
+      //note: the default is a pooling connection manager
+      return new DefaultHttpClient(new ThreadSafeClientConnManager(), hcParams);
+    }
   }
 
   /** The http client used.
-   * @see #createHttpClient(HttpParams) */
+   * @see #createHttpClient() */
   protected HttpClient getProxyClient() {
     return proxyClient;
-  }
-
-  /** Reads a servlet config parameter by the name {@code hcParamName} of type {@code type}, and
-   * set it in {@code hcParams}.
-   */
-  protected void readConfigParam(HttpParams hcParams, String hcParamName, Class type) {
-    String val_str = getConfigParam(hcParamName);
-    if (val_str == null)
-      return;
-    Object val_obj;
-    if (type == String.class) {
-      val_obj = val_str;
-    } else {
-      try {
-        //noinspection unchecked
-        val_obj = type.getMethod("valueOf",String.class).invoke(type,val_str);
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    }
-    hcParams.setParameter(hcParamName,val_obj);
   }
 
   @Override
   public void destroy() {
     //As of HttpComponents v4.3, clients implement closeable
-    if (proxyClient instanceof Closeable) {//TODO AutoCloseable in Java 1.6
+    if (proxyClient instanceof Closeable) {
       try {
         ((Closeable) proxyClient).close();
       } catch (IOException e) {
