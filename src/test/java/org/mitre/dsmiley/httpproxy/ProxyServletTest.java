@@ -35,6 +35,8 @@ import java.io.PrintWriter;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Dictionary;
+import java.util.Enumeration;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -356,6 +358,14 @@ public class ProxyServletTest
     String firstTextLine = text.substring(0,text.indexOf(System.getProperty("line.separator")));
 
     assertEquals(expectedFirstLine, firstTextLine);
+
+    // Assert all headers are present, and therefore checks the case has been preserved (see GH #65)
+    Dictionary headers = request.getHeaders();
+    Enumeration headerNameEnum = headers.keys();
+    while (headerNameEnum.hasMoreElements()) {
+      String headerName = (String) headerNameEnum.nextElement();
+      assertTrue(text.contains(headerName));
+    }
 
     return rsp;
   }
