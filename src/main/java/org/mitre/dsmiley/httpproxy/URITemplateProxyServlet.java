@@ -53,6 +53,17 @@ public class URITemplateProxyServlet extends ProxyServlet {
   }
 
   @Override
+  public void init() throws ServletException {
+    super.init();
+    proxy.defineQueryStringRewriter(new QueryStringRewriter() {
+      @Override
+      public String rewriteQueryStringFromRequest(HttpServletRequest servletRequest, String queryString) {
+        return (String) servletRequest.getAttribute(ATTR_QUERY_STRING);
+      }
+    });
+  }
+
+  @Override
   protected void service(HttpServletRequest servletRequest, HttpServletResponse servletResponse)
           throws ServletException, IOException {
 
@@ -116,10 +127,5 @@ public class URITemplateProxyServlet extends ProxyServlet {
     servletRequest.setAttribute(ATTR_QUERY_STRING, newQueryBuf.toString());
 
     super.service(servletRequest, servletResponse);
-  }
-
-  @Override
-  protected String rewriteQueryStringFromRequest(HttpServletRequest servletRequest, String queryString) {
-    return (String) servletRequest.getAttribute(ATTR_QUERY_STRING);
   }
 }
