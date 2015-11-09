@@ -324,10 +324,19 @@ public class ProxyServlet extends HttpServlet {
         throw new ServletException("Received status code: " + statusCode
             + " but no " + HttpHeaders.LOCATION + " header was found in the response");
       }
+      // Pass the response code. This method with the "reason phrase" is deprecated but it's the only way to pass the
+      //  reason along too.
+      //noinspection deprecation
+      servletResponse.setStatus(statusCode, proxyResponse.getStatusLine().getReasonPhrase());
       // Modify the redirect to go to this proxy servlet rather that the proxied host
       String locStr = rewriteUrlFromResponse(servletRequest, locationHeader.getValue());
 
-      servletResponse.sendRedirect(locStr);
+      // Do not use sendRedirect as it closes output prematurely.
+      servletResponse.setHeader(HttpHeaders.LOCATION, locStr);
+
+      // If there is content from the back-end response: send it to the client
+      // Notice: we have already copied the Content-Length and Content-Type
+      copyResponseEntity(proxyResponse, servletResponse);
       return true;
     }
     // 304 needs special handling.  See:
