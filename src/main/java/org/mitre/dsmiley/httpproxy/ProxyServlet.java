@@ -327,6 +327,12 @@ public class ProxyServlet extends HttpServlet {
       // Modify the redirect to go to this proxy servlet rather that the proxied host
       String locStr = rewriteUrlFromResponse(servletRequest, locationHeader.getValue());
 
+      // Fix: #70 redirects do not use body
+      // When sending redirects a HttpServletResponse does not allow a body
+      // HttpServletResponse does not have a remove-header, so clear it instead
+      if (servletResponse.containsHeader(HttpHeaders.CONTENT_LENGTH)) {
+        servletResponse.setIntHeader(HttpHeaders.CONTENT_LENGTH, 0);
+      }
       servletResponse.sendRedirect(locStr);
       return true;
     }
