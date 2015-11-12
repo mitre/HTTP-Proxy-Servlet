@@ -325,6 +325,33 @@ public class ProxyServletTest
     assertEquals("USER_2_SESSION", sc.getCookieJar().getCookie("!Proxy!" + servletName + "JSESSIONID").getValue());
   }
 
+  @Test
+  public void testRedirectWithBody() throws Exception {
+    final String CONTENT = "-This-Shall-Not-Pass-";
+	localTestServer.register("/targetPath/test",new HttpRequestHandler()
+    {
+      public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
+        // Redirect to the requested URL with / appended
+        response.setHeader(HttpHeaders.LOCATION, targetBaseUri + "/test/");
+        response.setStatusCode(HttpStatus.SC_MOVED_TEMPORARILY);
+        response.setHeader(HttpHeaders.CONTENT_TYPE, "text/plain; charset=UTF-8");
+        // Set body of the response. We need it not-empty for the test.
+        response.setEntity(new ByteArrayEntity(CONTENT.getBytes("UTF-8")));
+      }
+    });
+    GetMethodWebRequest req = makeGetMethodRequest(sourceBaseUri + "/test");
+    // We expect a redirect with a / at the end
+    WebResponse rsp = sc.getResponse(req);
+
+    // Expect the same status code as the handler.
+    assertEquals(HttpStatus.SC_MOVED_TEMPORARILY, rsp.getResponseCode());
+    // Expect exact Content-Length
+    assertEquals(String.valueOf(CONTENT.length()), rsp.getHeaderField(HttpHeaders.CONTENT_LENGTH));
+    // Expect exact response
+    assertEquals(CONTENT, rsp.getText());
+    assertEquals(sourceBaseUri + "/test/", rsp.getHeaderField(HttpHeaders.LOCATION));
+  }
+
   private WebResponse execAssert(GetMethodWebRequest request, String expectedUri) throws Exception {
     return execAndAssert(request, expectedUri);
   }
