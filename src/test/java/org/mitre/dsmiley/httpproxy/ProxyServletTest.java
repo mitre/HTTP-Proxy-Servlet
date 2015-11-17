@@ -135,9 +135,19 @@ public class ProxyServletTest
         response.setStatusCode(HttpStatus.SC_MOVED_TEMPORARILY);
       }
     });//matches /targetPath and /targetPath/blahblah
-    GetMethodWebRequest request = makeGetMethodRequest(sourceBaseUri);
+    GetMethodWebRequest request = makeGetMethodRequest(sourceBaseUri + "/%64%69%72%2F");
     assertRedirect(request, "/dummy", "/dummy");//TODO represents a bug to fix
     assertRedirect(request, targetBaseUri+"/dummy?a=b", sourceBaseUri+"/dummy?a=b");
+    // %-encoded Redirects must be rewritten
+    assertRedirect(request, targetBaseUri+"/sample%20url", sourceBaseUri+"/sample%20url");
+    assertRedirect(request, targetBaseUri+"/sample%20url?a=b", sourceBaseUri+"/sample%20url?a=b");
+    assertRedirect(request, targetBaseUri+"/sample%20url?a=b#frag", sourceBaseUri+"/sample%20url?a=b#frag");
+    assertRedirect(request, targetBaseUri+"/sample+url", sourceBaseUri+"/sample+url");
+    assertRedirect(request, targetBaseUri+"/sample+url?a=b", sourceBaseUri+"/sample+url?a=b");
+    assertRedirect(request, targetBaseUri+"/sample+url?a=b#frag", sourceBaseUri+"/sample+url?a=b#frag");
+    assertRedirect(request, targetBaseUri+"/sample+url?a+b=b%20c#frag%23", sourceBaseUri+"/sample+url?a+b=b%20c#frag%23");
+    // Absolute redirects to 3rd parties must pass-through unchanged
+    assertRedirect(request, "http://blackhole.org/dir/file.ext?a=b#c", "http://blackhole.org/dir/file.ext?a=b#c");
   }
 
   private void assertRedirect(GetMethodWebRequest request, String origRedirect, String resultRedirect) throws IOException, SAXException {

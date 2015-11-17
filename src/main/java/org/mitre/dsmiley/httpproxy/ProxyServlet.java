@@ -532,13 +532,32 @@ public class ProxyServlet extends HttpServlet {
     //TODO document example paths
     final String targetUri = getTargetUri(servletRequest);
     if (theUrl.startsWith(targetUri)) {
-      String curUrl = servletRequest.getRequestURL().toString();//no query
-      String pathInfo = servletRequest.getPathInfo();
-      if (pathInfo != null) {
-        assert curUrl.endsWith(pathInfo);
-        curUrl = curUrl.substring(0,curUrl.length()-pathInfo.length());//take pathInfo off
+      /*-
+       * The URL points back to the back-end server.
+       * Instead of returning it verbatim we replace the target path with our
+       * source path in a way that should instruct the original client to
+       * request the URL pointed through this Proxy.
+       * We do this by taking the current request and rewriting the path part
+       * using this servlet's absolute path and the path from the returned URL
+       * after the base target URL.
+       */
+      StringBuffer curUrl = servletRequest.getRequestURL();//no query
+      int pos;
+      // Skip the protocol part
+      if ((pos = curUrl.indexOf("://"))>=0) {
+        // Skip the authority part
+        // + 3 to skip the separator between protocol and authority
+        if ((pos = curUrl.indexOf("/", pos + 3)) >=0) {
+          // Trim everything after the authority part.
+          curUrl.setLength(pos);
+        }
       }
-      theUrl = curUrl+theUrl.substring(targetUri.length());
+      // Context path starts with a / if it is not blank
+      curUrl.append(servletRequest.getContextPath());
+      // Servlet path starts with a / if it is not blank
+      curUrl.append(servletRequest.getServletPath());
+      curUrl.append(theUrl, targetUri.length(), theUrl.length());
+      theUrl = curUrl.toString();
     }
     return theUrl;
   }
