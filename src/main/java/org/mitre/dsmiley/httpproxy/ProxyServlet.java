@@ -141,6 +141,7 @@ public class ProxyServlet extends HttpServlet {
 
     HttpParams hcParams = new BasicHttpParams();
     hcParams.setParameter(ClientPNames.COOKIE_POLICY, CookiePolicy.IGNORE_COOKIES);
+    hcParams.setBooleanParameter(ClientPNames.HANDLE_REDIRECTS, false); // See #70
     readConfigParam(hcParams, ClientPNames.HANDLE_REDIRECTS, Boolean.class);
     proxyClient = createHttpClient(hcParams);
   }
