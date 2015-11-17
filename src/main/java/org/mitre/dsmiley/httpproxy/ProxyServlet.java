@@ -246,13 +246,10 @@ public class ProxyServlet extends HttpServlet {
     //spec: RFC 2616, sec 4.3: either of these two headers signal that there is a message body.
     if (servletRequest.getHeader(HttpHeaders.CONTENT_LENGTH) != null ||
         servletRequest.getHeader(HttpHeaders.TRANSFER_ENCODING) != null) {
-      HttpEntityEnclosingRequest eProxyRequest = new BasicHttpEntityEnclosingRequest(method, proxyRequestUri);
-      // Add the input entity (streamed)
-      //  note: we don't bother ensuring we close the servletInputStream since the container handles it
-      eProxyRequest.setEntity(new InputStreamEntity(servletRequest.getInputStream(), servletRequest.getContentLength()));
-      proxyRequest = eProxyRequest;
-    } else
+      proxyRequest = newProxyRequestWithEntity(method, proxyRequestUri, servletRequest);
+    } else {
       proxyRequest = new BasicHttpRequest(method, proxyRequestUri);
+    }
 
     copyRequestHeaders(servletRequest, proxyRequest);
 
@@ -266,26 +263,28 @@ public class ProxyServlet extends HttpServlet {
       }
       proxyResponse = proxyClient.execute(getTargetHost(servletRequest), proxyRequest);
 
-      // Process the response
+      // Process the response:
+
+      // Pass the response code. This method with the "reason phrase" is deprecated but it's the
+      //   only way to pass the reason along too.
       int statusCode = proxyResponse.getStatusLine().getStatusCode();
-
-      // copying response headers to make sure SESSIONID or other Cookie which comes from remote server
-      // will be saved in client when the proxied url was redirected to another one.
-      // see issue [#51](https://github.com/mitre/HTTP-Proxy-Servlet/issues/51)
-      copyResponseHeaders(proxyResponse, servletRequest, servletResponse);
-
-      if (doResponseRedirectOrNotModifiedLogic(servletRequest, servletResponse, proxyResponse, statusCode)) {
-        //the response is already "committed" now without any body to send
-        return;
-      }
-
-      // Pass the response code. This method with the "reason phrase" is deprecated but it's the only way to pass the
-      //  reason along too.
       //noinspection deprecation
       servletResponse.setStatus(statusCode, proxyResponse.getStatusLine().getReasonPhrase());
 
-      // Send the content to the client
-      copyResponseEntity(proxyResponse, servletResponse);
+      // Copying response headers to make sure SESSIONID or other Cookie which comes from the remote
+      // server will be saved in client when the proxied url was redirected to another one.
+      // See issue [#51](https://github.com/mitre/HTTP-Proxy-Servlet/issues/51)
+      copyResponseHeaders(proxyResponse, servletRequest, servletResponse);
+
+      if (statusCode == HttpServletResponse.SC_NOT_MODIFIED) {
+        // 304 needs special handling.  See:
+        // http://www.ics.uci.edu/pub/ietf/http/rfc1945.html#Code304
+        // Don't send body entity/content!
+        servletResponse.setIntHeader(HttpHeaders.CONTENT_LENGTH, 0);
+      } else {
+        // Send the content to the client
+        copyResponseEntity(proxyResponse, servletResponse);
+      }
 
     } catch (Exception e) {
       //abort request, according to best practice with HttpClient
@@ -311,22 +310,16 @@ public class ProxyServlet extends HttpServlet {
     }
   }
 
-  protected boolean doResponseRedirectOrNotModifiedLogic(
-          HttpServletRequest servletRequest, HttpServletResponse servletResponse,
-          HttpResponse proxyResponse, int statusCode)
-          throws ServletException, IOException {
-    // 304 needs special handling.  See:
-    // http://www.ics.uci.edu/pub/ietf/http/rfc1945.html#Code304
-    // We get a 304 whenever passed an 'If-Modified-Since'
-    // header and the data on disk has not changed; server
-    // responds w/ a 304 saying I'm not going to send the
-    // body because the file has not changed.
-    if (statusCode == HttpServletResponse.SC_NOT_MODIFIED) {
-      servletResponse.setIntHeader(HttpHeaders.CONTENT_LENGTH, 0);
-      servletResponse.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
-      return true;
-    }
-    return false;
+  private HttpRequest newProxyRequestWithEntity(String method, String proxyRequestUri,
+                                                HttpServletRequest servletRequest)
+          throws IOException {
+    HttpEntityEnclosingRequest eProxyRequest =
+            new BasicHttpEntityEnclosingRequest(method, proxyRequestUri);
+    // Add the input entity (streamed)
+    //  note: we don't bother ensuring we close the servletInputStream since the container handles it
+    eProxyRequest.setEntity(
+            new InputStreamEntity(servletRequest.getInputStream(), servletRequest.getContentLength()));
+    return eProxyRequest;
   }
 
   protected void closeQuietly(Closeable closeable) {
@@ -396,8 +389,8 @@ public class ProxyServlet extends HttpServlet {
 
   private void setXForwardedForHeader(HttpServletRequest servletRequest,
                                       HttpRequest proxyRequest) {
-    String headerName = "X-Forwarded-For";
     if (doForwardIP) {
+      String headerName = "X-Forwarded-For";
       String newHeader = servletRequest.getRemoteAddr();
       String existingHeader = servletRequest.getHeader(headerName);
       if (existingHeader != null) {
