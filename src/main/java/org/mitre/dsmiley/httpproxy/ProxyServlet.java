@@ -284,7 +284,7 @@ public class ProxyServlet extends HttpServlet {
         servletResponse.setIntHeader(HttpHeaders.CONTENT_LENGTH, 0);
       } else {
         // Send the content to the client
-        copyResponseEntity(proxyResponse, servletResponse);
+        copyResponseEntity(proxyResponse, servletResponse, proxyRequest, servletRequest);
       }
 
     } catch (Exception e) {
@@ -473,7 +473,9 @@ public class ProxyServlet extends HttpServlet {
   }
 
   /** Copy response body data (the entity) from the proxy to the servlet client. */
-  protected void copyResponseEntity(HttpResponse proxyResponse, HttpServletResponse servletResponse) throws IOException {
+  protected void copyResponseEntity(HttpResponse proxyResponse, HttpServletResponse servletResponse,
+                                    HttpRequest proxyRequest, HttpServletRequest servletRequest)
+          throws IOException {
     HttpEntity entity = proxyResponse.getEntity();
     if (entity != null) {
       OutputStream servletOutputStream = servletResponse.getOutputStream();
