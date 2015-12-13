@@ -49,7 +49,7 @@ add this to your dependencies in your pom like so:
     <dependency>
         <groupId>org.mitre.dsmiley.httpproxy</groupId>
         <artifactId>smiley-http-proxy-servlet</artifactId>
-        <version>1.6</version>
+        <version>1.7</version>
     </dependency>
 
 Ivy and other dependency managers can be used as well.
@@ -101,7 +101,39 @@ them from the normal query parameters in case of a conflict.:
       <url-pattern>/mywebapp/cluster/*</url-pattern>
     </servlet-mapping>
 
-If you are using SpringMVC, then an alternative is to use its
+If you are using **SpringMVC**, then an alternative is to use its
 [ServletWrappingController](http://static.springsource.org/spring/docs/3.0.x/api/org/springframework/web/servlet/mvc/ServletWrappingController.html)
 so that you can configure this servlet via Spring, which is supremely flexible, instead of having to modify your web.xml. However, note that some
 customization may be needed to divide the URL at the proxied portion; see [Issue#15](/dsmiley/HTTP-Proxy-Servlet/issues/15).
+
+If you are using **Spring Boot**, then consider this basic configuration:
+
+```java
+@Configuration
+public class SolrProxyServletConfiguration implements EnvironmentAware {
+
+  @Bean
+  public ServletRegistrationBean servletRegistrationBean(){
+    ServletRegistrationBean servletRegistrationBean = new ServletRegistrationBean(new ProxyServlet(), propertyResolver.getProperty("servlet_url"));
+    servletRegistrationBean.addInitParameter("targetUri", propertyResolver.getProperty("target_url"));
+    servletRegistrationBean.addInitParameter(ProxyServlet.P_LOG, propertyResolver.getProperty("logging_enabled", "false"));
+    return servletRegistrationBean;
+  }
+
+  private RelaxedPropertyResolver propertyResolver;
+
+  @Override
+  public void setEnvironment(Environment environment) {
+    this.propertyResolver = new RelaxedPropertyResolver(environment, "proxy.solr.");
+  }
+}
+```
+
+and properties in `application.yml`:
+
+```
+proxy:
+    solr:
+        servlet_url: /solr/*
+        target_url: http://solrserver:8983/solr
+```
