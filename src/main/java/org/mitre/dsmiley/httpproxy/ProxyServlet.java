@@ -358,34 +358,39 @@ public class ProxyServlet extends HttpServlet {
   }
 
   /** Copy request headers from the servlet client to the proxy request. */
-  protected void copyRequestHeaders(HttpServletRequest servletRequest, HttpRequest proxyRequest) {
-    // Get an Enumeration of all of the header names sent by the client
-    Enumeration enumerationOfHeaderNames = servletRequest.getHeaderNames();
-    while (enumerationOfHeaderNames.hasMoreElements()) {
-      String headerName = (String) enumerationOfHeaderNames.nextElement();
-      //Instead the content-length is effectively set via InputStreamEntity
-      if (headerName.equalsIgnoreCase(HttpHeaders.CONTENT_LENGTH))
-        continue;
-      if (hopByHopHeaders.containsHeader(headerName))
-        continue;
-
-      Enumeration headers = servletRequest.getHeaders(headerName);
-      while (headers.hasMoreElements()) {//sometimes more than one value
-        String headerValue = (String) headers.nextElement();
-        // In case the proxy host is running multiple virtual servers,
-        // rewrite the Host header to ensure that we get content from
-        // the correct virtual server
-        if (headerName.equalsIgnoreCase(HttpHeaders.HOST)) {
-          HttpHost host = getTargetHost(servletRequest);
-          headerValue = host.getHostName();
-          if (host.getPort() != -1)
-            headerValue += ":"+host.getPort();
-        } else if (headerName.equalsIgnoreCase(org.apache.http.cookie.SM.COOKIE)) {
-          headerValue = getRealCookie(headerValue);
-        }
-        proxyRequest.addHeader(headerName, headerValue);
+  protected void copyRequestHeaders(HttpServletRequest servletRequest,
+  HttpRequest proxyRequest) {
+  // Get an Enumeration of all of the header names sent by the client
+  Enumeration enumerationOfHeaderNames = servletRequest.getHeaderNames();
+  while (enumerationOfHeaderNames.hasMoreElements()) {
+  String headerName = (String) enumerationOfHeaderNames.nextElement();
+  // Instead the content-length is effectively set via
+  // InputStreamEntity
+  if (headerName.equalsIgnoreCase(HttpHeaders.CONTENT_LENGTH))
+  continue;
+  if (hopByHopHeaders.containsHeader(headerName))
+  continue;
+  
+          Enumeration headers = servletRequest.getHeaders(headerName);
+          while (headers.hasMoreElements()) {// sometimes more than one value
+              String headerValue = (String) headers.nextElement();
+              // In case the proxy host is running multiple virtual servers,
+              // rewrite the Host header to ensure that we get content from
+              // the correct virtual server
+              if (headerName.equalsIgnoreCase(HttpHeaders.HOST)) {
+                  HttpHost host = getTargetHost(servletRequest);
+                  headerValue = host.getHostName();
+                  if (host.getPort() != -1)
+                      headerValue += ":" + host.getPort();
+              } else if (headerName
+                      .equalsIgnoreCase(org.apache.http.cookie.SM.COOKIE)) {
+                      headerValue = getRealCookie(headerValue);
+              }
+              if (headerValue != null && !headerValue.equals("")) {
+                  proxyRequest.addHeader(headerName, headerValue);
+              }
+          }
       }
-    }
   }
 
   private void setXForwardedForHeader(HttpServletRequest servletRequest,
