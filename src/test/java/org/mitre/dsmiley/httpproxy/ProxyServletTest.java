@@ -231,6 +231,42 @@ public class ProxyServletTest
   }
 
   @Test
+  public void testCopyRequestHeaderToProxyRequest() throws Exception {
+    final String HEADER = "HEADER_TO_TEST";
+
+    localTestServer.register("/targetPath*", new RequestInfoHandler() {
+      public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
+        Header headerToTest = request.getFirstHeader(HEADER);
+        assertEquals("VALUE_TO_TEST", headerToTest.getValue());
+
+        super.handle(request, response, context);
+      }
+    });
+
+    GetMethodWebRequest req = makeGetMethodRequest(sourceBaseUri);
+    req.setHeaderField(HEADER, "VALUE_TO_TEST");
+
+    execAndAssert(req, "");
+  }
+
+  @Test
+  public void testCopyProxiedRequestHeadersToResponse() throws Exception {
+    final String HEADER = "HEADER_TO_TEST";
+
+    localTestServer.register("/targetPath*", new RequestInfoHandler() {
+      public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
+        response.setHeader(HEADER, "VALUE_TO_TEST");
+        super.handle(request, response, context);
+      }
+    });
+
+    GetMethodWebRequest req = makeGetMethodRequest(sourceBaseUri);
+
+    WebResponse rsp = execAndAssert(req, "");
+    assertEquals("VALUE_TO_TEST", rsp.getHeaderField(HEADER));
+  }
+
+  @Test
   public void testSetCookie() throws Exception {
     final String HEADER = "Set-Cookie";
     localTestServer.register("/targetPath*", new RequestInfoHandler() {
@@ -379,7 +415,7 @@ public class ProxyServletTest
     return rsp;
   }
 
-  private WebResponse execAndAssert(WebRequest request, String expectedUri) throws Exception {
+  protected WebResponse execAndAssert(WebRequest request, String expectedUri) throws Exception {
     WebResponse rsp = sc.getResponse( request );
 
     assertEquals(HttpStatus.SC_OK,rsp.getResponseCode());
@@ -413,7 +449,7 @@ public class ProxyServletTest
     return new URI(this.targetBaseUri).getPath() + expectedUri;
   }
 
-  private GetMethodWebRequest makeGetMethodRequest(final String url) {
+  protected GetMethodWebRequest makeGetMethodRequest(final String url) {
     return makeMethodRequest(url,GetMethodWebRequest.class);
   }
 
@@ -473,7 +509,7 @@ public class ProxyServletTest
   /**
    * Writes all information about the request back to the response.
    */
-  private static class RequestInfoHandler implements HttpRequestHandler
+  protected static class RequestInfoHandler implements HttpRequestHandler
   {
 
     public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {

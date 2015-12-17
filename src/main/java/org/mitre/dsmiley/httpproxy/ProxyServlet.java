@@ -383,9 +383,16 @@ public class ProxyServlet extends HttpServlet {
         } else if (headerName.equalsIgnoreCase(org.apache.http.cookie.SM.COOKIE)) {
           headerValue = getRealCookie(headerValue);
         }
-        proxyRequest.addHeader(headerName, headerValue);
+        addHeaderToProxyRequest(proxyRequest, headerName, headerValue);
       }
     }
+  }
+
+  /**
+   * adds header to proxied response by its name and value.
+   */
+  protected void addHeaderToProxyRequest(HttpRequest proxyRequest, String headerName, String headerValue) {
+    proxyRequest.addHeader(headerName, headerValue);
   }
 
   private void setXForwardedForHeader(HttpServletRequest servletRequest,
@@ -405,18 +412,29 @@ public class ProxyServlet extends HttpServlet {
   protected void copyResponseHeaders(HttpResponse proxyResponse, HttpServletRequest servletRequest,
                                      HttpServletResponse servletResponse) {
     for (Header header : proxyResponse.getAllHeaders()) {
-      if (hopByHopHeaders.containsHeader(header.getName()))
+      String headerName = header.getName();
+      if (hopByHopHeaders.containsHeader(headerName))
         continue;
-      if (header.getName().equalsIgnoreCase(org.apache.http.cookie.SM.SET_COOKIE) ||
-          header.getName().equalsIgnoreCase(org.apache.http.cookie.SM.SET_COOKIE2)) {
+      if (headerName.equalsIgnoreCase(org.apache.http.cookie.SM.SET_COOKIE) ||
+          headerName.equalsIgnoreCase(org.apache.http.cookie.SM.SET_COOKIE2)) {
         copyProxyCookie(servletRequest, servletResponse, header);
-      } else if (header.getName().equalsIgnoreCase(HttpHeaders.LOCATION)) {
-        // LOCATION Header may have to be rewritten.
-        servletResponse.addHeader(header.getName(), rewriteUrlFromResponse(servletRequest, header.getValue()));
       } else {
-        servletResponse.addHeader(header.getName(), header.getValue());
+        String headerValue = header.getValue();
+        if (headerName.equalsIgnoreCase(HttpHeaders.LOCATION)) {
+          // LOCATION Header may have to be rewritten.
+          addHeaderToResponse(servletResponse, headerName, rewriteUrlFromResponse(servletRequest, headerValue));
+        } else {
+          addHeaderToResponse(servletResponse, headerName, headerValue);
+        }
       }
     }
+  }
+
+  /**
+   * adds header to servlet response by its name and value.
+   */
+  protected void addHeaderToResponse(HttpServletResponse servletResponse, String headerName, String headerValue) {
+    servletResponse.addHeader(headerName, headerValue);
   }
 
   /** Copy cookie from the proxy to the servlet client.
