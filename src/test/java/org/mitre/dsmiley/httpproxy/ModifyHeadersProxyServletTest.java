@@ -9,6 +9,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.protocol.HttpContext;
 import org.junit.Test;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
@@ -62,19 +63,22 @@ public class ModifyHeadersProxyServletTest extends ProxyServletTest {
     public static final String RESPONSE_HEADER = "RESPONSE_HEADER";
 
     @Override
-    protected void addHeaderToProxyRequest(HttpRequest proxyRequest, String headerName, String headerValue) {
+    protected void copyRequestHeader(HttpServletRequest servletRequest, HttpRequest proxyRequest, String headerName) {
       if (REQUEST_HEADER.equalsIgnoreCase(headerName)) {
-        headerValue = "REQUEST_VALUE_MODIFIED";
+        proxyRequest.addHeader(headerName, "REQUEST_VALUE_MODIFIED");
+      } else {
+        super.copyRequestHeader(servletRequest, proxyRequest, headerName);
       }
-      proxyRequest.addHeader(headerName, headerValue);
     }
 
     @Override
-    protected void addHeaderToResponse(HttpServletResponse servletResponse, String headerName, String headerValue) {
-      if (RESPONSE_HEADER.equalsIgnoreCase(headerName)) {
-        headerValue = "RESPONSE_VALUE_MODIFIED";
+    protected void copyResponseHeader(HttpServletRequest servletRequest,
+                                      HttpServletResponse servletResponse, Header header) {
+      if (RESPONSE_HEADER.equalsIgnoreCase(header.getName())) {
+        servletResponse.addHeader(header.getName(), "RESPONSE_VALUE_MODIFIED");
+      } else {
+        super.copyResponseHeader(servletRequest, servletResponse, header);
       }
-      servletResponse.addHeader(headerName, headerValue);
     }
 
   }

@@ -363,36 +363,38 @@ public class ProxyServlet extends HttpServlet {
     Enumeration enumerationOfHeaderNames = servletRequest.getHeaderNames();
     while (enumerationOfHeaderNames.hasMoreElements()) {
       String headerName = (String) enumerationOfHeaderNames.nextElement();
-      //Instead the content-length is effectively set via InputStreamEntity
-      if (headerName.equalsIgnoreCase(HttpHeaders.CONTENT_LENGTH))
-        continue;
-      if (hopByHopHeaders.containsHeader(headerName))
-        continue;
-
-      Enumeration headers = servletRequest.getHeaders(headerName);
-      while (headers.hasMoreElements()) {//sometimes more than one value
-        String headerValue = (String) headers.nextElement();
-        // In case the proxy host is running multiple virtual servers,
-        // rewrite the Host header to ensure that we get content from
-        // the correct virtual server
-        if (headerName.equalsIgnoreCase(HttpHeaders.HOST)) {
-          HttpHost host = getTargetHost(servletRequest);
-          headerValue = host.getHostName();
-          if (host.getPort() != -1)
-            headerValue += ":"+host.getPort();
-        } else if (headerName.equalsIgnoreCase(org.apache.http.cookie.SM.COOKIE)) {
-          headerValue = getRealCookie(headerValue);
-        }
-        addHeaderToProxyRequest(proxyRequest, headerName, headerValue);
-      }
+      copyRequestHeader(servletRequest, proxyRequest, headerName);
     }
   }
 
   /**
-   * adds header to proxied response by its name and value.
+   * Copy a request header from the servlet client to the proxy request.
+   * This is easily overwritten to filter out certain headers if desired.
    */
-  protected void addHeaderToProxyRequest(HttpRequest proxyRequest, String headerName, String headerValue) {
-    proxyRequest.addHeader(headerName, headerValue);
+  protected void copyRequestHeader(HttpServletRequest servletRequest, HttpRequest proxyRequest,
+                                   String headerName) {
+    //Instead the content-length is effectively set via InputStreamEntity
+    if (headerName.equalsIgnoreCase(HttpHeaders.CONTENT_LENGTH))
+      return;
+    if (hopByHopHeaders.containsHeader(headerName))
+      return;
+
+    Enumeration headers = servletRequest.getHeaders(headerName);
+    while (headers.hasMoreElements()) {//sometimes more than one value
+      String headerValue = (String) headers.nextElement();
+      // In case the proxy host is running multiple virtual servers,
+      // rewrite the Host header to ensure that we get content from
+      // the correct virtual server
+      if (headerName.equalsIgnoreCase(HttpHeaders.HOST)) {
+        HttpHost host = getTargetHost(servletRequest);
+        headerValue = host.getHostName();
+        if (host.getPort() != -1)
+          headerValue += ":"+host.getPort();
+      } else if (headerName.equalsIgnoreCase(org.apache.http.cookie.SM.COOKIE)) {
+        headerValue = getRealCookie(headerValue);
+      }
+      proxyRequest.addHeader(headerName, headerValue);
+    }
   }
 
   private void setXForwardedForHeader(HttpServletRequest servletRequest,
@@ -412,37 +414,36 @@ public class ProxyServlet extends HttpServlet {
   protected void copyResponseHeaders(HttpResponse proxyResponse, HttpServletRequest servletRequest,
                                      HttpServletResponse servletResponse) {
     for (Header header : proxyResponse.getAllHeaders()) {
-      String headerName = header.getName();
-      if (hopByHopHeaders.containsHeader(headerName))
-        continue;
-      if (headerName.equalsIgnoreCase(org.apache.http.cookie.SM.SET_COOKIE) ||
-          headerName.equalsIgnoreCase(org.apache.http.cookie.SM.SET_COOKIE2)) {
-        copyProxyCookie(servletRequest, servletResponse, header);
-      } else {
-        String headerValue = header.getValue();
-        if (headerName.equalsIgnoreCase(HttpHeaders.LOCATION)) {
-          // LOCATION Header may have to be rewritten.
-          addHeaderToResponse(servletResponse, headerName, rewriteUrlFromResponse(servletRequest, headerValue));
-        } else {
-          addHeaderToResponse(servletResponse, headerName, headerValue);
-        }
-      }
+      copyResponseHeader(servletRequest, servletResponse, header);
     }
   }
 
-  /**
-   * adds header to servlet response by its name and value.
+  /** Copy a proxied response header back to the servlet client.
+   * This is easily overwritten to filter out certain headers if desired.
    */
-  protected void addHeaderToResponse(HttpServletResponse servletResponse, String headerName, String headerValue) {
-    servletResponse.addHeader(headerName, headerValue);
+  protected void copyResponseHeader(HttpServletRequest servletRequest,
+                                  HttpServletResponse servletResponse, Header header) {
+    String headerName = header.getName();
+    if (hopByHopHeaders.containsHeader(headerName))
+      return;
+    String headerValue = header.getValue();
+    if (headerName.equalsIgnoreCase(org.apache.http.cookie.SM.SET_COOKIE) ||
+            headerName.equalsIgnoreCase(org.apache.http.cookie.SM.SET_COOKIE2)) {
+      copyProxyCookie(servletRequest, servletResponse, headerValue);
+    } else if (headerName.equalsIgnoreCase(HttpHeaders.LOCATION)) {
+      // LOCATION Header may have to be rewritten.
+      servletResponse.addHeader(headerName, rewriteUrlFromResponse(servletRequest, headerValue));
+    } else {
+      servletResponse.addHeader(headerName, headerValue);
+    }
   }
 
   /** Copy cookie from the proxy to the servlet client.
    *  Replaces cookie path to local path and renames cookie to avoid collisions.
    */
   protected void copyProxyCookie(HttpServletRequest servletRequest,
-                                 HttpServletResponse servletResponse, Header header) {
-    List<HttpCookie> cookies = HttpCookie.parse(header.getValue());
+                                 HttpServletResponse servletResponse, String headerValue) {
+    List<HttpCookie> cookies = HttpCookie.parse(headerValue);
     String path = servletRequest.getContextPath(); // path starts with / or is empty string
     path += servletRequest.getServletPath(); // servlet path starts with / or is empty string
 
