@@ -255,7 +255,6 @@ public class ProxyServlet extends HttpServlet {
     
     // PATCH
     if (!preProxyRequest(servletRequest, servletResponse, proxyRequest)) {
-    	
     	// Stop proxying request if preProxyRequest return false.
     	return;
     }
