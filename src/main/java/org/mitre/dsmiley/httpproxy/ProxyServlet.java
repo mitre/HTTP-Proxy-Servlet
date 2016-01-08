@@ -416,7 +416,7 @@ public class ProxyServlet extends HttpServlet {
         if (host.getPort() != -1)
           headerValue += ":"+host.getPort();
       } else if (headerName.equalsIgnoreCase(org.apache.http.cookie.SM.COOKIE)) {
-        headerValue = getRealCookie(headerValue);
+    	  headerValue = getRealCookie(headerValue);
       }
       proxyRequest.addHeader(headerName, headerValue);
     }
@@ -471,14 +471,19 @@ public class ProxyServlet extends HttpServlet {
     List<HttpCookie> cookies = HttpCookie.parse(headerValue);
     String path = servletRequest.getContextPath(); // path starts with / or is empty string
     path += servletRequest.getServletPath(); // servlet path starts with / or is empty string
-
+    
     for (HttpCookie cookie : cookies) {
       //set cookie name prefixed w/ a proxy value so it won't collide w/ other cookies
-      String proxyCookieName = getCookieNamePrefix() + cookie.getName();
+      String proxyCookieName = cookie.getName();
       Cookie servletCookie = new Cookie(proxyCookieName, cookie.getValue());
       servletCookie.setComment(cookie.getComment());
       servletCookie.setMaxAge((int) cookie.getMaxAge());
-      servletCookie.setPath(path); //set to the path of the proxy servlet
+      if ("JSESSIONID".equals(proxyCookieName) 
+    		  ||"XSRF-TOKEN".equals(proxyCookieName)) {
+    	  servletCookie.setPath(cookie.getPath());
+      } else {
+    	  servletCookie.setPath(path); //set to the path of the proxy servlet
+      }
       // don't set cookie domain
       servletCookie.setSecure(cookie.getSecure());
       servletCookie.setVersion(cookie.getVersion());
@@ -499,11 +504,17 @@ public class ProxyServlet extends HttpServlet {
         String cookieName = cookieSplit[0];
         if (cookieName.startsWith(getCookieNamePrefix())) {
           cookieName = cookieName.substring(getCookieNamePrefix().length());
-          if (escapedCookie.length() > 0) {
-            escapedCookie.append("; ");
-          }
-          escapedCookie.append(cookieName).append("=").append(cookieSplit[1]);
+//          if (escapedCookie.length() > 0) {
+//            escapedCookie.append("; ");
+//          }
+          //escapedCookie.append(cookieName).append("=").append(cookieSplit[1]);
         }
+        
+        if (escapedCookie.length() > 0) {
+            escapedCookie.append("; ");
+        }
+        
+        escapedCookie.append(cookieName).append("=").append(cookieSplit[1]);
       }
 
       cookieValue = escapedCookie.toString();
