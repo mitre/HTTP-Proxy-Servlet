@@ -9,7 +9,7 @@
 
   <groupId>org.mitre.dsmiley.httpproxy</groupId>
   <artifactId>smiley-http-proxy-servlet</artifactId>
-  <version>1.8.patch-edu-1.0.0-SNAPSHOT</version>
+  <version>1.8-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>Smiley's HTTP Proxy Servlet</name>
