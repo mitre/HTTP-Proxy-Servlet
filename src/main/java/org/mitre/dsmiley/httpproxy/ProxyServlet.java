@@ -491,24 +491,24 @@ public class ProxyServlet extends HttpServlet {
    * This also blocks any local cookies from being sent to the proxy.
    */
   protected String getRealCookie(String cookieValue) {
-    StringBuilder escapedCookie = new StringBuilder();
-    String cookies[] = cookieValue.split("; ");
-    for (String cookie : cookies) {
-      String cookieSplit[] = cookie.split("=");
-      if (cookieSplit.length == 2) {
-        String cookieName = cookieSplit[0];
-        if (cookieName.startsWith(getCookieNamePrefix())) {
-          cookieName = cookieName.substring(getCookieNamePrefix().length());
-        }
-        if (escapedCookie.length() > 0) {
-            escapedCookie.append("; ");
-        }
-        escapedCookie.append(cookieName).append("=").append(cookieSplit[1]);
-      }
+	  StringBuilder escapedCookie = new StringBuilder();
+	    String cookies[] = cookieValue.split("; ");
+	    for (String cookie : cookies) {
+	      String cookieSplit[] = cookie.split("=");
+	      if (cookieSplit.length == 2) {
+	        String cookieName = cookieSplit[0];
+	        if (cookieName.startsWith(getCookieNamePrefix())) {
+	          cookieName = cookieName.substring(getCookieNamePrefix().length());
+	          if (escapedCookie.length() > 0) {
+	            escapedCookie.append("; ");
+	          }
+	          escapedCookie.append(cookieName).append("=").append(cookieSplit[1]);
+	        }
+	      }
 
-      cookieValue = escapedCookie.toString();
-    }
-    return cookieValue;
+	      cookieValue = escapedCookie.toString();
+	    }
+	    return cookieValue;
   }
 
   /** The string prefixing rewritten cookies. */
