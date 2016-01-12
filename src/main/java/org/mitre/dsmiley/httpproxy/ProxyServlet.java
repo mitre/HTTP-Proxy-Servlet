@@ -86,7 +86,10 @@ public class ProxyServlet extends HttpServlet {
           ProxyServlet.class.getSimpleName() + ".targetUri";
   protected static final String ATTR_TARGET_HOST =
           ProxyServlet.class.getSimpleName() + ".targetHost";
-
+  
+  /** The parameter name for rewrite the cookie path with local or use orginal path from the target (destination).*/
+  protected static final String P_USE_ORIGINAL_COOKIE_PATH = "useOriginalCookiePath";
+  
   /* MISC */
 
   protected boolean doLog = false;
@@ -100,7 +103,8 @@ public class ProxyServlet extends HttpServlet {
   protected String targetUri;
   protected URI targetUriObj;//new URI(targetUri)
   protected HttpHost targetHost;//URIUtils.extractHost(targetUriObj);
-
+  protected boolean useOriginalCookiePath;
+  
   private HttpClient proxyClient;
 
   @Override
@@ -136,7 +140,12 @@ public class ProxyServlet extends HttpServlet {
     if (doForwardIPString != null) {
         this.doForwardIP = Boolean.parseBoolean(doForwardIPString);
     }
-
+    
+    String useOriginalCookiePathString = getConfigParam(P_USE_ORIGINAL_COOKIE_PATH);
+	if (useOriginalCookiePathString != null) {
+	  useOriginalCookiePath = Boolean.parseBoolean(useOriginalCookiePathString);
+	}
+	
     initTarget();//sets target*
 
     HttpParams hcParams = new BasicHttpParams();
@@ -477,8 +486,12 @@ public class ProxyServlet extends HttpServlet {
       Cookie servletCookie = new Cookie(proxyCookieName, cookie.getValue());
       servletCookie.setComment(cookie.getComment());
       servletCookie.setMaxAge((int) cookie.getMaxAge());
-      servletCookie.setPath(cookie.getPath());
-      // servletCookie.setPath(path); //set to the path of the proxy servlet
+      
+      if (useOriginalCookiePath) {
+    	  servletCookie.setPath(cookie.getPath());
+      } else {
+    	  servletCookie.setPath(path); //set to the path of the proxy servlet
+      }
       // don't set cookie domain
       servletCookie.setSecure(cookie.getSecure());
       servletCookie.setVersion(cookie.getVersion());
