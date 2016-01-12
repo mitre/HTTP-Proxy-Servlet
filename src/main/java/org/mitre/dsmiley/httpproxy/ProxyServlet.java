@@ -253,7 +253,7 @@ public class ProxyServlet extends HttpServlet {
     }
     
     // PATCH
-    if (!preProxyRequest(servletRequest, servletResponse, proxyRequest)) {
+    if (!shouldProxyRequest(servletRequest, servletResponse, proxyRequest)) {
     	// Stop proxying request if preProxyRequest return false.
     	// The response must be set by the preProxyRequest method via servletResponse.
     	return;
@@ -320,7 +320,7 @@ public class ProxyServlet extends HttpServlet {
   
   /**
    * Empty implementation for instrumenting proxy request in subclasse before proxy pass.
-   * This method must provide the respons if it return false (http status, cause, ...)
+   * This method must provide the response if it return false (http status, cause, ...)
    * @param servletRequest
    * @param servletResponse
    * @param proxyRequest
@@ -328,10 +328,10 @@ public class ProxyServlet extends HttpServlet {
    * @throws IOException
    * @return true to perform request proxy or false to not proxy.
    */
-  protected boolean preProxyRequest(HttpServletRequest servletRequest, 
-		  						 HttpServletResponse servletResponse, 
-		  						 HttpRequest proxyRequest) 
-		  						 throws ServletException, IOException {
+  protected boolean shouldProxyRequest(HttpServletRequest servletRequest, 
+		  						       HttpServletResponse servletResponse, 
+		  						       HttpRequest proxyRequest) 
+		  						       throws ServletException, IOException {
 	  return true;
   }
   
