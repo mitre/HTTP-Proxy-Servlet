@@ -120,14 +120,14 @@ public class ModifyCookiesProxyServletTest extends ProxyServletTest {
   }
   
   private void assertRedirect(GetMethodWebRequest request, String origRedirect, String resultRedirect) throws IOException, SAXException {
-	    request.setHeaderField("xxTarget", origRedirect);
-	    WebResponse rsp = sc.getResponse(request);
+    request.setHeaderField("xxTarget", origRedirect);
+    WebResponse rsp = sc.getResponse(request);
 
-	    assertEquals(HttpStatus.SC_MOVED_TEMPORARILY,rsp.getResponseCode());
-	    assertEquals("",rsp.getText());
-	    String gotLocation = rsp.getHeaderField(HttpHeaders.LOCATION);
-	    assertEquals(resultRedirect, gotLocation);
-	    assertEquals("!Proxy!"+servletName+"JSESSIONID=1234;path=/", rsp.getHeaderField("Set-Cookie"));
-	  }
+    assertEquals(HttpStatus.SC_MOVED_TEMPORARILY,rsp.getResponseCode());
+    assertEquals("",rsp.getText());
+    String gotLocation = rsp.getHeaderField(HttpHeaders.LOCATION);
+    assertEquals(resultRedirect, gotLocation);
+    assertEquals("!Proxy!"+servletName+"JSESSIONID=1234;path=/", rsp.getHeaderField("Set-Cookie"));
+  }
   
 }
