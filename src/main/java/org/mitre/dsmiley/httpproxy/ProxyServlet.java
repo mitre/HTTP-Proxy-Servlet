@@ -113,7 +113,7 @@ public class ProxyServlet extends HttpServlet {
     return (String) servletRequest.getAttribute(ATTR_TARGET_URI);
   }
 
-  private HttpHost getTargetHost(HttpServletRequest servletRequest) {
+  protected HttpHost getTargetHost(HttpServletRequest servletRequest) {
     return (HttpHost) servletRequest.getAttribute(ATTR_TARGET_HOST);
   }
 
