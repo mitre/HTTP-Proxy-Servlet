@@ -86,7 +86,10 @@ public class ProxyServlet extends HttpServlet {
           ProxyServlet.class.getSimpleName() + ".targetUri";
   protected static final String ATTR_TARGET_HOST =
           ProxyServlet.class.getSimpleName() + ".targetHost";
-
+  
+  /** The parameter name for rewrite the cookie path with local or use orginal path from the target (destination).*/
+  protected static final String P_USE_ORIGINAL_COOKIE_PATH = "useOriginalCookiePath";
+  
   /* MISC */
 
   protected boolean doLog = false;
@@ -100,7 +103,8 @@ public class ProxyServlet extends HttpServlet {
   protected String targetUri;
   protected URI targetUriObj;//new URI(targetUri)
   protected HttpHost targetHost;//URIUtils.extractHost(targetUriObj);
-
+  protected boolean useOriginalCookiePath;
+  
   private HttpClient proxyClient;
 
   @Override
@@ -136,7 +140,12 @@ public class ProxyServlet extends HttpServlet {
     if (doForwardIPString != null) {
         this.doForwardIP = Boolean.parseBoolean(doForwardIPString);
     }
-
+    
+    String useOriginalCookiePathString = getConfigParam(P_USE_ORIGINAL_COOKIE_PATH);
+	if (useOriginalCookiePathString != null) {
+	  useOriginalCookiePath = Boolean.parseBoolean(useOriginalCookiePathString);
+	}
+	
     initTarget();//sets target*
 
     HttpParams hcParams = new BasicHttpParams();
@@ -251,7 +260,14 @@ public class ProxyServlet extends HttpServlet {
     } else {
       proxyRequest = new BasicHttpRequest(method, proxyRequestUri);
     }
-
+    
+    // PATCH
+    if (!shouldProxyRequest(servletRequest, servletResponse, proxyRequest)) {
+    	// Stop proxying request if preProxyRequest return false.
+    	// The response must be set by the preProxyRequest method via servletResponse.
+    	return;
+    }
+    
     copyRequestHeaders(servletRequest, proxyRequest);
 
     setXForwardedForHeader(servletRequest, proxyRequest);
@@ -310,7 +326,24 @@ public class ProxyServlet extends HttpServlet {
       // http://stackoverflow.com/questions/1159168/should-one-call-close-on-httpservletresponse-getoutputstream-getwriter
     }
   }
-
+  
+  /**
+   * Empty implementation for instrumenting proxy request in subclasse before proxy pass.
+   * This method must provide the response if it return false (http status, cause, ...)
+   * @param servletRequest
+   * @param servletResponse
+   * @param proxyRequest
+   * @throws ServletException
+   * @throws IOException
+   * @return true to perform request proxy or false to not proxy.
+   */
+  protected boolean shouldProxyRequest(HttpServletRequest servletRequest, 
+		  						       HttpServletResponse servletResponse, 
+		  						       HttpRequest proxyRequest) 
+		  						       throws ServletException, IOException {
+	  return true;
+  }
+  
   private HttpRequest newProxyRequestWithEntity(String method, String proxyRequestUri,
                                                 HttpServletRequest servletRequest)
           throws IOException {
@@ -453,7 +486,12 @@ public class ProxyServlet extends HttpServlet {
       Cookie servletCookie = new Cookie(proxyCookieName, cookie.getValue());
       servletCookie.setComment(cookie.getComment());
       servletCookie.setMaxAge((int) cookie.getMaxAge());
-      servletCookie.setPath(path); //set to the path of the proxy servlet
+      
+      if (useOriginalCookiePath) {
+    	  servletCookie.setPath(cookie.getPath());
+      } else {
+    	  servletCookie.setPath(path); //set to the path of the proxy servlet
+      }
       // don't set cookie domain
       servletCookie.setSecure(cookie.getSecure());
       servletCookie.setVersion(cookie.getVersion());
@@ -466,24 +504,24 @@ public class ProxyServlet extends HttpServlet {
    * This also blocks any local cookies from being sent to the proxy.
    */
   protected String getRealCookie(String cookieValue) {
-    StringBuilder escapedCookie = new StringBuilder();
-    String cookies[] = cookieValue.split("; ");
-    for (String cookie : cookies) {
-      String cookieSplit[] = cookie.split("=");
-      if (cookieSplit.length == 2) {
-        String cookieName = cookieSplit[0];
-        if (cookieName.startsWith(getCookieNamePrefix())) {
-          cookieName = cookieName.substring(getCookieNamePrefix().length());
-          if (escapedCookie.length() > 0) {
-            escapedCookie.append("; ");
-          }
-          escapedCookie.append(cookieName).append("=").append(cookieSplit[1]);
-        }
-      }
+	  StringBuilder escapedCookie = new StringBuilder();
+	    String cookies[] = cookieValue.split("; ");
+	    for (String cookie : cookies) {
+	      String cookieSplit[] = cookie.split("=");
+	      if (cookieSplit.length == 2) {
+	        String cookieName = cookieSplit[0];
+	        if (cookieName.startsWith(getCookieNamePrefix())) {
+	          cookieName = cookieName.substring(getCookieNamePrefix().length());
+	          if (escapedCookie.length() > 0) {
+	            escapedCookie.append("; ");
+	          }
+	          escapedCookie.append(cookieName).append("=").append(cookieSplit[1]);
+	        }
+	      }
 
-      cookieValue = escapedCookie.toString();
-    }
-    return cookieValue;
+	      cookieValue = escapedCookie.toString();
+	    }
+	    return cookieValue;
   }
 
   /** The string prefixing rewritten cookies. */

@@ -59,7 +59,7 @@ public class ProxyServletTest
 
   /** From Meterware httpunit. */
   protected ServletRunner servletRunner;
-  private ServletUnitClient sc;
+  protected ServletUnitClient sc;
 
   protected String targetBaseUri;
   protected String sourceBaseUri;
