@@ -76,6 +76,14 @@ public class SNISSLSocketFactory extends SSLConnectionSocketFactory {
   }
 
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public Socket createSocket(HttpContext context) throws IOException {
+    return SSLSocketFactory.getDefault().createSocket();
+  }
+
   @Override
   public Socket connectSocket(
           int connectTimeout,
