@@ -30,6 +30,7 @@ import org.apache.http.client.params.CookiePolicy;
 import org.apache.http.client.utils.URIUtils;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpEntityEnclosingRequest;
@@ -168,6 +169,7 @@ public class ProxyServlet extends HttpServlet {
    * SystemDefaultHttpClient uses PoolingClientConnectionManager. In any case, it should be thread-safe. */
   @SuppressWarnings({"unchecked", "deprecation"})
   protected HttpClient createHttpClient(HttpParams hcParams) {
+    /*
     try {
       //as of HttpComponents v4.2, this class is better since it uses System
       // Properties:
@@ -182,6 +184,10 @@ public class ProxyServlet extends HttpServlet {
 
     //Fallback on using older client:
     return new DefaultHttpClient(new ThreadSafeClientConnManager(), hcParams);
+    */
+    
+    return HttpClientBuilder.create().useSystemProperties().disableCookieManagement().disableRedirectHandling()
+        .setSSLSocketFactory(SNISSLSocketFactory.createFromSystem()).build();
   }
 
   /** The http client used.
