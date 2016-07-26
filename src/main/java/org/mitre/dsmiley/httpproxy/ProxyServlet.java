@@ -1,5 +1,22 @@
 package org.mitre.dsmiley.httpproxy;
 
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.lang.reflect.Constructor;
+import java.net.HttpCookie;
+import java.net.URI;
+import java.util.BitSet;
+import java.util.Enumeration;
+import java.util.Formatter;
+import java.util.List;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 /**
  * Copyright MITRE
  *
@@ -39,22 +56,6 @@ import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.lang.reflect.Constructor;
-import java.net.HttpCookie;
-import java.net.URI;
-import java.util.BitSet;
-import java.util.Enumeration;
-import java.util.Formatter;
-import java.util.List;
-
 /**
  * An HTTP reverse proxy/gateway servlet. It is designed to be extended for customization
  * if desired. Most of the work is handled by
@@ -70,9 +71,13 @@ import java.util.List;
  *
  * @author David Smiley dsmiley@mitre.org
  */
+@SuppressWarnings({ "deprecation" })
 public class ProxyServlet extends HttpServlet {
 
   /* INIT PARAMETER NAME CONSTANTS */
+
+  /** serial id */
+  private static final long serialVersionUID = 1L;
 
   /** A boolean parameter name to enable logging of input and target URLs to the servlet log. */
   public static final String P_LOG = "log";
@@ -166,13 +171,12 @@ public class ProxyServlet extends HttpServlet {
    * back to:
    * <pre>new DefaultHttpClient(new ThreadSafeClientConnManager(),hcParams)</pre>
    * SystemDefaultHttpClient uses PoolingClientConnectionManager. In any case, it should be thread-safe. */
-  @SuppressWarnings({"unchecked", "deprecation"})
   protected HttpClient createHttpClient(HttpParams hcParams) {
     try {
       //as of HttpComponents v4.2, this class is better since it uses System
       // Properties:
-      Class clientClazz = Class.forName("org.apache.http.impl.client.SystemDefaultHttpClient");
-      Constructor constructor = clientClazz.getConstructor(HttpParams.class);
+      Class<?> clientClazz = Class.forName("org.apache.http.impl.client.SystemDefaultHttpClient");
+      Constructor<?> constructor = clientClazz.getConstructor(HttpParams.class);
       return (HttpClient) constructor.newInstance(hcParams);
     } catch (ClassNotFoundException e) {
       //no problem; use v4.1 below
@@ -193,7 +197,7 @@ public class ProxyServlet extends HttpServlet {
   /** Reads a servlet config parameter by the name {@code hcParamName} of type {@code type}, and
    * set it in {@code hcParams}.
    */
-  protected void readConfigParam(HttpParams hcParams, String hcParamName, Class type) {
+  protected void readConfigParam(HttpParams hcParams, String hcParamName, Class<?> type) {
     String val_str = getConfigParam(hcParamName);
     if (val_str == null)
       return;
@@ -360,7 +364,7 @@ public class ProxyServlet extends HttpServlet {
   /** Copy request headers from the servlet client to the proxy request. */
   protected void copyRequestHeaders(HttpServletRequest servletRequest, HttpRequest proxyRequest) {
     // Get an Enumeration of all of the header names sent by the client
-    Enumeration enumerationOfHeaderNames = servletRequest.getHeaderNames();
+    Enumeration<?> enumerationOfHeaderNames = servletRequest.getHeaderNames();
     while (enumerationOfHeaderNames.hasMoreElements()) {
       String headerName = (String) enumerationOfHeaderNames.nextElement();
       copyRequestHeader(servletRequest, proxyRequest, headerName);
@@ -379,7 +383,7 @@ public class ProxyServlet extends HttpServlet {
     if (hopByHopHeaders.containsHeader(headerName))
       return;
 
-    Enumeration headers = servletRequest.getHeaders(headerName);
+    Enumeration<?> headers = servletRequest.getHeaders(headerName);
     while (headers.hasMoreElements()) {//sometimes more than one value
       String headerValue = (String) headers.nextElement();
       // In case the proxy host is running multiple virtual servers,
@@ -449,7 +453,7 @@ public class ProxyServlet extends HttpServlet {
 
     for (HttpCookie cookie : cookies) {
       //set cookie name prefixed w/ a proxy value so it won't collide w/ other cookies
-      String proxyCookieName = getCookieNamePrefix() + cookie.getName();
+      String proxyCookieName = getCookieNamePrefix(cookie.getName()) + cookie.getName();
       Cookie servletCookie = new Cookie(proxyCookieName, cookie.getValue());
       servletCookie.setComment(cookie.getComment());
       servletCookie.setMaxAge((int) cookie.getMaxAge());
@@ -472,8 +476,8 @@ public class ProxyServlet extends HttpServlet {
       String cookieSplit[] = cookie.split("=");
       if (cookieSplit.length == 2) {
         String cookieName = cookieSplit[0];
-        if (cookieName.startsWith(getCookieNamePrefix())) {
-          cookieName = cookieName.substring(getCookieNamePrefix().length());
+        if (cookieName.startsWith(getCookieNamePrefix(cookieName))) {
+          cookieName = cookieName.substring(getCookieNamePrefix(cookieName).length());
           if (escapedCookie.length() > 0) {
             escapedCookie.append("; ");
           }
@@ -487,7 +491,7 @@ public class ProxyServlet extends HttpServlet {
   }
 
   /** The string prefixing rewritten cookies. */
-  protected String getCookieNamePrefix() {
+  protected String getCookieNamePrefix(String name) {
     return "!Proxy!" + getServletConfig().getServletName();
   }
 

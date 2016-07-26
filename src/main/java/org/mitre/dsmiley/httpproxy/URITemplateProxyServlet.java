@@ -27,16 +27,21 @@ import java.util.regex.Pattern;
  * names.  They are removed when the request is sent to the target.
  */
 public class URITemplateProxyServlet extends ProxyServlet {
-/* Rich:
- * It might be a nice addition to have some syntax that allowed a proxy arg to be "optional", that is,
- * don't fail if not present, just return the empty string or a given default. But I don't see
- * anything in the spec that supports this kind of construct.
- * Notionally, it might look like {?host:google.com} would return the value of
- * the URL parameter "?hostProxyArg=somehost.com" if defined, but if not defined, return "google.com".
- * Similarly, {?host} could return the value of hostProxyArg or empty string if not present.
- * But that's not how the spec works. So for now we will require a proxy arg to be present
- * if defined for this proxy URL.
- */
+  /**
+   * 
+   */
+  private static final long serialVersionUID = 1L;
+
+  /* Rich:
+  * It might be a nice addition to have some syntax that allowed a proxy arg to be "optional", that is,
+  * don't fail if not present, just return the empty string or a given default. But I don't see
+  * anything in the spec that supports this kind of construct.
+  * Notionally, it might look like {?host:google.com} would return the value of
+  * the URL parameter "?hostProxyArg=somehost.com" if defined, but if not defined, return "google.com".
+  * Similarly, {?host} could return the value of hostProxyArg or empty string if not present.
+  * But that's not how the spec works. So for now we will require a proxy arg to be present
+  * if defined for this proxy URL.
+  */
   protected static final Pattern TEMPLATE_PATTERN = Pattern.compile("\\{([a-zA-Z0-9_%.]+)\\}");
   private static final String ATTR_QUERY_STRING =
           URITemplateProxyServlet.class.getSimpleName() + ".queryString";
