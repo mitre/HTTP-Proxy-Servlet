@@ -70,13 +70,10 @@ import java.util.List;
  *
  * @author David Smiley dsmiley@mitre.org
  */
-@SuppressWarnings({ "deprecation" })
+@SuppressWarnings({ "deprecation", "serial" })
 public class ProxyServlet extends HttpServlet {
 
   /* INIT PARAMETER NAME CONSTANTS */
-
-  /** serial id */
-  private static final long serialVersionUID = 1L;
 
   /** A boolean parameter name to enable logging of input and target URLs to the servlet log. */
   public static final String P_LOG = "log";
@@ -363,9 +360,10 @@ public class ProxyServlet extends HttpServlet {
   /** Copy request headers from the servlet client to the proxy request. */
   protected void copyRequestHeaders(HttpServletRequest servletRequest, HttpRequest proxyRequest) {
     // Get an Enumeration of all of the header names sent by the client
-    Enumeration<?> enumerationOfHeaderNames = servletRequest.getHeaderNames();
+    @SuppressWarnings("unchecked")
+    Enumeration<String> enumerationOfHeaderNames = servletRequest.getHeaderNames();
     while (enumerationOfHeaderNames.hasMoreElements()) {
-      String headerName = (String) enumerationOfHeaderNames.nextElement();
+      String headerName = enumerationOfHeaderNames.nextElement();
       copyRequestHeader(servletRequest, proxyRequest, headerName);
     }
   }
@@ -382,9 +380,10 @@ public class ProxyServlet extends HttpServlet {
     if (hopByHopHeaders.containsHeader(headerName))
       return;
 
-    Enumeration<?> headers = servletRequest.getHeaders(headerName);
+    @SuppressWarnings("unchecked")
+    Enumeration<String> headers = servletRequest.getHeaders(headerName);
     while (headers.hasMoreElements()) {//sometimes more than one value
-      String headerValue = (String) headers.nextElement();
+      String headerValue = headers.nextElement();
       // In case the proxy host is running multiple virtual servers,
       // rewrite the Host header to ensure that we get content from
       // the correct virtual server

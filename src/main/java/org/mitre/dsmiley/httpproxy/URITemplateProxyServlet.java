@@ -42,11 +42,8 @@ import java.util.regex.Pattern;
  * --which has the template variables.  The incoming request must contain query args of these
  * names.  They are removed when the request is sent to the target.
  */
+@SuppressWarnings({"serial"})
 public class URITemplateProxyServlet extends ProxyServlet {
-  /**
-   * 
-   */
-  private static final long serialVersionUID = 1L;
 
   /* Rich:
   * It might be a nice addition to have some syntax that allowed a proxy arg to be "optional", that is,

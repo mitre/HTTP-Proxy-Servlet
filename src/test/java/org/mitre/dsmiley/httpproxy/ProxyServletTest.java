@@ -63,6 +63,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author David Smiley - dsmiley@mitre.org
  */
+@SuppressWarnings({ "deprecation", "rawtypes" })
 public class ProxyServletTest
 {
   private static final Log log = LogFactory.getLog(ProxyServletTest.class);
@@ -195,6 +196,7 @@ public class ProxyServletTest
   }
 
   /** http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html */
+  @SuppressWarnings("unchecked")
   @Test
   public void testHopByHopHeadersOnSource() throws Exception {
     //"Proxy-Authenticate" is a hop-by-hop header

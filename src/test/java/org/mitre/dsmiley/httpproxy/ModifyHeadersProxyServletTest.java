@@ -74,6 +74,7 @@ public class ModifyHeadersProxyServletTest extends ProxyServletTest {
     assertEquals("RESPONSE_VALUE_MODIFIED", rsp.getHeaderField(ModifyHeadersProxyServlet.RESPONSE_HEADER));
   }
 
+  @SuppressWarnings({ "serial" })
   public static class ModifyHeadersProxyServlet extends ProxyServlet {
     public static final String REQUEST_HEADER = "REQUEST_HEADER";
     public static final String RESPONSE_HEADER = "RESPONSE_HEADER";
