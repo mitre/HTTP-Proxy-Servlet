@@ -48,7 +48,8 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <!-- works with v4.1 and forward; see .travis.yml -->
-    <httpclient.version>4.5</httpclient.version>
+    <!--  4.5.1 needed for client certificate proxy -->
+    <httpclient.version>4.5.1</httpclient.version>
     <!-- the last version to provide LocalTestServer.java -->
     <httpclient.test.version>4.3.5</httpclient.test.version>
   </properties>
