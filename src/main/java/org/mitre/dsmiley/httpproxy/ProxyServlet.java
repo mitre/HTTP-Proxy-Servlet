@@ -319,8 +319,17 @@ public class ProxyServlet extends HttpServlet {
     // Add the input entity (streamed)
     //  note: we don't bother ensuring we close the servletInputStream since the container handles it
     eProxyRequest.setEntity(
-            new InputStreamEntity(servletRequest.getInputStream(), servletRequest.getContentLength()));
+            new InputStreamEntity(servletRequest.getInputStream(), getContentLength(servletRequest)));
     return eProxyRequest;
+  }
+
+  // Get the header value as a long in order to more correctly proxy very large requests
+  private long getContentLength(HttpServletRequest request) {
+    String contentLengthHeader = request.getHeader("Content-Length");
+    if (contentLengthHeader != null) {
+      return Long.parseLong(contentLengthHeader);
+    }
+    return -1L;
   }
 
   protected void closeQuietly(Closeable closeable) {
