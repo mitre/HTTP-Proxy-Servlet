@@ -311,7 +311,7 @@ public class ProxyServlet extends HttpServlet {
     }
   }
 
-  private HttpRequest newProxyRequestWithEntity(String method, String proxyRequestUri,
+  protected HttpRequest newProxyRequestWithEntity(String method, String proxyRequestUri,
                                                 HttpServletRequest servletRequest)
           throws IOException {
     HttpEntityEnclosingRequest eProxyRequest =
