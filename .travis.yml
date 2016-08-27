@@ -6,7 +6,7 @@ script: mvn -Dhttpclient.version=$HTTPCLIENT_VERSION -Dhttpclient.test.version=$
 
 jdk:
   - openjdk7
-  - openjdk8
+  - oraclejdk8
 
 # We use httpclient test jar providing LocalTestServer.java; no longer in 4.4+.
 
