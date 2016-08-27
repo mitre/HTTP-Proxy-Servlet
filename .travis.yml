@@ -2,10 +2,11 @@ language: java
 
 sudo: false
 
-script: mvn -Dhttpclient.version=$HTTPCLIENT_VERSION -Dhttpclient.test.version=$HTTPCLIENT_TEST_VERSION clean verify
+script: mvn -Dhttpclient.version=$HTTPCLIENT_VERSION -Dhttpclient.test.version=$HTTPCLIENT_TEST_VERSION clean verify javadoc:javadoc
 
 jdk:
   - openjdk7
+  - openjdk8
 
 # We use httpclient test jar providing LocalTestServer.java; no longer in 4.4+.
 

@@ -352,7 +352,7 @@ public class ProxyServlet extends HttpServlet {
 
   /** These are the "hop-by-hop" headers that should not be copied.
    * http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html
-   * I use an HttpClient HeaderGroup class instead of Set<String> because this
+   * I use an HttpClient HeaderGroup class instead of Set&lt;String&gt; because this
    * approach does case insensitive lookup faster.
    */
   protected static final HeaderGroup hopByHopHeaders;
@@ -599,7 +599,7 @@ public class ProxyServlet extends HttpServlet {
    * To be more forgiving, we must escape the problematic characters.  See the URI class for the
    * spec.
    *
-   * @param in example: name=value&foo=bar#fragment
+   * @param in example: name=value&amp;foo=bar#fragment
    */
   protected static CharSequence encodeUriQuery(CharSequence in) {
     //Note that I can't simply use URI.java to encode because it will escape pre-existing escaped things.
