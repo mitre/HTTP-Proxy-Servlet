@@ -1,12 +1,6 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <parent>
-    <groupId>org.sonatype.oss</groupId>
-    <artifactId>oss-parent</artifactId>
-    <version>7</version>
-  </parent>
-
   <groupId>org.mitre.dsmiley.httpproxy</groupId>
   <artifactId>smiley-http-proxy-servlet</artifactId>
   <version>1.8-SNAPSHOT</version>
@@ -48,10 +42,19 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <!-- works with v4.1 and forward; see .travis.yml -->
-    <httpclient.version>4.5</httpclient.version>
+    <httpclient.version>4.5.2</httpclient.version>
     <!-- the last version to provide LocalTestServer.java -->
     <httpclient.test.version>4.3.5</httpclient.test.version>
   </properties>
+
+  <prerequisites>
+    <maven>3.0.4</maven>
+  </prerequisites>
+
+  <!-- To check for new plugins and dependencies:
+  mvn org.codehaus.mojo:versions-maven-plugin:2.3:display-plugin-updates
+  mvn org.codehaus.mojo:versions-maven-plugin:2.3:display-dependency-updates
+  -->
 
   <dependencies>
 
@@ -72,7 +75,7 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.8.2</version>
+      <version>4.12</version>
       <scope>test</scope>
     </dependency>
 
@@ -117,20 +120,13 @@
         </configuration>
       </plugin>
 
-      <!-- TODO add an assembly with the dependencies -->
-      <plugin>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <version>2.2.2</version>
-        <configuration>
-          <descriptorRefs>
-            <descriptorRef>project</descriptorRef>
-          </descriptorRefs>
-        </configuration>
-      </plugin>
-
       <!-- See
       http://central.sonatype.org/pages/apache-maven.html#nexus-staging-maven-plugin-for-deployment-and-release
+
+      mvn release:clean release:prepare
+      mvn release:perform
       -->
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-release-plugin</artifactId>
@@ -146,7 +142,7 @@
       <plugin>
         <groupId>org.sonatype.plugins</groupId>
         <artifactId>nexus-staging-maven-plugin</artifactId>
-        <version>1.6.3</version>
+        <version>1.6.6</version>
         <extensions>true</extensions>
         <configuration>
           <serverId>ossrh</serverId>
@@ -158,15 +154,46 @@
     </plugins>
   </build>
 
+  <reporting>
+    <plugins>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-project-info-reports-plugin</artifactId>
+        <version>2.7</version>
+        <configuration>
+          <!-- slow: -->
+          <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>2.9.1</version>
+        <reportSets>
+          <reportSet>
+            <reports>
+              <report>javadoc</report>
+              <!--<report>test-javadoc</report>-->
+            </reports>
+          </reportSet>
+        </reportSets>
+      </plugin>
+
+    </plugins>
+  </reporting>
+
   <profiles>
     <profile>
       <id>release</id>
+
       <build>
         <plugins>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-source-plugin</artifactId>
-            <version>2.2.1</version>
+            <version>2.4</version>
             <executions>
               <execution>
                 <id>attach-sources</id>
@@ -176,10 +203,11 @@
               </execution>
             </executions>
           </plugin>
+
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
-            <version>2.9</version>
+            <version>2.9.1</version>
             <executions>
               <execution>
                 <id>attach-javadocs</id>
@@ -189,9 +217,35 @@
               </execution>
             </executions>
           </plugin>
+
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>1.6</version>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
         </plugins>
       </build>
     </profile>
   </profiles>
+
+  <distributionManagement>
+    <snapshotRepository>
+      <id>ossrh</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </snapshotRepository>
+    <repository>
+      <id>ossrh</id>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+    </repository>
+  </distributionManagement>
   
 </project>
