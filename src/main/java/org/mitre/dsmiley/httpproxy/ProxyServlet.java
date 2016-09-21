@@ -464,7 +464,7 @@ public class ProxyServlet extends HttpServlet {
       Cookie servletCookie = new Cookie(proxyCookieName, cookie.getValue());
       servletCookie.setComment(cookie.getComment());
       servletCookie.setMaxAge((int) cookie.getMaxAge());
-      servletCookie.setPath(path); //set to the path of the proxy servlet
+      servletCookie.setPath(cookie.getPath()); //set to the path of the proxy servlet
       // don't set cookie domain
       servletCookie.setSecure(cookie.getSecure());
       servletCookie.setVersion(cookie.getVersion());
