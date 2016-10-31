@@ -131,12 +131,17 @@ public class ProxyServlet extends HttpServlet {
 
     initTarget();//sets target*
 
-    final RequestConfig requestConfig = RequestConfig.custom()
+    proxyClient = createHttpClient(buildRequestConfig());
+  }
+
+  /**
+   * Sub-classes can override specific behaviour of {@link org.apache.http.client.config.RequestConfig}.
+   */
+  protected RequestConfig buildRequestConfig() {
+    return RequestConfig.custom()
             .setRedirectsEnabled(false)
             .setCookieSpec(CookieSpecs.IGNORE_COOKIES)
             .build();
-
-    proxyClient = createHttpClient(requestConfig);
   }
 
   protected void initTarget() throws ServletException {
