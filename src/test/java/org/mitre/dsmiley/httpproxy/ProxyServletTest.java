@@ -217,29 +217,32 @@ public class ProxyServletTest
 
   @Test
   public void testWithExistingXForwardedFor() throws Exception {
-    final String HEADER = "X-Forwarded-For";
+    final String FOR_HEADER = "X-Forwarded-For";
 
     localTestServer.register("/targetPath*", new RequestInfoHandler() {
       public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
-        Header xForwardedForHeader = request.getFirstHeader(HEADER);
+        Header xForwardedForHeader = request.getFirstHeader(FOR_HEADER);
         assertEquals("192.168.1.1, 127.0.0.1", xForwardedForHeader.getValue());
         super.handle(request, response, context);
       }
     });
 
     GetMethodWebRequest req = makeGetMethodRequest(sourceBaseUri);
-    req.setHeaderField(HEADER, "192.168.1.1");
+    req.setHeaderField(FOR_HEADER, "192.168.1.1");
     WebResponse rsp = execAndAssert(req, "");
   }
 
   @Test
   public void testEnabledXForwardedFor() throws Exception {
-    final String HEADER = "X-Forwarded-For";
+    final String FOR_HEADER = "X-Forwarded-For";
+    final String PROTO_HEADER = "X-Forwarded-Proto";
 
     localTestServer.register("/targetPath*", new RequestInfoHandler() {
       public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
-        Header xForwardedForHeader = request.getFirstHeader(HEADER);
+        Header xForwardedForHeader = request.getFirstHeader(FOR_HEADER);
+        Header xForwardedProtoHeader = request.getFirstHeader(PROTO_HEADER);
         assertEquals("127.0.0.1", xForwardedForHeader.getValue());
+        assertEquals("http", xForwardedProtoHeader.getValue());
         super.handle(request, response, context);
       }
     });
@@ -315,6 +318,34 @@ public class ProxyServletTest
     // note httpunit doesn't set all cookie fields, ignores max-agent, secure, etc.
     // also doesn't support more than one header of same name so I can't test this working on two cookies
     assertEquals("!Proxy!" + servletName + "JSESSIONID=1234;path=" + servletPath, rsp.getHeaderField("Set-Cookie"));
+  }
+
+  @Test
+  public void testPreserveCookie() throws Exception {
+    servletRunner = new ServletRunner();
+
+    Properties servletProps = new Properties();
+    servletProps.setProperty("http.protocol.handle-redirects", "false");
+    servletProps.setProperty(ProxyServlet.P_LOG, "true");
+    servletProps.setProperty(ProxyServlet.P_FORWARDEDFOR, "true");
+    servletProps.setProperty(ProxyServlet.P_PRESERVECOOKIES, "true");
+    setUpServlet(servletProps);
+
+    sc = servletRunner.newClient();
+    sc.getClientProperties().setAutoRedirect(false);//don't want httpunit itself to redirect
+
+    final String HEADER = "Set-Cookie";
+    localTestServer.register("/targetPath*", new RequestInfoHandler() {
+      public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
+        response.setHeader(HEADER, "JSESSIONID=1234; Path=/proxy/path/that/we/dont/want; Expires=Wed, 13 Jan 2021 22:23:01 GMT; Domain=.foo.bar.com; HttpOnly");
+        super.handle(request, response, context);
+      }
+    });
+
+    GetMethodWebRequest req = makeGetMethodRequest(sourceBaseUri);
+    WebResponse rsp = execAndAssert(req, "");
+    // note httpunit doesn't set all cookie fields, ignores max-agent, secure, etc.
+    assertEquals("JSESSIONID=1234;path=" + servletPath, rsp.getHeaderField(HEADER));
   }
 
   @Test
@@ -414,6 +445,35 @@ public class ProxyServletTest
     // Expect exact response
     assertEquals(CONTENT, rsp.getText());
     assertEquals(sourceBaseUri + "/test/", rsp.getHeaderField(HttpHeaders.LOCATION));
+  }
+
+  @Test
+  public void testPreserveHost() throws Exception {
+    servletRunner = new ServletRunner();
+
+    Properties servletProps = new Properties();
+    servletProps.setProperty("http.protocol.handle-redirects", "false");
+    servletProps.setProperty(ProxyServlet.P_LOG, "true");
+    servletProps.setProperty(ProxyServlet.P_FORWARDEDFOR, "true");
+    servletProps.setProperty(ProxyServlet.P_PRESERVEHOST, "true");
+    setUpServlet(servletProps);
+
+    sc = servletRunner.newClient();
+    sc.getClientProperties().setAutoRedirect(false);//don't want httpunit itself to redirect
+
+    final String HEADER = "Host";
+    final String[] proxyHost = new String[1];
+    localTestServer.register("/targetPath*", new RequestInfoHandler() {
+      public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
+    	  proxyHost[0] = request.getHeaders(HEADER)[0].getValue();
+        super.handle(request, response, context);
+      }
+    });
+
+    GetMethodWebRequest req = makeGetMethodRequest(sourceBaseUri);
+    req.setHeaderField(HEADER, "SomeHost");
+    execAndAssert(req, "");
+    assertEquals("SomeHost", proxyHost[0]);
   }
 
   private WebResponse execAssert(GetMethodWebRequest request, String expectedUri) throws Exception {
