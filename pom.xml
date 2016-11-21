@@ -3,7 +3,7 @@
 
   <groupId>org.mitre.dsmiley.httpproxy</groupId>
   <artifactId>smiley-http-proxy-servlet</artifactId>
-  <version>1.9-SNAPSHOT</version>
+  <version>1.9.1</version>
   <packaging>jar</packaging>
 
   <name>Smiley's HTTP Proxy Servlet</name>
@@ -29,13 +29,25 @@
       <!-- I used to work for MITRE for many years but I don't anymore. -->
       <!--<organization>MITRE</organization>-->
     </developer>
+    <developer>
+      <name>Prasad Madhbhavikar</name>
+      <email>prasad.madhbhavikar@gmail.com</email>
+      <!-- Currently working with Cisco and the changes are as requested -->
+      <organization>Cisco</organization>
+    </developer>
+    <developer>
+      <name>Gourav Jangra</name>
+      <email>jangra.gourav143@gmail.com</email>
+      <!-- Currently working with Cisco and the changes are as requested -->
+      <organization>Cisco</organization>
+    </developer>
   </developers>
 
   <scm>
     <url>https://github.com/dsmiley/HTTP-Proxy-Servlet</url>
     <connection>scm:git:https://dsmiley@github.com/dsmiley/HTTP-Proxy-Servlet.git</connection>
     <developerConnection>scm:git:git@github.com:dsmiley/HTTP-Proxy-Servlet.git</developerConnection>
-    <tag>HEAD</tag>
+    <tag>smiley-http-proxy-servlet-1.9</tag>
   </scm>
 
   <properties>

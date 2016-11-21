@@ -37,7 +37,7 @@ HTTP POST. Other application parameters can be in your POSTed url-encoded-form s
 proxyArgs.
 
 Build & Installation
-------------
+--------------------
 
 Simply build the jar using "mvn package" at the command line.
 The jar is built to "target/smiley-http-proxy-servlet-VERSION.jar".
@@ -49,7 +49,7 @@ add this to your dependencies in your pom like so:
     <dependency>
         <groupId>org.mitre.dsmiley.httpproxy</groupId>
         <artifactId>smiley-http-proxy-servlet</artifactId>
-        <version>1.7</version>
+        <version>1.9.1</version>
     </dependency>
 
 Ivy and other dependency managers can be used as well.
@@ -136,4 +136,43 @@ proxy:
     solr:
         servlet_url: /solr/*
         target_url: http://solrserver:8983/solr
+```
+
+Here is an example of using the proxy with an externalized properties file `http-proxy.properties` and / or `http-proxy-override.properties` which would be plugged into the `web.xml` if it is available in the classpath:
+
+```xml
+    ...
+    <servlet>
+        <servlet-name>solr</servlet-name>
+        <servlet-class>org.mitre.dsmiley.httpproxy.ProxyServlet</servlet-class>
+        <init-param>
+          <param-name>targetUri</param-name>
+          <param-value>${some-url}</param-value>
+        </init-param>
+        <init-param>
+          <param-name>log</param-name>
+          <param-value>true</param-value>
+        </init-param>
+    </servlet>
+    ...
+```
+
+make sure you put **${**some-url**}** is used if you want to pickup values from the properties file.
+
+The properties file could be:
+
+**http-proxy.properties**:
+  
+```properties
+some-url=http://www.cisco.com/{x-some-parameter}/someEndpoint
+```
+
+Assuming `x-some-parameter`  is a custom header parameter.
+
+If this property needs to be overridden for some reason for a different environment for example, then the override properties file could be:
+
+**http-proxy-override.properties**
+
+```properties
+some-url=http://www.cisco.com/someContext/someEndpoint
 ```
