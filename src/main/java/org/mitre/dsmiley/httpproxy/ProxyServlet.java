@@ -205,7 +205,7 @@ public class ProxyServlet extends HttpServlet {
     hcParams.setBooleanParameter(ClientPNames.HANDLE_REDIRECTS, false); // See #70
     readConfigParam(hcParams, ClientPNames.HANDLE_REDIRECTS, Boolean.class);
     readConfigParam(hcParams, ClientPNames.ALLOW_CIRCULAR_REDIRECTS, Boolean.class);
-    readConfigParam(hcParams, ClientPNames.CONN_MANAGER_TIMEOUT, Integer.class);
+    readConfigParam(hcParams, "http.conn-manager.timeout", Integer.class);
     readConfigParam(hcParams, ClientPNames.MAX_REDIRECTS, Integer.class);
     readConfigParam(hcParams, CoreConnectionPNames.CONNECTION_TIMEOUT, Integer.class);
     readConfigParam(hcParams, CoreConnectionPNames.SO_TIMEOUT, Integer.class);
