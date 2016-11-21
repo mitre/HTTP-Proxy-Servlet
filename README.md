@@ -6,7 +6,7 @@ This is an HTTP Proxy (aka gateway) in the form of a Java servlet.  An HTTP prox
 This is hardly the first proxy, so why did I write it and thus why might you use it?
 
  * It's simple -- a single source file implementation
- * It's tested -- have confidence it works [![Build Status](https://travis-ci.org/mitre/HTTP-Proxy-Servlet.png)](https://travis-ci.org/mitre/HTTP-Proxy-Servlet)
+ * It's tested -- have confidence it works [![Build Status](https://travis-ci.org/madhbhavikar/HTTP-Proxy-Servlet.svg?branch=propertiesSupport)](https://travis-ci.org/madhbhavikar/HTTP-Proxy-Servlet)
  * It's securable -- via Java EE web.xml or via a servlet filter such as [Spring-Security]([http://static.springsource.org/spring-security/site/)
  * It's extendible -- via simple class extension
  * It's embeddable -- into your Java web application making testing your app easier
@@ -15,7 +15,7 @@ I have seen many quick'n'dirty proxies posted in source form on the web such as 
 
 This proxy depends on [Apache HttpClient](http://hc.apache.org/httpcomponents-client-ga/), which offers another point of extension for this proxy.  At some point I may write an alternative that uses the JDK and thus doesn't have any dependencies, which is desirable. In the mean time, you'll have to add the jar files for this and its dependencies:
 
-     +- org.apache.httpcomponents:httpclient:jar:4.2.5:compile
+     +- org.apache.httpcomponents:httpclient:jar:**4.5.2**:compile
         +- org.apache.httpcomponents:httpcore:jar:4.2.4:compile
         |  +- commons-logging:commons-logging:jar:1.1.1:compile
         |  \- commons-codec:commons-codec:jar:1.6:compile
