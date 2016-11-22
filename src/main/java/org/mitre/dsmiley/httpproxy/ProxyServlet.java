@@ -139,18 +139,18 @@ public class ProxyServlet extends HttpServlet {
    * http-proxy-override.properties which would be plugged into the web.xml if it is available in the classpath:
    *
    *    ...
-   *    <servlet>
-   *    <servlet-name>solr</servlet-name>
-   *    <servlet-class>org.mitre.dsmiley.httpproxy.ProxyServlet</servlet-class>
-   *    <init-param>
-   *    <param-name>targetUri</param-name>
-   *    <param-value>${some-url}</param-value>
-   *    </init-param>
-   *    <init-param>
-   *    <param-name>log</param-name>
-   *    <param-value>true</param-value>
-   *    </init-param>
-   *    </servlet>
+   *    &lt;servlet&gt;
+   *    &lt;servlet-name&gt;solr&lt;/servlet-name&gt;
+   *    &lt;servlet-class&gt;org.mitre.dsmiley.httpproxy.ProxyServlet&lt;/servlet-class&gt;
+   *    &lt;init-param&gt;
+   *    &lt;param-name&gt;targetUri&lt;/param-name&gt;
+   *    &lt;param-value&gt;${some-url}&lt;/param-value&gt;
+   *    &lt;/init-param&gt;
+   *    &lt;init-param&gt;
+   *    &lt;param-name&gt;log&lt;/param-name&gt;
+   *    &lt;param-value&gt;true&lt;/param-value&gt;
+   *    &lt;/init-param&gt;
+   *    &lt;/servlet&gt;
    *    ...
    *
    * make sure you put ${some-url} is used if you want to pickup values from the properties file.
