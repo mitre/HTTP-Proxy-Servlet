@@ -29,18 +29,6 @@
       <!-- I used to work for MITRE for many years but I don't anymore. -->
       <!--<organization>MITRE</organization>-->
     </developer>
-    <developer>
-      <name>Prasad Madhbhavikar</name>
-      <email>prasad.madhbhavikar@gmail.com</email>
-      <!-- Currently working with Cisco and the changes are as requested -->
-      <organization>Cisco</organization>
-    </developer>
-    <developer>
-      <name>Gourav Jangra</name>
-      <email>jangra.gourav143@gmail.com</email>
-      <!-- Currently working with Cisco and the changes are as requested -->
-      <organization>Cisco</organization>
-    </developer>
   </developers>
 
   <scm>

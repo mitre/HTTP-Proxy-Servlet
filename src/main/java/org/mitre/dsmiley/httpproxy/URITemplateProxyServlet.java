@@ -23,7 +23,6 @@ import org.apache.http.client.utils.URLEncodedUtils;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Enumeration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,7 +56,7 @@ public class URITemplateProxyServlet extends ProxyServlet {
   * But that's not how the spec works. So for now we will require a proxy arg to be present
   * if defined for this proxy URL.
   */
-  protected static final Pattern TEMPLATE_PATTERN = Pattern.compile("\\{([a-zA-Z0-9_%-.]+)\\}");
+  protected static final Pattern TEMPLATE_PATTERN = Pattern.compile("\\{(.+?)\\}");
   private static final String ATTR_QUERY_STRING =
           URITemplateProxyServlet.class.getSimpleName() + ".queryString";
 
@@ -102,8 +101,6 @@ public class URITemplateProxyServlet extends ProxyServlet {
       params.put(pair.getName(), pair.getValue());
     }
 
-    LinkedHashMap<String, String> specialHeaders = getVariablesFromRequestHeaders(servletRequest);
-
     //Now rewrite the URL
     StringBuffer urlBuf = new StringBuffer();//note: StringBuilder isn't supported by Matcher
     Matcher matcher = TEMPLATE_PATTERN.matcher(targetUriTemplate);
@@ -111,7 +108,7 @@ public class URITemplateProxyServlet extends ProxyServlet {
       String arg = matcher.group(1);
       String replacement = params.remove(arg);//note we remove
       if (replacement == null) {
-        replacement = specialHeaders.get(arg);
+        replacement = servletRequest.getHeader(arg) ;
         if (replacement == null) {
             throw new ServletException("Missing HTTP parameter " + arg + " to fill the template");
         }
@@ -148,15 +145,4 @@ public class URITemplateProxyServlet extends ProxyServlet {
     return (String) servletRequest.getAttribute(ATTR_QUERY_STRING);
   }
 
-    private LinkedHashMap<String, String> getVariablesFromRequestHeaders(HttpServletRequest servletRequest) {
-        LinkedHashMap<String, String> specialHeaders = new LinkedHashMap<>();
-        Enumeration headerNames = servletRequest.getHeaderNames();
-
-        while (headerNames.hasMoreElements()) {
-            String headerName = (String) headerNames.nextElement();
-            specialHeaders.put(headerName, servletRequest.getHeader(headerName));
-        }
-
-        return specialHeaders;
-    }
 }
