@@ -16,13 +16,7 @@
 
 package org.mitre.dsmiley.httpproxy;
 
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpEntityEnclosingRequest;
-import org.apache.http.HttpHeaders;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
+import org.apache.http.*;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.AbortableHttpRequest;
 import org.apache.http.client.params.ClientPNames;
@@ -276,10 +270,7 @@ public class ProxyServlet extends HttpServlet {
     HttpResponse proxyResponse = null;
     try {
       // Execute the request
-      if (doLog) {
-        log("proxy " + method + " uri: " + servletRequest.getRequestURI() + " -- " + proxyRequest.getRequestLine().getUri());
-      }
-      proxyResponse = proxyClient.execute(getTargetHost(servletRequest), proxyRequest);
+        proxyResponse = doExecute(servletRequest, servletResponse, proxyRequest);
 
       // Process the response:
 
@@ -327,6 +318,15 @@ public class ProxyServlet extends HttpServlet {
       // http://stackoverflow.com/questions/1159168/should-one-call-close-on-httpservletresponse-getoutputstream-getwriter
     }
   }
+
+    protected HttpResponse doExecute(HttpServletRequest servletRequest, HttpServletResponse servletResponse,
+                                     HttpRequest proxyRequest) throws IOException {
+        if (doLog) {
+            log("proxy " + servletRequest.getMethod() + " uri: " + servletRequest.getRequestURI() + " -- " +
+                    proxyRequest.getRequestLine().getUri());
+        }
+        return proxyClient.execute(getTargetHost(servletRequest), proxyRequest);
+    }
 
   protected HttpRequest newProxyRequestWithEntity(String method, String proxyRequestUri,
                                                 HttpServletRequest servletRequest)
