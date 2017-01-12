@@ -96,7 +96,7 @@ public class ProxyServlet extends HttpServlet {
   protected boolean doSendUrlFragment = true;
   protected boolean doPreserveHost = false;
   protected boolean doPreserveCookies = false;
-  
+
   //These next 3 are cached here, and should only be referred to in initialization logic. See the
   // ATTR_* parameters.
   /** From the configured parameter "targetUri". */
@@ -499,23 +499,21 @@ public class ProxyServlet extends HttpServlet {
    */
   protected String getRealCookie(String cookieValue) {
     StringBuilder escapedCookie = new StringBuilder();
-    String cookies[] = cookieValue.split("; ");
+    String cookies[] = cookieValue.split("[;,]");
     for (String cookie : cookies) {
       String cookieSplit[] = cookie.split("=");
       if (cookieSplit.length == 2) {
-        String cookieName = cookieSplit[0];
+        String cookieName = cookieSplit[0].trim();
         if (cookieName.startsWith(getCookieNamePrefix(cookieName))) {
           cookieName = cookieName.substring(getCookieNamePrefix(cookieName).length());
           if (escapedCookie.length() > 0) {
             escapedCookie.append("; ");
           }
-          escapedCookie.append(cookieName).append("=").append(cookieSplit[1]);
+          escapedCookie.append(cookieName).append("=").append(cookieSplit[1].trim());
         }
       }
-
-      cookieValue = escapedCookie.toString();
     }
-    return cookieValue;
+    return escapedCookie.toString();
   }
 
   /** The string prefixing rewritten cookies. */
