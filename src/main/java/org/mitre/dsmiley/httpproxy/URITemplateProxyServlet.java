@@ -20,9 +20,6 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URIUtils;
 import org.apache.http.client.utils.URLEncodedUtils;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -31,6 +28,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * A proxy servlet in which the target URI is templated from incoming request parameters. The
@@ -55,7 +56,7 @@ public class URITemplateProxyServlet extends ProxyServlet {
   * But that's not how the spec works. So for now we will require a proxy arg to be present
   * if defined for this proxy URL.
   */
-  protected static final Pattern TEMPLATE_PATTERN = Pattern.compile("\\{([a-zA-Z0-9_%.]+)\\}");
+  protected static final Pattern TEMPLATE_PATTERN = Pattern.compile("\\{(.+?)\\}");
   private static final String ATTR_QUERY_STRING =
           URITemplateProxyServlet.class.getSimpleName() + ".queryString";
 
@@ -107,7 +108,10 @@ public class URITemplateProxyServlet extends ProxyServlet {
       String arg = matcher.group(1);
       String replacement = params.remove(arg);//note we remove
       if (replacement == null) {
-        throw new ServletException("Missing HTTP parameter "+arg+" to fill the template");
+        replacement = servletRequest.getHeader(arg) ;
+        if (replacement == null) {
+            throw new ServletException("Missing HTTP parameter " + arg + " to fill the template");
+        }
       }
       matcher.appendReplacement(urlBuf, replacement);
     }
@@ -140,4 +144,5 @@ public class URITemplateProxyServlet extends ProxyServlet {
   protected String rewriteQueryStringFromRequest(HttpServletRequest servletRequest, String queryString) {
     return (String) servletRequest.getAttribute(ATTR_QUERY_STRING);
   }
+
 }

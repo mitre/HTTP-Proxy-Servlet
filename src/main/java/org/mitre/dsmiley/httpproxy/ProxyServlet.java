@@ -30,16 +30,13 @@ import org.apache.http.message.BasicHttpEntityEnclosingRequest;
 import org.apache.http.message.BasicHttpRequest;
 import org.apache.http.message.HeaderGroup;
 import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.CoreConnectionPNames;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Constructor;
 import java.net.HttpCookie;
@@ -48,6 +45,13 @@ import java.util.BitSet;
 import java.util.Enumeration;
 import java.util.Formatter;
 import java.util.List;
+import java.util.Properties;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * An HTTP reverse proxy/gateway servlet. It is designed to be extended for customization
@@ -106,6 +110,8 @@ public class ProxyServlet extends HttpServlet {
 
   private HttpClient proxyClient;
 
+  private Properties configurationProperties = null;
+
   @Override
   public String getServletInfo() {
     return "A proxy servlet by David Smiley, dsmiley@apache.org";
@@ -123,9 +129,80 @@ public class ProxyServlet extends HttpServlet {
   /**
    * Reads a configuration parameter. By default it reads servlet init parameters but
    * it can be overridden.
+   * In case if you are using an externalized properties file http-proxy.properties and / or
+   * http-proxy-override.properties which would be plugged into the web.xml if it is available in the classpath:
+   *
+   *    ...
+   *    &lt;servlet&gt;
+   *    &lt;servlet-name&gt;solr&lt;/servlet-name&gt;
+   *    &lt;servlet-class&gt;org.mitre.dsmiley.httpproxy.ProxyServlet&lt;/servlet-class&gt;
+   *    &lt;init-param&gt;
+   *    &lt;param-name&gt;targetUri&lt;/param-name&gt;
+   *    &lt;param-value&gt;${some-url}&lt;/param-value&gt;
+   *    &lt;/init-param&gt;
+   *    &lt;init-param&gt;
+   *    &lt;param-name&gt;log&lt;/param-name&gt;
+   *    &lt;param-value&gt;true&lt;/param-value&gt;
+   *    &lt;/init-param&gt;
+   *    &lt;/servlet&gt;
+   *    ...
+   *
+   * make sure you put ${some-url} is used if you want to pickup values from the properties file.
+   *
+   * The properties file could be:
+   *
+   * http-proxy.properties:
+   *
+   * some-url=http://www.cisco.com/{x-some-parameter}/someEndpoint
+   *
+   * Assuming x-some-parameter is a custom header parameter.
+   *
+   * If this property needs to be overridden for some reason for a different environment for example, then the override properties file could be:
+   *
+   * http-proxy-override.properties
+   *
+   * some-url=http://www.cisco.com/someContext/someEndpoint
    */
+
   protected String getConfigParam(String key) {
-    return getServletConfig().getInitParameter(key);
+    if(configurationProperties == null) {
+      configurationProperties = getConfigurationProperties();
+    }
+    return getValue(configurationProperties, getServletConfig().getInitParameter(key));
+  }
+
+  protected String getValue(Properties configurationProperties, String value){
+    if(value == null){
+      return value;
+    }
+    if(value.startsWith("${") && value.endsWith("}")){
+      String key = value.replaceAll("\\$\\{(.*)\\}", "$1");
+      return (String) configurationProperties.get(key);
+    }
+    return value;
+  }
+  protected Properties getConfigurationProperties()
+  {
+    Properties configurationProperties = new Properties();
+    try
+    {
+      InputStream proxyPropertiesResource = Thread.currentThread().getContextClassLoader().getResourceAsStream("http-proxy.properties");
+      if (proxyPropertiesResource != null) {
+        configurationProperties.load(proxyPropertiesResource);
+      }
+    }
+    catch (IOException e) {}
+    Properties proxyOverrideProperties = new Properties();
+    try
+    {
+      InputStream proxyOverridePropertiesResource = Thread.currentThread().getContextClassLoader().getResourceAsStream("http-proxy-override.properties");
+      if (proxyOverridePropertiesResource != null) {
+        proxyOverrideProperties.load(proxyOverridePropertiesResource);
+      }
+    }
+    catch (IOException e) {}
+    configurationProperties.putAll(proxyOverrideProperties);
+    return configurationProperties;
   }
 
   @Override
@@ -155,6 +232,12 @@ public class ProxyServlet extends HttpServlet {
     hcParams.setParameter(ClientPNames.COOKIE_POLICY, CookiePolicy.IGNORE_COOKIES);
     hcParams.setBooleanParameter(ClientPNames.HANDLE_REDIRECTS, false); // See #70
     readConfigParam(hcParams, ClientPNames.HANDLE_REDIRECTS, Boolean.class);
+    readConfigParam(hcParams, ClientPNames.ALLOW_CIRCULAR_REDIRECTS, Boolean.class);
+    readConfigParam(hcParams, "http.conn-manager.timeout", Integer.class);
+    readConfigParam(hcParams, ClientPNames.MAX_REDIRECTS, Integer.class);
+    readConfigParam(hcParams, CoreConnectionPNames.CONNECTION_TIMEOUT, Integer.class);
+    readConfigParam(hcParams, CoreConnectionPNames.SO_TIMEOUT, Integer.class);
+    readConfigParam(hcParams, CoreConnectionPNames.STALE_CONNECTION_CHECK, Boolean.class);
     proxyClient = createHttpClient(hcParams);
   }
 
@@ -650,6 +733,10 @@ public class ProxyServlet extends HttpServlet {
         //leading %, 0 padded, width 2, capital hex
         formatter.format("%%%02X",(int)c);//TODO
       }
+    }
+
+    if(formatter!= null){
+      formatter.close();
     }
     return outBuf != null ? outBuf : in;
   }
