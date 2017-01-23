@@ -478,6 +478,9 @@ public class ProxyServlet extends HttpServlet {
     List<HttpCookie> cookies = HttpCookie.parse(headerValue);
     String path = servletRequest.getContextPath(); // path starts with / or is empty string
     path += servletRequest.getServletPath(); // servlet path starts with / or is empty string
+    if(path.isEmpty()){
+        path = "/";
+    }
 
     for (HttpCookie cookie : cookies) {
       //set cookie name prefixed w/ a proxy value so it won't collide w/ other cookies
