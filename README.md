@@ -104,7 +104,7 @@ them from the normal query parameters in case of a conflict.:
 If you are using **SpringMVC**, then an alternative is to use its
 [ServletWrappingController](http://static.springsource.org/spring/docs/3.0.x/api/org/springframework/web/servlet/mvc/ServletWrappingController.html)
 so that you can configure this servlet via Spring, which is supremely flexible, instead of having to modify your web.xml. However, note that some
-customization may be needed to divide the URL at the proxied portion; see [Issue#15](/dsmiley/HTTP-Proxy-Servlet/issues/15).
+customization may be needed to divide the URL at the proxied portion; see [Issue #15](https://github.com/mitre/HTTP-Proxy-Servlet/issues/15).
 
 If you are using **Spring Boot**, then consider this basic configuration:
 
