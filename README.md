@@ -11,20 +11,25 @@ This is hardly the first proxy, so why did I write it and thus why might you use
  * It's extendible -- via simple class extension
  * It's embeddable -- into your Java web application making testing your app easier
 
-I have seen many quick'n'dirty proxies posted in source form on the web such as in a blog.  I've found such proxies to support a limited HTTP subset, such as only a GET request, or to suffer other implementation problems such as performance issues or URL escaping bugs.  Disappointed at the situation, I set out to create a simple one that works well and that is well tested so I know it works.  I suggest you use a well tested proxy instead of something non-tested that is perhaps better described as a proof-of-concept.
+I have seen many quick'n'dirty proxies posted in source form on the web such as in a blog.
+I've found such proxies to support a limited HTTP subset, such as only a GET request, or to suffer other implementation problems such as performance issues or URL escaping bugs.
+Disappointed at the situation, I set out to create a simple one that works well and that is well tested so I know it works.
+I suggest you use a well tested proxy instead of something non-tested that is perhaps better described as a proof-of-concept.
 
-This proxy depends on [Apache HttpClient](http://hc.apache.org/httpcomponents-client-ga/), which offers another point of extension for this proxy.  At some point I may write an alternative that uses the JDK and thus doesn't have any dependencies, which is desirable. In the mean time, you'll have to add the jar files for this and its dependencies:
+This proxy depends on [Apache HttpClient](http://hc.apache.org/httpcomponents-client-ga/), which offers another point of extension for this proxy.
+At some point I may write an alternative that uses the JDK and thus doesn't have any dependencies, which is desirable.
+In the mean time, you'll have to add the jar files for this and its dependencies:
 
-     +- org.apache.httpcomponents:httpclient:jar:4.2.5:compile
-        +- org.apache.httpcomponents:httpcore:jar:4.2.4:compile
-        |  +- commons-logging:commons-logging:jar:1.1.1:compile
-        |  \- commons-codec:commons-codec:jar:1.6:compile
+     +- org.apache.httpcomponents:httpclient:jar:4.5.2:compile
+        +- org.apache.httpcomponents:httpcore:jar:4.4.4:compile
+        |  +- commons-logging:commons-logging:jar:1.2:compile
+        |  \- commons-codec:commons-codec:jar:1.9:compile
+
+This proxy supports HttpClient 4.3, and newer version too.
+If you need to support _older_ HttpClient versions, namely 4.1 and 4.2, then use  the 1.8 version of this proxy.
 
 As of version 1.4 of the proxy, it will by default recognize "http.proxy" and
- most other standard Java system properties. This is inherited from HC's
- new [SystemDefaultHttpClient](http://hc.apache.org/httpcomponents-client-ga/httpclient/apidocs/org/apache/http/impl/client/SystemDefaultHttpClient.html). You can still use HC 4.1, however, as java
- reflection is used to support both 4.1, which doesn't have that class, and 4.2+.
- Tests pass with 4.3 too.
+ most other standard Java system properties.
 
 As of version 1.5 of the proxy, there is the ability to parameterize your proxy URL, allowing you to use
 the same web.xml servlet specification for multiple target servers. It follows the
@@ -49,7 +54,7 @@ add this to your dependencies in your pom like so:
     <dependency>
         <groupId>org.mitre.dsmiley.httpproxy</groupId>
         <artifactId>smiley-http-proxy-servlet</artifactId>
-        <version>1.8</version>
+        <version>1.9</version>
     </dependency>
 
 Ivy and other dependency managers can be used as well.
