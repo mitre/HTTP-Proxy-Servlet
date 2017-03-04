@@ -18,18 +18,16 @@ package org.mitre.dsmiley.httpproxy;
 
 import org.apache.http.*;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.CookieSpecs;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.AbortableHttpRequest;
-import org.apache.http.client.params.ClientPNames;
-import org.apache.http.client.params.CookiePolicy;
 import org.apache.http.client.utils.URIUtils;
 import org.apache.http.entity.InputStreamEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpEntityEnclosingRequest;
 import org.apache.http.message.BasicHttpRequest;
 import org.apache.http.message.HeaderGroup;
-import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 
@@ -41,7 +39,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.lang.reflect.Constructor;
 import java.net.HttpCookie;
 import java.net.URI;
 import java.util.BitSet;
@@ -151,11 +148,17 @@ public class ProxyServlet extends HttpServlet {
     }
     initTarget();//sets target*
 
-    HttpParams hcParams = new BasicHttpParams();
-    hcParams.setParameter(ClientPNames.COOKIE_POLICY, CookiePolicy.IGNORE_COOKIES);
-    hcParams.setBooleanParameter(ClientPNames.HANDLE_REDIRECTS, false); // See #70
-    readConfigParam(hcParams, ClientPNames.HANDLE_REDIRECTS, Boolean.class);
-    proxyClient = createHttpClient(hcParams);
+    proxyClient = createHttpClient(buildRequestConfig());
+  }
+
+  /**
+   * Sub-classes can override specific behaviour of {@link org.apache.http.client.config.RequestConfig}.
+   */
+  protected RequestConfig buildRequestConfig() {
+    return RequestConfig.custom()
+            .setRedirectsEnabled(false)
+            .setCookieSpec(CookieSpecs.IGNORE_COOKIES)
+            .build();
   }
 
   protected void initTarget() throws ServletException {
@@ -171,32 +174,17 @@ public class ProxyServlet extends HttpServlet {
     targetHost = URIUtils.extractHost(targetUriObj);
   }
 
-  /** Called from {@link #init(javax.servlet.ServletConfig)}. HttpClient offers many opportunities
-   * for customization. By default,
-   * <a href="http://hc.apache.org/httpcomponents-client-ga/httpclient/apidocs/org/apache/http/impl/client/SystemDefaultHttpClient.html">
-   *   SystemDefaultHttpClient</a> is used if available, otherwise it falls
-   * back to:
-   * <pre>new DefaultHttpClient(new ThreadSafeClientConnManager(),hcParams)</pre>
-   * SystemDefaultHttpClient uses PoolingClientConnectionManager. In any case, it should be thread-safe. */
-  protected HttpClient createHttpClient(HttpParams hcParams) {
-    try {
-      //as of HttpComponents v4.2, this class is better since it uses System
-      // Properties:
-      Class<?> clientClazz = Class.forName("org.apache.http.impl.client.SystemDefaultHttpClient");
-      Constructor<?> constructor = clientClazz.getConstructor(HttpParams.class);
-      return (HttpClient) constructor.newInstance(hcParams);
-    } catch (ClassNotFoundException e) {
-      //no problem; use v4.1 below
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-
-    //Fallback on using older client:
-    return new DefaultHttpClient(new ThreadSafeClientConnManager(), hcParams);
+  /** Called from {@link #init(javax.servlet.ServletConfig)}.
+   *  HttpClient offers many opportunities for customization.
+   *  In any case, it should be thread-safe.
+   **/
+  protected HttpClient createHttpClient(final RequestConfig requestConfig) {
+    return HttpClientBuilder.create()
+            .setDefaultRequestConfig(requestConfig).build();
   }
 
   /** The http client used.
-   * @see #createHttpClient(HttpParams) */
+   * @see #createHttpClient(RequestConfig) */
   protected HttpClient getProxyClient() {
     return proxyClient;
   }
