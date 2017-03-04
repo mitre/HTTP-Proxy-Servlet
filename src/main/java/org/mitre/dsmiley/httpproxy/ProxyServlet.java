@@ -34,7 +34,6 @@ import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpEntityEnclosingRequest;
 import org.apache.http.message.BasicHttpRequest;
 import org.apache.http.message.HeaderGroup;
-import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 
 import javax.servlet.ServletException;
@@ -84,6 +83,12 @@ public class ProxyServlet extends HttpServlet {
   /** A boolean parameter name to keep COOKIES as-is  */
   public static final String P_PRESERVECOOKIES = "preserveCookies";
 
+  /** A boolean parameter name to have auto-handle redirects */
+  public static final String P_HANDLEREDIRECTS = "http.protocol.handle-redirects"; // ClientPNames.HANDLE_REDIRECTS
+
+  /** A integer parameter name to set the socket connection timeout (millis) */
+  public static final String P_CONNECTTIMEOUT = "http.socket.timeout"; // CoreConnectionPNames.SO_TIMEOUT
+
   /** The parameter name for the target (destination) URI to proxy to. */
   protected static final String P_TARGET_URI = "targetUri";
   protected static final String ATTR_TARGET_URI =
@@ -99,6 +104,8 @@ public class ProxyServlet extends HttpServlet {
   protected boolean doSendUrlFragment = true;
   protected boolean doPreserveHost = false;
   protected boolean doPreserveCookies = false;
+  protected boolean doHandleRedirects = false;
+  protected int connectTimeout = -1;
 
   //These next 3 are cached here, and should only be referred to in initialization logic. See the
   // ATTR_* parameters.
@@ -140,18 +147,29 @@ public class ProxyServlet extends HttpServlet {
 
     String doForwardIPString = getConfigParam(P_FORWARDEDFOR);
     if (doForwardIPString != null) {
-        this.doForwardIP = Boolean.parseBoolean(doForwardIPString);
+      this.doForwardIP = Boolean.parseBoolean(doForwardIPString);
     }
 
     String preserveHostString = getConfigParam(P_PRESERVEHOST);
     if (preserveHostString != null) {
-        this.doPreserveHost = Boolean.parseBoolean(preserveHostString);
+      this.doPreserveHost = Boolean.parseBoolean(preserveHostString);
     }
 
     String preserveCookiesString = getConfigParam(P_PRESERVECOOKIES);
     if (preserveCookiesString != null) {
-        this.doPreserveCookies = Boolean.parseBoolean(preserveCookiesString);
+      this.doPreserveCookies = Boolean.parseBoolean(preserveCookiesString);
     }
+
+    String handleRedirectsString = getConfigParam(P_HANDLEREDIRECTS);
+    if (handleRedirectsString != null) {
+      this.doHandleRedirects = Boolean.parseBoolean(handleRedirectsString);
+    }
+
+    String connectTimeoutString = getConfigParam(P_CONNECTTIMEOUT);
+    if (connectTimeoutString != null) {
+      this.connectTimeout = Integer.parseInt(connectTimeoutString);
+    }
+
     initTarget();//sets target*
 
     proxyClient = createHttpClient(buildRequestConfig());
@@ -161,10 +179,11 @@ public class ProxyServlet extends HttpServlet {
    * Sub-classes can override specific behaviour of {@link org.apache.http.client.config.RequestConfig}.
    */
   protected RequestConfig buildRequestConfig() {
-    return RequestConfig.custom()
-            .setRedirectsEnabled(false)
-            .setCookieSpec(CookieSpecs.IGNORE_COOKIES)
-            .build();
+    RequestConfig.Builder builder = RequestConfig.custom()
+            .setRedirectsEnabled(doHandleRedirects)
+            .setCookieSpec(CookieSpecs.IGNORE_COOKIES) // we handle them in the servlet instead
+            .setConnectTimeout(connectTimeout);
+    return builder.build();
   }
 
   protected void initTarget() throws ServletException {
@@ -195,31 +214,10 @@ public class ProxyServlet extends HttpServlet {
     return proxyClient;
   }
 
-  /** Reads a servlet config parameter by the name {@code hcParamName} of type {@code type}, and
-   * set it in {@code hcParams}.
-   */
-  protected void readConfigParam(HttpParams hcParams, String hcParamName, Class<?> type) {
-    String val_str = getConfigParam(hcParamName);
-    if (val_str == null)
-      return;
-    Object val_obj;
-    if (type == String.class) {
-      val_obj = val_str;
-    } else {
-      try {
-        //noinspection unchecked
-        val_obj = type.getMethod("valueOf",String.class).invoke(type,val_str);
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    }
-    hcParams.setParameter(hcParamName,val_obj);
-  }
-
   @Override
   public void destroy() {
-    //Usually, clients implement closeable:
-    if (proxyClient instanceof Closeable) {//TODO AutoCloseable in Java 1.6
+    //Usually, clients implement Closeable:
+    if (proxyClient instanceof Closeable) {
       try {
         ((Closeable) proxyClient).close();
       } catch (IOException e) {
