@@ -375,7 +375,10 @@ public class ProxyServlet extends HttpServlet {
     }
   }
 
-  /** Copy request headers from the servlet client to the proxy request. */
+  /** 
+   * Copy request headers from the servlet client to the proxy request. 
+   * This is easily overridden to add your own.
+   */
   protected void copyRequestHeaders(HttpServletRequest servletRequest, HttpRequest proxyRequest) {
     // Get an Enumeration of all of the header names sent by the client
     @SuppressWarnings("unchecked")
@@ -388,7 +391,7 @@ public class ProxyServlet extends HttpServlet {
 
   /**
    * Copy a request header from the servlet client to the proxy request.
-   * This is easily overwritten to filter out certain headers if desired.
+   * This is easily overridden to filter out certain headers if desired.
    */
   protected void copyRequestHeader(HttpServletRequest servletRequest, HttpRequest proxyRequest,
                                    String headerName) {
