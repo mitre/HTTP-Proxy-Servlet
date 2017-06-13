@@ -89,6 +89,9 @@ public class ProxyServlet extends HttpServlet {
   /** A integer parameter name to set the socket connection timeout (millis) */
   public static final String P_CONNECTTIMEOUT = "http.socket.timeout"; // CoreConnectionPNames.SO_TIMEOUT
 
+  /** A integer parameter name to set the socket read timeout (millis) */
+  public static final String P_READTIMEOUT = "http.read.timeout";
+  
   /** The parameter name for the target (destination) URI to proxy to. */
   protected static final String P_TARGET_URI = "targetUri";
   protected static final String ATTR_TARGET_URI =
@@ -106,6 +109,7 @@ public class ProxyServlet extends HttpServlet {
   protected boolean doPreserveCookies = false;
   protected boolean doHandleRedirects = false;
   protected int connectTimeout = -1;
+  protected int readTimeout = -1;
 
   //These next 3 are cached here, and should only be referred to in initialization logic. See the
   // ATTR_* parameters.
@@ -169,6 +173,11 @@ public class ProxyServlet extends HttpServlet {
     if (connectTimeoutString != null) {
       this.connectTimeout = Integer.parseInt(connectTimeoutString);
     }
+    
+    String readTimeoutString = getConfigParam(P_READTIMEOUT);
+    if (readTimeoutString != null) {
+      this.readTimeout = Integer.parseInt(readTimeoutString);
+    }
 
     initTarget();//sets target*
 
@@ -182,7 +191,8 @@ public class ProxyServlet extends HttpServlet {
     RequestConfig.Builder builder = RequestConfig.custom()
             .setRedirectsEnabled(doHandleRedirects)
             .setCookieSpec(CookieSpecs.IGNORE_COOKIES) // we handle them in the servlet instead
-            .setConnectTimeout(connectTimeout);
+            .setConnectTimeout(connectTimeout)
+            .setSocketTimeout(readTimeout);
     return builder.build();
   }
 
