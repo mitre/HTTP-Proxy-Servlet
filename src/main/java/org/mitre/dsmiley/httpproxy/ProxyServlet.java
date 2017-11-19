@@ -298,20 +298,7 @@ public class ProxyServlet extends HttpServlet {
       }
 
     } catch (Exception e) {
-      //abort request, according to best practice with HttpClient
-      if (proxyRequest instanceof AbortableHttpRequest) {
-        AbortableHttpRequest abortableHttpRequest = (AbortableHttpRequest) proxyRequest;
-        abortableHttpRequest.abort();
-      }
-      if (e instanceof RuntimeException)
-        throw (RuntimeException)e;
-      if (e instanceof ServletException)
-        throw (ServletException)e;
-      //noinspection ConstantConditions
-      if (e instanceof IOException)
-        throw (IOException) e;
-      throw new RuntimeException(e);
-
+      handleRequestException(proxyRequest, e);
     } finally {
       // make sure the entire entity was consumed, so the connection is released
       if (proxyResponse != null)
@@ -319,6 +306,22 @@ public class ProxyServlet extends HttpServlet {
       //Note: Don't need to close servlet outputStream:
       // http://stackoverflow.com/questions/1159168/should-one-call-close-on-httpservletresponse-getoutputstream-getwriter
     }
+  }
+
+  protected void handleRequestException(HttpRequest proxyRequest, Exception e) throws ServletException, IOException {
+    //abort request, according to best practice with HttpClient
+    if (proxyRequest instanceof AbortableHttpRequest) {
+      AbortableHttpRequest abortableHttpRequest = (AbortableHttpRequest) proxyRequest;
+      abortableHttpRequest.abort();
+    }
+    if (e instanceof RuntimeException)
+      throw (RuntimeException)e;
+    if (e instanceof ServletException)
+      throw (ServletException)e;
+    //noinspection ConstantConditions
+    if (e instanceof IOException)
+      throw (IOException) e;
+    throw new RuntimeException(e);
   }
 
   protected HttpResponse doExecute(HttpServletRequest servletRequest, HttpServletResponse servletResponse,
