@@ -550,8 +550,12 @@ public class ProxyServlet extends HttpServlet {
     StringBuilder uri = new StringBuilder(500);
     uri.append(getTargetUri(servletRequest));
     // Handle the path given to the servlet
-    if (servletRequest.getPathInfo() != null) {//ex: /my/path.html
-      uri.append(encodeUriQuery(servletRequest.getPathInfo()));
+    String pathInfo = servletRequest.getPathInfo();
+    if (pathInfo != null) {//ex: /my/path.html
+      // getPathInfo() returns decoded string, and encodeUriQuery doesn't encode % sign to avoid double encoding in querystring (which is not decoded).
+      // To fix this, we manually encode "%" in path info before calling encodeUriQuery.
+      pathInfo = pathInfo.replace("%", "%25");
+      uri.append(encodeUriQuery(pathInfo));
     }
     // Handle the query string & fragment
     String queryString = servletRequest.getQueryString();//ex:(following '?'): name=value&foo=bar#fragment
