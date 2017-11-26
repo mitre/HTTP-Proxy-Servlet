@@ -550,8 +550,10 @@ public class ProxyServlet extends HttpServlet {
     StringBuilder uri = new StringBuilder(500);
     uri.append(getTargetUri(servletRequest));
     // Handle the path given to the servlet
-    if (servletRequest.getPathInfo() != null) {//ex: /my/path.html
-      uri.append(encodeUriQuery(servletRequest.getPathInfo()));
+    String pathInfo = servletRequest.getPathInfo();
+    if (pathInfo != null) {//ex: /my/path.html
+      // getPathInfo() returns decoded string, so we need encodeUriQuery to encode "%" characters
+      uri.append(encodeUriQuery(pathInfo, true));
     }
     // Handle the query string & fragment
     String queryString = servletRequest.getQueryString();//ex:(following '?'): name=value&foo=bar#fragment
@@ -568,12 +570,14 @@ public class ProxyServlet extends HttpServlet {
     queryString = rewriteQueryStringFromRequest(servletRequest, queryString);
     if (queryString != null && queryString.length() > 0) {
       uri.append('?');
-      uri.append(encodeUriQuery(queryString));
+      // queryString is not decoded, so we need encodeUriQuery not to encode "%" characters, to avoid double-encoding
+      uri.append(encodeUriQuery(queryString, false));
     }
 
     if (doSendUrlFragment && fragment != null) {
       uri.append('#');
-      uri.append(encodeUriQuery(fragment));
+      // fragment is not decoded, so we need encodeUriQuery not to encode "%" characters, to avoid double-encoding
+      uri.append(encodeUriQuery(fragment, false));
     }
     return uri.toString();
   }
@@ -630,8 +634,9 @@ public class ProxyServlet extends HttpServlet {
    * spec.
    *
    * @param in example: name=value&amp;foo=bar#fragment
+   * @param encodePercent determine whether percent characters need to be encoded
    */
-  protected static CharSequence encodeUriQuery(CharSequence in) {
+  protected static CharSequence encodeUriQuery(CharSequence in, boolean encodePercent) {
     //Note that I can't simply use URI.java to encode because it will escape pre-existing escaped things.
     StringBuilder outBuf = null;
     Formatter formatter = null;
@@ -639,7 +644,7 @@ public class ProxyServlet extends HttpServlet {
       char c = in.charAt(i);
       boolean escape = true;
       if (c < 128) {
-        if (asciiQueryChars.get((int)c)) {
+        if (asciiQueryChars.get((int)c) && !(encodePercent && c == '%')) {
           escape = false;
         }
       } else if (!Character.isISOControl(c) && !Character.isSpaceChar(c)) {//not-ascii
