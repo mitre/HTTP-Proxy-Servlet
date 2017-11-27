@@ -54,7 +54,7 @@ add this to your dependencies in your pom like so:
     <dependency>
         <groupId>org.mitre.dsmiley.httpproxy</groupId>
         <artifactId>smiley-http-proxy-servlet</artifactId>
-        <version>1.9</version>
+        <version>1.10</version>
     </dependency>
 
 Ivy and other dependency managers can be used as well.
