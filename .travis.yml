@@ -7,6 +7,7 @@ script: mvn -Dhttpclient.version=$HTTPCLIENT_VERSION -Dhttpclient.test.version=$
 jdk:
   - openjdk7
   - oraclejdk8
+  - oraclejdk9
 
 # We use httpclient test jar providing LocalTestServer.java; no longer in 4.4+.
 # We only do javadoc test for the latest version (as it's the only official one)
@@ -14,7 +15,7 @@ jdk:
 env:
   - HTTPCLIENT_VERSION=4.3.6  HTTPCLIENT_TEST_VERSION=4.3.5 JDOC=
   - HTTPCLIENT_VERSION=4.4.1  HTTPCLIENT_TEST_VERSION=4.3.5 JDOC=
-  - HTTPCLIENT_VERSION=4.5.2  HTTPCLIENT_TEST_VERSION=4.3.5 JDOC=javadoc:javadoc
+  - HTTPCLIENT_VERSION=4.5.3  HTTPCLIENT_TEST_VERSION=4.3.5 JDOC=javadoc:javadoc
 
 notifications:
   email:
