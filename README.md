@@ -181,8 +181,7 @@ Then create register Smiley's proxy servlet with Jetty through the Dropwizard se
 
     
         environment.getApplicationContext()
-            .addServlet("org.mitre.dsmiley.httpproxy.ProxyServlet",
-                configuration.getReportProxy().getUri())
+            .addServlet("org.mitre.dsmiley.httpproxy.ProxyServlet", "foo/*")
             .setInitParameter("targetUri", configuration.getTargetUri());  
 ```
 
