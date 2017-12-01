@@ -63,6 +63,8 @@ Ivy and other dependency managers can be used as well.
 Configuration
 -------------
 
+## Servlet
+
 Here's an example excerpt of a web.xml file to communicate to a Solr server:
 
     <servlet>
@@ -106,10 +108,14 @@ them from the normal query parameters in case of a conflict.:
       <url-pattern>/mywebapp/cluster/*</url-pattern>
     </servlet-mapping>
 
+## SpringMVC
+
 If you are using **SpringMVC**, then an alternative is to use its
 [ServletWrappingController](http://static.springsource.org/spring/docs/3.0.x/api/org/springframework/web/servlet/mvc/ServletWrappingController.html)
 so that you can configure this servlet via Spring, which is supremely flexible, instead of having to modify your web.xml. However, note that some
 customization may be needed to divide the URL at the proxied portion; see [Issue #15](https://github.com/mitre/HTTP-Proxy-Servlet/issues/15).
+
+## Spring Boot
 
 If you are using **Spring Boot**, then consider this basic configuration:
 
@@ -142,3 +148,42 @@ proxy:
         servlet_url: /solr/*
         target_url: http://solrserver:8983/solr
 ```
+
+
+## Dropwizard 
+
+Addition of Smiley's proxy to Dropwizard is very straightforward.   
+
+Add a new property in the Dropwizard app `.yml` file
+
+```
+targetUri: http://foo.com/api  
+```
+
+Create a new configuration property
+
+``` 
+    @NotEmpty
+    private String targetUri = "";
+    
+    @JsonProperty("targetUri")
+    public String getTargetUri() {
+        return targetUri;
+    }  
+``` 
+
+Then create register Smiley's proxy servlet with Jetty through the Dropwizard service's App `run()` method. 
+
+```
+@Override
+    public void run(final ShepherdServiceConfiguration configuration,
+        final Environment environment) {
+
+    
+        environment.getApplicationContext()
+            .addServlet("org.mitre.dsmiley.httpproxy.ProxyServlet",
+                configuration.getReportProxy().getUri())
+            .setInitParameter("targetUri", configuration.getTargetUri());  
+```
+
+
