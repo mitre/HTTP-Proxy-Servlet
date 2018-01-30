@@ -33,8 +33,8 @@ As of version 1.4 of the proxy, it will by default recognize "http.proxy" and
 
 As of version 1.5 of the proxy, there is the ability to parameterize your proxy URL, allowing you to use
 the same web.xml servlet specification for multiple target servers. It follows the
-[URI Template RFC, Level 1](http://tools.ietf.org/html/rfc6570). Special query 
-parameters (see the examples below) sent from the client to the ProxyServlet will 
+[URI Template RFC, Level 1](http://tools.ietf.org/html/rfc6570). Special query
+parameters (see the examples below) sent from the client to the ProxyServlet will
 map to the matching URL template, replacing arguments in the proxy's targetUri as
 specified in the web.xml.  To use this, you must use a subclass of the base servlet.
 IMPORTANT! The template substitutions must be placed in the query string, even when using
@@ -62,8 +62,21 @@ Ivy and other dependency managers can be used as well.
 
 Configuration
 -------------
+### Parameters
 
-## Servlet
+The following is a list of parameters that can be configured
+
++ log: A boolean parameter name to enable logging of input and target URLs to the servlet log.
++ forwardip: A boolean parameter name to enable forwarding of the client IP
++ preserveHost: A boolean parameter name to keep HOST parameter as-is  
++ preserveCookies: A boolean parameter name to keep COOKIES as-is
++ http.protocol.handle-redirects: A boolean parameter name to have auto-handle redirects
++ http.socket.timeout: A integer parameter name to set the socket connection timeout (millis)
++ http.read.timeout: A integer parameter name to set the socket read timeout (millis)
++ targetUri: The parameter name for the target (destination) URI to proxy to.
+
+
+### Servlet
 
 Here's an example excerpt of a web.xml file to communicate to a Solr server:
 
@@ -85,7 +98,7 @@ Here's an example excerpt of a web.xml file to communicate to a Solr server:
     </servlet-mapping>
 
 Here's an example with a parameterized proxy URL matching query parameters
-_subHost, _port, and _path such as 
+_subHost, _port, and _path such as
 "http://mywebapp/cluster/subpath?_subHost=namenode&_port=8080&_path=monitor". Note the different
 proxy servlet class. The leading underscore is not mandatory but it's good to differentiate
 them from the normal query parameters in case of a conflict.:
@@ -102,20 +115,20 @@ them from the normal query parameters in case of a conflict.:
         <param-value>true</param-value>
       </init-param>
     </servlet>
-    
+
     <servlet-mapping>
       <servlet-name>clusterProxy</servlet-name>
       <url-pattern>/mywebapp/cluster/*</url-pattern>
     </servlet-mapping>
 
-## SpringMVC
+### SpringMVC
 
 If you are using **SpringMVC**, then an alternative is to use its
 [ServletWrappingController](http://static.springsource.org/spring/docs/3.0.x/api/org/springframework/web/servlet/mvc/ServletWrappingController.html)
 so that you can configure this servlet via Spring, which is supremely flexible, instead of having to modify your web.xml. However, note that some
 customization may be needed to divide the URL at the proxied portion; see [Issue #15](https://github.com/mitre/HTTP-Proxy-Servlet/issues/15).
 
-## Spring Boot
+### Spring Boot
 
 If you are using **Spring Boot**, then consider this basic configuration:
 
@@ -150,7 +163,7 @@ proxy:
 ```
 
 
-## Dropwizard 
+### Dropwizard
 
 Addition of Smiley's proxy to Dropwizard is very straightforward.   
 
@@ -162,27 +175,25 @@ targetUri: http://foo.com/api
 
 Create a new configuration property
 
-``` 
+```
     @NotEmpty
     private String targetUri = "";
-    
+
     @JsonProperty("targetUri")
     public String getTargetUri() {
         return targetUri;
     }  
-``` 
+```
 
-Then create register Smiley's proxy servlet with Jetty through the Dropwizard service's App `run()` method. 
+Then create register Smiley's proxy servlet with Jetty through the Dropwizard service's App `run()` method.
 
 ```
 @Override
     public void run(final ShepherdServiceConfiguration configuration,
         final Environment environment) {
 
-    
+
         environment.getApplicationContext()
             .addServlet("org.mitre.dsmiley.httpproxy.ProxyServlet", "foo/*")
             .setInitParameter("targetUri", configuration.getTargetUri());  
 ```
-
-
