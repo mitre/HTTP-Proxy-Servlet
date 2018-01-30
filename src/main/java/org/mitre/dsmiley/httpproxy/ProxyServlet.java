@@ -91,7 +91,7 @@ public class ProxyServlet extends HttpServlet {
 
   /** A integer parameter name to set the socket read timeout (millis) */
   public static final String P_READTIMEOUT = "http.read.timeout";
-  
+
   /** The parameter name for the target (destination) URI to proxy to. */
   protected static final String P_TARGET_URI = "targetUri";
   protected static final String ATTR_TARGET_URI =
@@ -173,7 +173,7 @@ public class ProxyServlet extends HttpServlet {
     if (connectTimeoutString != null) {
       this.connectTimeout = Integer.parseInt(connectTimeoutString);
     }
-    
+
     String readTimeoutString = getConfigParam(P_READTIMEOUT);
     if (readTimeoutString != null) {
       this.readTimeout = Integer.parseInt(readTimeoutString);
@@ -388,8 +388,8 @@ public class ProxyServlet extends HttpServlet {
     }
   }
 
-  /** 
-   * Copy request headers from the servlet client to the proxy request. 
+  /**
+   * Copy request headers from the servlet client to the proxy request.
    * This is easily overridden to add your own.
    */
   protected void copyRequestHeaders(HttpServletRequest servletRequest, HttpRequest proxyRequest) {
@@ -446,6 +446,10 @@ public class ProxyServlet extends HttpServlet {
 
       String protoHeaderName = "X-Forwarded-Proto";
       String protoHeader = servletRequest.getScheme();
+      String existingProtoHeader = servletRequest.getHeader(protoHeaderName);
+      if (existingProtoHeader != null) {
+          protoHeader = existingProtoHeader;
+      }
       proxyRequest.setHeader(protoHeaderName, protoHeader);
     }
   }
