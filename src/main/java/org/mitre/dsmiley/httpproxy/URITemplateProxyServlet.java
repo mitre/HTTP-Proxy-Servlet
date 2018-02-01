@@ -88,7 +88,6 @@ public class URITemplateProxyServlet extends ProxyServlet {
     if (requestQueryString != null) {
       queryString = "?" + requestQueryString;//no "?" but might have "#"
     }
-    String queryString = "?" + servletRequest.getQueryString();//no "?" but might have "#"
     int hash = queryString.indexOf('#');
     if (hash >= 0) {
       queryString = queryString.substring(0, hash);
