@@ -83,6 +83,11 @@ public class URITemplateProxyServlet extends ProxyServlet {
      * we can keep the proxy parameters in the query string and not
      * have to add them to a URL encoded form attachment.
      */
+    String requestQueryString = servletRequest.getQueryString();
+    String queryString = "";
+    if (requestQueryString != null) {
+      queryString = "?" + requestQueryString;//no "?" but might have "#"
+    }
     String queryString = "?" + servletRequest.getQueryString();//no "?" but might have "#"
     int hash = queryString.indexOf('#');
     if (hash >= 0) {
