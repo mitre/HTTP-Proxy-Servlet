@@ -11,25 +11,30 @@ This is hardly the first proxy, so why did I write it and thus why might you use
  * It's extendible -- via simple class extension
  * It's embeddable -- into your Java web application making testing your app easier
 
-I have seen many quick'n'dirty proxies posted in source form on the web such as in a blog.  I've found such proxies to support a limited HTTP subset, such as only a GET request, or to suffer other implementation problems such as performance issues or URL escaping bugs.  Disappointed at the situation, I set out to create a simple one that works well and that is well tested so I know it works.  I suggest you use a well tested proxy instead of something non-tested that is perhaps better described as a proof-of-concept.
+I have seen many quick'n'dirty proxies posted in source form on the web such as in a blog.
+I've found such proxies to support a limited HTTP subset, such as only a GET request, or to suffer other implementation problems such as performance issues or URL escaping bugs.
+Disappointed at the situation, I set out to create a simple one that works well and that is well tested so I know it works.
+I suggest you use a well tested proxy instead of something non-tested that is perhaps better described as a proof-of-concept.
 
-This proxy depends on [Apache HttpClient](http://hc.apache.org/httpcomponents-client-ga/), which offers another point of extension for this proxy.  At some point I may write an alternative that uses the JDK and thus doesn't have any dependencies, which is desirable. In the mean time, you'll have to add the jar files for this and its dependencies:
+This proxy depends on [Apache HttpClient](http://hc.apache.org/httpcomponents-client-ga/), which offers another point of extension for this proxy.
+At some point I may write an alternative that uses the JDK and thus doesn't have any dependencies, which is desirable.
+In the mean time, you'll have to add the jar files for this and its dependencies:
 
-     +- org.apache.httpcomponents:httpclient:jar:4.2.5:compile
-        +- org.apache.httpcomponents:httpcore:jar:4.2.4:compile
-        |  +- commons-logging:commons-logging:jar:1.1.1:compile
-        |  \- commons-codec:commons-codec:jar:1.6:compile
+     +- org.apache.httpcomponents:httpclient:jar:4.5.2:compile
+        +- org.apache.httpcomponents:httpcore:jar:4.4.4:compile
+        |  +- commons-logging:commons-logging:jar:1.2:compile
+        |  \- commons-codec:commons-codec:jar:1.9:compile
+
+This proxy supports HttpClient 4.3, and newer version too.
+If you need to support _older_ HttpClient versions, namely 4.1 and 4.2, then use  the 1.8 version of this proxy.
 
 As of version 1.4 of the proxy, it will by default recognize "http.proxy" and
- most other standard Java system properties. This is inherited from HC's
- new [SystemDefaultHttpClient](http://hc.apache.org/httpcomponents-client-ga/httpclient/apidocs/org/apache/http/impl/client/SystemDefaultHttpClient.html). You can still use HC 4.1, however, as java
- reflection is used to support both 4.1, which doesn't have that class, and 4.2+.
- Tests pass with 4.3 too.
+ most other standard Java system properties.
 
 As of version 1.5 of the proxy, there is the ability to parameterize your proxy URL, allowing you to use
 the same web.xml servlet specification for multiple target servers. It follows the
-[URI Template RFC, Level 1](http://tools.ietf.org/html/rfc6570). Special query 
-parameters (see the examples below) sent from the client to the ProxyServlet will 
+[URI Template RFC, Level 1](http://tools.ietf.org/html/rfc6570). Special query
+parameters (see the examples below) sent from the client to the ProxyServlet will
 map to the matching URL template, replacing arguments in the proxy's targetUri as
 specified in the web.xml.  To use this, you must use a subclass of the base servlet.
 IMPORTANT! The template substitutions must be placed in the query string, even when using
@@ -49,7 +54,7 @@ add this to your dependencies in your pom like so:
     <dependency>
         <groupId>org.mitre.dsmiley.httpproxy</groupId>
         <artifactId>smiley-http-proxy-servlet</artifactId>
-        <version>1.7</version>
+        <version>1.10</version>
     </dependency>
 
 Ivy and other dependency managers can be used as well.
@@ -57,6 +62,21 @@ Ivy and other dependency managers can be used as well.
 
 Configuration
 -------------
+### Parameters
+
+The following is a list of parameters that can be configured
+
++ log: A boolean parameter name to enable logging of input and target URLs to the servlet log.
++ forwardip: A boolean parameter name to enable forwarding of the client IP
++ preserveHost: A boolean parameter name to keep HOST parameter as-is  
++ preserveCookies: A boolean parameter name to keep COOKIES as-is
++ http.protocol.handle-redirects: A boolean parameter name to have auto-handle redirects
++ http.socket.timeout: A integer parameter name to set the socket connection timeout (millis)
++ http.read.timeout: A integer parameter name to set the socket read timeout (millis)
++ targetUri: The parameter name for the target (destination) URI to proxy to.
+
+
+### Servlet
 
 Here's an example excerpt of a web.xml file to communicate to a Solr server:
 
@@ -78,7 +98,7 @@ Here's an example excerpt of a web.xml file to communicate to a Solr server:
     </servlet-mapping>
 
 Here's an example with a parameterized proxy URL matching query parameters
-_subHost, _port, and _path such as 
+_subHost, _port, and _path such as
 "http://mywebapp/cluster/subpath?_subHost=namenode&_port=8080&_path=monitor". Note the different
 proxy servlet class. The leading underscore is not mandatory but it's good to differentiate
 them from the normal query parameters in case of a conflict.:
@@ -95,16 +115,20 @@ them from the normal query parameters in case of a conflict.:
         <param-value>true</param-value>
       </init-param>
     </servlet>
-    
+
     <servlet-mapping>
       <servlet-name>clusterProxy</servlet-name>
       <url-pattern>/mywebapp/cluster/*</url-pattern>
     </servlet-mapping>
 
+### SpringMVC
+
 If you are using **SpringMVC**, then an alternative is to use its
 [ServletWrappingController](http://static.springsource.org/spring/docs/3.0.x/api/org/springframework/web/servlet/mvc/ServletWrappingController.html)
 so that you can configure this servlet via Spring, which is supremely flexible, instead of having to modify your web.xml. However, note that some
-customization may be needed to divide the URL at the proxied portion; see [Issue#15](/dsmiley/HTTP-Proxy-Servlet/issues/15).
+customization may be needed to divide the URL at the proxied portion; see [Issue #15](https://github.com/mitre/HTTP-Proxy-Servlet/issues/15).
+
+### Spring Boot
 
 If you are using **Spring Boot**, then consider this basic configuration:
 
@@ -115,7 +139,7 @@ public class SolrProxyServletConfiguration implements EnvironmentAware {
   @Bean
   public ServletRegistrationBean servletRegistrationBean(){
     ServletRegistrationBean servletRegistrationBean = new ServletRegistrationBean(new ProxyServlet(), propertyResolver.getProperty("servlet_url"));
-    servletRegistrationBean.addInitParameter("targetUri", propertyResolver.getProperty("target_url"));
+    servletRegistrationBean.addInitParameter(ProxyServlet.P_TARGET_URI, propertyResolver.getProperty("target_url"));
     servletRegistrationBean.addInitParameter(ProxyServlet.P_LOG, propertyResolver.getProperty("logging_enabled", "false"));
     return servletRegistrationBean;
   }
@@ -136,4 +160,40 @@ proxy:
     solr:
         servlet_url: /solr/*
         target_url: http://solrserver:8983/solr
+```
+
+
+### Dropwizard
+
+Addition of Smiley's proxy to Dropwizard is very straightforward.   
+
+Add a new property in the Dropwizard app `.yml` file
+
+```
+targetUri: http://foo.com/api  
+```
+
+Create a new configuration property
+
+```
+    @NotEmpty
+    private String targetUri = "";
+
+    @JsonProperty("targetUri")
+    public String getTargetUri() {
+        return targetUri;
+    }  
+```
+
+Then create register Smiley's proxy servlet with Jetty through the Dropwizard service's App `run()` method.
+
+```
+@Override
+    public void run(final ShepherdServiceConfiguration configuration,
+        final Environment environment) {
+
+
+        environment.getApplicationContext()
+            .addServlet("org.mitre.dsmiley.httpproxy.ProxyServlet", "foo/*")
+            .setInitParameter("targetUri", configuration.getTargetUri());  
 ```
