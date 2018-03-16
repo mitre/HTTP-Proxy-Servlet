@@ -162,6 +162,8 @@ proxy:
         target_url: http://solrserver:8983/solr
 ```
 
+It may be the case that Spring Boot (or Spring MVC) is consuming the servlet input stream before the servlet gets it, which is a problem.  
+See [Issue #83](https://github.com/mitre/HTTP-Proxy-Servlet/issues/83#issuecomment-307216795) RE disabling `FilterRegistrationBean`.
 
 ### Dropwizard
 
