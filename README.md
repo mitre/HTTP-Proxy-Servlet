@@ -1,7 +1,7 @@
 Smiley's HTTP Proxy Servlet
 ===========================
 
-This is an HTTP Proxy (aka gateway) in the form of a Java servlet.  An HTTP proxy is useful for AJAX applications to communicate with web accessible services on hosts other than where the web application is hosted.
+This is an HTTP Proxy (aka gateway) in the form of a Java servlet.  An HTTP proxy is useful for AJAX applications to communicate with web accessible services on hosts other than where the web application is hosted.  It's a _reverse proxy_, and not really a _forwarding proxy_ albeit the template form of the servlet may blur that line.
 
 This is hardly the first proxy, so why did I write it and thus why might you use it?
 
@@ -15,6 +15,8 @@ I have seen many quick'n'dirty proxies posted in source form on the web such as 
 I've found such proxies to support a limited HTTP subset, such as only a GET request, or to suffer other implementation problems such as performance issues or URL escaping bugs.
 Disappointed at the situation, I set out to create a simple one that works well and that is well tested so I know it works.
 I suggest you use a well tested proxy instead of something non-tested that is perhaps better described as a proof-of-concept.
+
+If you need something more sophisticated than there are some alternatives listed at the bottom of this page.
 
 This proxy depends on [Apache HttpClient](http://hc.apache.org/httpcomponents-client-ga/), which offers another point of extension for this proxy.
 At some point I may write an alternative that uses the JDK and thus doesn't have any dependencies, which is desirable.
@@ -199,3 +201,10 @@ Then create register Smiley's proxy servlet with Jetty through the Dropwizard se
             .addServlet("org.mitre.dsmiley.httpproxy.ProxyServlet", "foo/*")
             .setInitParameter("targetUri", configuration.getTargetUri());  
 ```
+
+Alternatives
+-------------
+This servlet is intentionally simple and limited in scope.  As such it may not meet your needs, so consider looking at these alternatives:
+* Jetty's ProxyServlet: https://www.eclipse.org/jetty/documentation/9.4.x/proxy-servlet.html  This is perhaps the closest competitor (simple, limited scope, no dependencies), and may very well already be on your classpath.
+* Netflix's Zuul: https://github.com/Netflix/zuul
+* Charon: https://github.com/mkopylec/charon-spring-boot-starter
