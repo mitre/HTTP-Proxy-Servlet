@@ -233,6 +233,24 @@ public class ProxyServletTest
   }
 
   @Test
+  public void testWithExistingXForwardedProto() throws Exception {
+    final String PROTO_HEADER = "X-Forwarded-Proto";
+
+    localTestServer.register("/targetPath*", new RequestInfoHandler() {
+      public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
+        Header xForwardedProtoHeader = request.getFirstHeader(PROTO_HEADER);
+        assertEquals("https", xForwardedProtoHeader.getValue());
+        super.handle(request, response, context);
+      }
+    });
+
+    GetMethodWebRequest req = makeGetMethodRequest(sourceBaseUri);
+    req.setHeaderField(PROTO_HEADER, "https");
+    WebResponse rsp = execAndAssert(req, "");
+  }
+
+
+  @Test
   public void testEnabledXForwardedFor() throws Exception {
     final String FOR_HEADER = "X-Forwarded-For";
     final String PROTO_HEADER = "X-Forwarded-Proto";
