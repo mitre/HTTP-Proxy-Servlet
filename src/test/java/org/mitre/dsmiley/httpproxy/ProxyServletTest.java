@@ -16,12 +16,25 @@
 
 package org.mitre.dsmiley.httpproxy;
 
-import com.meterware.httpunit.GetMethodWebRequest;
-import com.meterware.httpunit.PostMethodWebRequest;
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
-import com.meterware.servletunit.ServletRunner;
-import com.meterware.servletunit.ServletUnitClient;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.UnknownHostException;
+import java.util.Dictionary;
+import java.util.Enumeration;
+import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.Header;
@@ -43,22 +56,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Dictionary;
-import java.util.Enumeration;
-import java.util.Properties;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
+import com.meterware.servletunit.ServletRunner;
+import com.meterware.servletunit.ServletUnitClient;
 
 /**
  * @author David Smiley - dsmiley@mitre.org
@@ -474,6 +477,33 @@ public class ProxyServletTest
     req.setHeaderField(HEADER, "SomeHost");
     execAndAssert(req, "");
     assertEquals("SomeHost", proxyHost[0]);
+  }
+
+  @Test
+  public void testUseSystemProperties() throws Exception {
+    System.setProperty("http.proxyHost", "foo.blah.nonexisting.dns.name");
+    servletRunner = new ServletRunner();
+
+    Properties servletProps = new Properties();
+    servletProps.setProperty(ProxyServlet.P_LOG, "true");
+    servletProps.setProperty(ProxyServlet.P_USESYSTEMPROPERTIES, "true");
+    // Must use a non-local URL because localhost is in http.nonProxyHosts by default.
+    targetBaseUri = "http://www.google.com";
+    servletProps.setProperty(ProxyServlet.P_TARGET_URI, targetBaseUri);
+    servletRunner.registerServlet(servletPath + "/*", servletName, servletProps);
+
+    sc = servletRunner.newClient();
+    sc.getClientProperties().setAutoRedirect(false);//don't want httpunit itself to redirect
+
+    GetMethodWebRequest req = makeGetMethodRequest(sourceBaseUri);
+    try {
+      execAssert(req);
+      fail("UnknownHostException expected.");
+    } catch (UnknownHostException e) {
+      // Expected assuming that our proxy host defined above does not exist.
+    } finally {
+      System.clearProperty("http.proxyHost");
+    }
   }
 
   private WebResponse execAssert(GetMethodWebRequest request, String expectedUri) throws Exception {
