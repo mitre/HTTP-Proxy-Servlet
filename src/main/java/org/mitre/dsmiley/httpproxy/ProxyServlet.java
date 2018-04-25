@@ -92,6 +92,9 @@ public class ProxyServlet extends HttpServlet {
   /** A integer parameter name to set the socket read timeout (millis) */
   public static final String P_READTIMEOUT = "http.read.timeout";
   
+  /** A boolean parameter whether to use JVM-defined system properties to configure various networking aspects. */
+  public static final String P_USESYSTEMPROPERTIES = "useSystemProperties";
+  
   /** The parameter name for the target (destination) URI to proxy to. */
   protected static final String P_TARGET_URI = "targetUri";
   protected static final String ATTR_TARGET_URI =
@@ -108,6 +111,7 @@ public class ProxyServlet extends HttpServlet {
   protected boolean doPreserveHost = false;
   protected boolean doPreserveCookies = false;
   protected boolean doHandleRedirects = false;
+  protected boolean useSystemProperties = false;
   protected int connectTimeout = -1;
   protected int readTimeout = -1;
 
@@ -179,6 +183,11 @@ public class ProxyServlet extends HttpServlet {
       this.readTimeout = Integer.parseInt(readTimeoutString);
     }
 
+    String useSystemPropertiesString = getConfigParam(P_USESYSTEMPROPERTIES);
+    if (useSystemPropertiesString != null) {
+      this.useSystemProperties = Boolean.parseBoolean(useSystemPropertiesString);
+    }
+
     initTarget();//sets target*
 
     proxyClient = createHttpClient(buildRequestConfig());
@@ -214,8 +223,10 @@ public class ProxyServlet extends HttpServlet {
    *  In any case, it should be thread-safe.
    **/
   protected HttpClient createHttpClient(final RequestConfig requestConfig) {
-    return HttpClientBuilder.create()
-            .setDefaultRequestConfig(requestConfig).build();
+    HttpClientBuilder clientBuilder = HttpClientBuilder.create().setDefaultRequestConfig(requestConfig);
+    if (useSystemProperties)
+      clientBuilder = clientBuilder.useSystemProperties();
+    return clientBuilder.build();
   }
 
   /** The http client used.
