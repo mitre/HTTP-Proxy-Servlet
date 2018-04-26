@@ -197,12 +197,12 @@ public class ProxyServlet extends HttpServlet {
    * Sub-classes can override specific behaviour of {@link org.apache.http.client.config.RequestConfig}.
    */
   protected RequestConfig buildRequestConfig() {
-    RequestConfig.Builder builder = RequestConfig.custom()
+    return RequestConfig.custom()
             .setRedirectsEnabled(doHandleRedirects)
             .setCookieSpec(CookieSpecs.IGNORE_COOKIES) // we handle them in the servlet instead
             .setConnectTimeout(connectTimeout)
-            .setSocketTimeout(readTimeout);
-    return builder.build();
+            .setSocketTimeout(readTimeout)
+            .build();
   }
 
   protected void initTarget() throws ServletException {
@@ -218,10 +218,11 @@ public class ProxyServlet extends HttpServlet {
     targetHost = URIUtils.extractHost(targetUriObj);
   }
 
-  /** Called from {@link #init(javax.servlet.ServletConfig)}.
-   *  HttpClient offers many opportunities for customization.
-   *  In any case, it should be thread-safe.
-   **/
+  /**
+   * Called from {@link #init(javax.servlet.ServletConfig)}.
+   * HttpClient offers many opportunities for customization.
+   * In any case, it should be thread-safe.
+   */
   protected HttpClient createHttpClient(final RequestConfig requestConfig) {
     HttpClientBuilder clientBuilder = HttpClientBuilder.create().setDefaultRequestConfig(requestConfig);
     if (useSystemProperties)
@@ -229,8 +230,10 @@ public class ProxyServlet extends HttpServlet {
     return clientBuilder.build();
   }
 
-  /** The http client used.
-   * @see #createHttpClient(RequestConfig) */
+  /**
+   * The http client used.
+   * @see #createHttpClient(RequestConfig)
+   */
   protected HttpClient getProxyClient() {
     return proxyClient;
   }
@@ -313,7 +316,7 @@ public class ProxyServlet extends HttpServlet {
     } finally {
       // make sure the entire entity was consumed, so the connection is released
       if (proxyResponse != null)
-        consumeQuietly(proxyResponse.getEntity());
+        EntityUtils.consumeQuietly(proxyResponse.getEntity());
       //Note: Don't need to close servlet outputStream:
       // http://stackoverflow.com/questions/1159168/should-one-call-close-on-httpservletresponse-getoutputstream-getwriter
     }
@@ -369,16 +372,6 @@ public class ProxyServlet extends HttpServlet {
     try {
       closeable.close();
     } catch (IOException e) {
-      log(e.getMessage(), e);
-    }
-  }
-
-  /** HttpClient v4.1 doesn't have the
-   * {@link org.apache.http.util.EntityUtils#consumeQuietly(org.apache.http.HttpEntity)} method. */
-  protected void consumeQuietly(HttpEntity entity) {
-    try {
-      EntityUtils.consume(entity);
-    } catch (IOException e) {//ignore
       log(e.getMessage(), e);
     }
   }
@@ -489,19 +482,20 @@ public class ProxyServlet extends HttpServlet {
     }
   }
 
-  /** Copy cookie from the proxy to the servlet client.
-   *  Replaces cookie path to local path and renames cookie to avoid collisions.
+  /**
+   * Copy cookie from the proxy to the servlet client.
+   * Replaces cookie path to local path and renames cookie to avoid collisions.
    */
   protected void copyProxyCookie(HttpServletRequest servletRequest,
                                  HttpServletResponse servletResponse, String headerValue) {
-    List<HttpCookie> cookies = HttpCookie.parse(headerValue);
+    //build path for resulting cookie
     String path = servletRequest.getContextPath(); // path starts with / or is empty string
     path += servletRequest.getServletPath(); // servlet path starts with / or is empty string
     if(path.isEmpty()){
-        path = "/";
+      path = "/";
     }
 
-    for (HttpCookie cookie : cookies) {
+    for (HttpCookie cookie : HttpCookie.parse(headerValue)) {
       //set cookie name prefixed w/ a proxy value so it won't collide w/ other cookies
       String proxyCookieName = doPreserveCookies ? cookie.getName() : getCookieNamePrefix(cookie.getName()) + cookie.getName();
       Cookie servletCookie = new Cookie(proxyCookieName, cookie.getValue());
@@ -515,7 +509,8 @@ public class ProxyServlet extends HttpServlet {
     }
   }
 
-  /** Take any client cookies that were originally from the proxy and prepare them to send to the
+  /**
+   * Take any client cookies that were originally from the proxy and prepare them to send to the
    * proxy.  This relies on cookie headers being set correctly according to RFC 6265 Sec 5.4.
    * This also blocks any local cookies from being sent to the proxy.
    */
@@ -554,7 +549,8 @@ public class ProxyServlet extends HttpServlet {
     }
   }
 
-  /** Reads the request URI from {@code servletRequest} and rewrites it, considering targetUri.
+  /**
+   * Reads the request URI from {@code servletRequest} and rewrites it, considering targetUri.
    * It's used to make the new request.
    */
   protected String rewriteUrlFromRequest(HttpServletRequest servletRequest) {
@@ -597,8 +593,10 @@ public class ProxyServlet extends HttpServlet {
     return queryString;
   }
 
-  /** For a redirect response from the target server, this translates {@code theUrl} to redirect to
-   * and translates it to one the original client can use. */
+  /**
+   * For a redirect response from the target server, this translates {@code theUrl} to redirect to
+   * and translates it to one the original client can use.
+   */
   protected String rewriteUrlFromResponse(HttpServletRequest servletRequest, String theUrl) {
     //TODO document example paths
     final String targetUri = getTargetUri(servletRequest);
@@ -628,7 +626,7 @@ public class ProxyServlet extends HttpServlet {
       // Servlet path starts with a / if it is not blank
       curUrl.append(servletRequest.getServletPath());
       curUrl.append(theUrl, targetUri.length(), theUrl.length());
-      theUrl = curUrl.toString();
+      return curUrl.toString();
     }
     return theUrl;
   }
