@@ -51,6 +51,19 @@ import java.util.Enumeration;
 import java.util.Formatter;
 import java.util.List;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+
+
 /**
  * An HTTP reverse proxy/gateway servlet. It is designed to be extended for customization
  * if desired. Most of the work is handled by
@@ -224,7 +237,33 @@ public class ProxyServlet extends HttpServlet {
    * In any case, it should be thread-safe.
    */
   protected HttpClient createHttpClient(final RequestConfig requestConfig) {
-    HttpClientBuilder clientBuilder = HttpClientBuilder.create().setDefaultRequestConfig(requestConfig);
+
+   SSLContext ctx = null;
+        try
+        {
+            ctx = SSLContext.getInstance("TLS");
+            ctx.init(new KeyManager[0], new TrustManager[] { new DefaultTrustManager() }, new SecureRandom());
+        } catch (final KeyManagementException kmex)
+        {
+             // should be a ServletException, but the parent signature does not allow it
+            throw new RuntimeException(kmex);
+        } catch (final NoSuchAlgorithmException nsaex)
+        {
+             // should be a ServletException, but the parent signature does not allow it
+            throw new RuntimeException(nsaex);
+        }
+
+        final HostnameVerifier hostnameVerifier = new HostnameVerifier()
+        {
+            @Override
+            public boolean verify(final String arg0, final SSLSession arg1)
+            {
+                return true;
+            }
+        };
+
+    HttpClientBuilder clientBuilder = HttpClientBuilder.create().setDefaultRequestConfig(requestConfig).setSSLContext(ctx)
+                .setSSLHostnameVerifier(hostnameVerifier);
     if (useSystemProperties)
       clientBuilder = clientBuilder.useSystemProperties();
     return clientBuilder.build();
@@ -692,5 +731,24 @@ public class ProxyServlet extends HttpServlet {
 
     asciiQueryChars.set((int)'%');//leave existing percent escapes in place
   }
+
+    private static class DefaultTrustManager implements X509TrustManager
+    {
+        @Override
+        public void checkClientTrusted(final X509Certificate[] arg0, final String arg1) throws CertificateException
+        {
+        }
+
+        @Override
+        public void checkServerTrusted(final X509Certificate[] arg0, final String arg1) throws CertificateException
+        {
+        }
+
+        @Override
+        public X509Certificate[] getAcceptedIssuers()
+        {
+            return null;
+        }
+    }
 
 }
