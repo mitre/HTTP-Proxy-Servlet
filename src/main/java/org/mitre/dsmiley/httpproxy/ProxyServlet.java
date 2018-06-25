@@ -16,24 +16,16 @@
 
 package org.mitre.dsmiley.httpproxy;
 
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpEntityEnclosingRequest;
-import org.apache.http.HttpHeaders;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
+import org.apache.http.*;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.AbortableHttpRequest;
 import org.apache.http.client.utils.URIUtils;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.message.BasicHttpEntityEnclosingRequest;
-import org.apache.http.message.BasicHttpRequest;
-import org.apache.http.message.HeaderGroup;
+import org.apache.http.message.*;
 import org.apache.http.util.EntityUtils;
 
 import javax.servlet.ServletException;
@@ -46,10 +38,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpCookie;
 import java.net.URI;
-import java.util.BitSet;
-import java.util.Enumeration;
-import java.util.Formatter;
-import java.util.List;
+import java.util.*;
 
 /**
  * An HTTP reverse proxy/gateway servlet. It is designed to be extended for customization
@@ -91,10 +80,10 @@ public class ProxyServlet extends HttpServlet {
 
   /** A integer parameter name to set the socket read timeout (millis) */
   public static final String P_READTIMEOUT = "http.read.timeout";
-  
+
   /** A boolean parameter whether to use JVM-defined system properties to configure various networking aspects. */
   public static final String P_USESYSTEMPROPERTIES = "useSystemProperties";
-  
+
   /** The parameter name for the target (destination) URI to proxy to. */
   protected static final String P_TARGET_URI = "targetUri";
   protected static final String ATTR_TARGET_URI =
@@ -177,7 +166,7 @@ public class ProxyServlet extends HttpServlet {
     if (connectTimeoutString != null) {
       this.connectTimeout = Integer.parseInt(connectTimeoutString);
     }
-    
+
     String readTimeoutString = getConfigParam(P_READTIMEOUT);
     if (readTimeoutString != null) {
       this.readTimeout = Integer.parseInt(readTimeoutString);
@@ -354,8 +343,22 @@ public class ProxyServlet extends HttpServlet {
             new BasicHttpEntityEnclosingRequest(method, proxyRequestUri);
     // Add the input entity (streamed)
     //  note: we don't bother ensuring we close the servletInputStream since the container handles it
-    eProxyRequest.setEntity(
-            new InputStreamEntity(servletRequest.getInputStream(), getContentLength(servletRequest)));
+    if("application/x-www-form-urlencoded".equals(servletRequest.getContentType()) || getContentLength(servletRequest) == 0){
+      List<NameValuePair> formparams = new ArrayList<NameValuePair>();
+      Enumeration<String> paramNames = servletRequest.getParameterNames();
+      while (paramNames.hasMoreElements()) {
+        String name = paramNames.nextElement();
+        String value = servletRequest.getParameter(name);
+        formparams.add(new BasicNameValuePair(name, value));
+      }
+      if(formparams.size() != 0){
+        UrlEncodedFormEntity urlEncodedFormEntity = new UrlEncodedFormEntity(formparams, "UTF-8");
+        eProxyRequest.setEntity(urlEncodedFormEntity);
+      }
+    }else{
+      eProxyRequest.setEntity(
+              new InputStreamEntity(servletRequest.getInputStream(), getContentLength(servletRequest)));
+    }
     return eProxyRequest;
   }
 
@@ -392,8 +395,8 @@ public class ProxyServlet extends HttpServlet {
     }
   }
 
-  /** 
-   * Copy request headers from the servlet client to the proxy request. 
+  /**
+   * Copy request headers from the servlet client to the proxy request.
    * This is easily overridden to add your own.
    */
   protected void copyRequestHeaders(HttpServletRequest servletRequest, HttpRequest proxyRequest) {
