@@ -3,7 +3,7 @@
 
   <groupId>org.mitre.dsmiley.httpproxy</groupId>
   <artifactId>smiley-http-proxy-servlet</artifactId>
-  <version>1.11-SNAPSHOT</version>
+  <version>1.11</version>
   <packaging>jar</packaging>
 
   <name>Smiley's HTTP Proxy Servlet</name>
@@ -119,7 +119,22 @@
           </compilerArgs>
         </configuration>
       </plugin>
-
+		<plugin>
+			<groupId>org.apache.maven.plugins</groupId>
+			<artifactId>maven-jar-plugin</artifactId>
+			<configuration>
+				<archive>
+		            <manifestEntries>
+		              <Bundle-Version>${project.version}</Bundle-Version>
+		              <Tool>Bundlor ${project.version}</Tool>		              
+		              <Bundle-Name>${project.artifactId}</Bundle-Name>
+		              <Bundle-SymbolicName>org.mitre.dsmiley.http-proxy-servlet</Bundle-SymbolicName>		
+		              <Export-Package>org.mitre.dsmiley.httpproxy;version="0"</Export-Package>
+		              <Import-Package>org.apache.http;version="0", javax.servlet.http;version="0", javax.net.ssl;version="0", org.apache.http;version="0"</Import-Package>
+		            </manifestEntries>				
+				</archive>
+			</configuration>
+		</plugin>
       <!-- See
       http://central.sonatype.org/pages/apache-maven.html#nexus-staging-maven-plugin-for-deployment-and-release
 
