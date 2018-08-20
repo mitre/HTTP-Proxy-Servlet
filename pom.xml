@@ -130,7 +130,7 @@
 		              <Bundle-Name>${project.artifactId}</Bundle-Name>
 		              <Bundle-SymbolicName>org.mitre.dsmiley.http-proxy-servlet</Bundle-SymbolicName>		
 		              <Export-Package>org.mitre.dsmiley.httpproxy;version="0"</Export-Package>
-		              <Import-Package>org.apache.http;version="0", javax.servlet.http;version="0", javax.net.ssl;version="0", org.apache.http;version="0"</Import-Package>
+		              <Import-Package>org.apache.http;version="0", javax.servlet;version="0", javax.servlet.http;version="0", javax.net.ssl;version="0", org.apache.http.client.utils;version="0"</Import-Package>
 		            </manifestEntries>				
 				</archive>
 			</configuration>
