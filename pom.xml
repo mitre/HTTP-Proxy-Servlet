@@ -137,6 +137,7 @@
  org.apache.http.message;version="0",
  org.apache.http.util; version="0",
  org.apache.http.client.utils;version="0",
+ org.apache.http.client.methods;version="0",
  javax.servlet;version="0",
  javax.servlet.http;version="0",
  javax.net.ssl;version="0", org.apache.http.client.config;version="0"</Import-Package>
