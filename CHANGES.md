@@ -9,6 +9,10 @@ Thanks Thorsten Möller.
 request that had no query portion of the URL.
 Thanks @pjunlin.
 
+\#80: If the proxy target added CORS headers as well as the proxy web application itself, 
+the header "Access-Control-Allow-Origin" gets doubled and browsers reject this, 
+referring to CORB.
+
 README updates.  Thanks Bruce Taylor, Gonzalo Fernández-Victorio
 
 # Version 1.10, 2017-11-26

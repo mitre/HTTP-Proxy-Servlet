@@ -386,7 +386,9 @@ public class ProxyServlet extends HttpServlet {
     hopByHopHeaders = new HeaderGroup();
     String[] headers = new String[] {
         "Connection", "Keep-Alive", "Proxy-Authenticate", "Proxy-Authorization",
-        "TE", "Trailers", "Transfer-Encoding", "Upgrade" };
+        "TE", "Trailers", "Transfer-Encoding", "Upgrade",
+        // CORS related headers are not defined in rfc2616 but are also "hop-by-hop" only, browsers block it if doubled.
+        "Access-Control-Allow-Origin" };
     for (String header : headers) {
       hopByHopHeaders.addHeader(new BasicHeader(header, null));
     }
