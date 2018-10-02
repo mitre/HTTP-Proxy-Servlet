@@ -49,7 +49,6 @@ import java.net.URI;
 import java.util.BitSet;
 import java.util.Enumeration;
 import java.util.Formatter;
-import java.util.List;
 
 /**
  * An HTTP reverse proxy/gateway servlet. It is designed to be extended for customization
@@ -557,7 +556,7 @@ public class ProxyServlet extends HttpServlet {
     StringBuilder uri = new StringBuilder(500);
     uri.append(getTargetUri(servletRequest));
     // Handle the path given to the servlet
-    String pathInfo = servletRequest.getPathInfo();
+    String pathInfo = rewritePathInfoFromRequest(servletRequest, servletRequest.getPathInfo());
     if (pathInfo != null) {//ex: /my/path.html
       // getPathInfo() returns decoded string, so we need encodeUriQuery to encode "%" characters
       uri.append(encodeUriQuery(pathInfo, true));
@@ -591,6 +590,14 @@ public class ProxyServlet extends HttpServlet {
 
   protected String rewriteQueryStringFromRequest(HttpServletRequest servletRequest, String queryString) {
     return queryString;
+  }
+
+  /**
+   * Allow overrides of {@link javax.servlet.http.HttpServletRequest#getPathInfo()}.
+   * Useful when url-pattern of servlet-mapping (web.xml) requires manipulation.
+   */
+  protected String rewritePathInfoFromRequest(HttpServletRequest servletRequest, String pathInfo) {
+    return pathInfo;
   }
 
   /**
