@@ -596,8 +596,8 @@ public class ProxyServlet extends HttpServlet {
    * Allow overrides of {@link javax.servlet.http.HttpServletRequest#getPathInfo()}.
    * Useful when url-pattern of servlet-mapping (web.xml) requires manipulation.
    */
-  protected String rewritePathInfoFromRequest(HttpServletRequest servletRequest, String pathInfo) {
-    return pathInfo;
+  protected String rewritePathInfoFromRequest(HttpServletRequest servletRequest) {
+    return servletRequest.getPathInfo();
   }
 
   /**
