@@ -211,7 +211,7 @@ public class ProxyServlet extends HttpServlet {
    */
   protected SocketConfig buildSocketConfig() {
     return SocketConfig.custom()
-            .setSoTimeout(readTimeout)
+            .setSoTimeout(readTimeout == -1 ? 0 : readTimeout)
             .build();
   }
 
