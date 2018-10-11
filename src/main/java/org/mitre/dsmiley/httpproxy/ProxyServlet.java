@@ -28,6 +28,7 @@ import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.AbortableHttpRequest;
 import org.apache.http.client.utils.URIUtils;
+import org.apache.http.config.SocketConfig;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicHeader;
@@ -190,7 +191,7 @@ public class ProxyServlet extends HttpServlet {
 
     initTarget();//sets target*
 
-    proxyClient = createHttpClient(buildRequestConfig());
+    proxyClient = createHttpClient(buildRequestConfig(), buildSocketConfig());
   }
 
   /**
@@ -202,6 +203,15 @@ public class ProxyServlet extends HttpServlet {
             .setCookieSpec(CookieSpecs.IGNORE_COOKIES) // we handle them in the servlet instead
             .setConnectTimeout(connectTimeout)
             .setSocketTimeout(readTimeout)
+            .build();
+  }
+
+  /**
+   * Sub-classes can override specific behaviour of {@link org.apache.http.config.SocketConfig}.
+   */
+  protected SocketConfig buildSocketConfig() {
+    return SocketConfig.custom()
+            .setSoTimeout(readTimeout)
             .build();
   }
 
@@ -223,8 +233,10 @@ public class ProxyServlet extends HttpServlet {
    * HttpClient offers many opportunities for customization.
    * In any case, it should be thread-safe.
    */
-  protected HttpClient createHttpClient(final RequestConfig requestConfig) {
-    HttpClientBuilder clientBuilder = HttpClientBuilder.create().setDefaultRequestConfig(requestConfig);
+  protected HttpClient createHttpClient(final RequestConfig requestConfig, final SocketConfig socketConfig) {
+    HttpClientBuilder clientBuilder = HttpClientBuilder.create()
+                                        .setDefaultRequestConfig(requestConfig)
+                                        .setDefaultSocketConfig(socketConfig);
     if (useSystemProperties)
       clientBuilder = clientBuilder.useSystemProperties();
     return clientBuilder.build();
