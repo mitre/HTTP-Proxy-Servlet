@@ -244,7 +244,7 @@ public class ProxyServlet extends HttpServlet {
 
   /**
    * The http client used.
-   * @see #createHttpClient(RequestConfig)
+   * @see #createHttpClient(RequestConfig, SocketConfig)
    */
   protected HttpClient getProxyClient() {
     return proxyClient;
