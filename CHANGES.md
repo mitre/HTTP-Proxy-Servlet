@@ -1,6 +1,9 @@
 
 # Version 1.11 (unreleased)
 
+\#151: Copy `HttpOnly` flag of proxy coookie to request clients, for fixing security vulnerabilities in cookies.
+This also updates `javax.servlet-api` to `v3.0.1`.
+
 \#139: Use Java system properties for http proxy (and other settings) by default.
 This is a regression; it used to work this way in 1.8 and prior.
 Thanks Thorsten Möller.

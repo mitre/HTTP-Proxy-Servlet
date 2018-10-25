@@ -505,6 +505,7 @@ public class ProxyServlet extends HttpServlet {
       // don't set cookie domain
       servletCookie.setSecure(cookie.getSecure());
       servletCookie.setVersion(cookie.getVersion());
+      servletCookie.setHttpOnly(cookie.isHttpOnly());
       servletResponse.addCookie(servletCookie);
     }
   }
