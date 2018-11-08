@@ -50,7 +50,6 @@ import java.net.URI;
 import java.util.BitSet;
 import java.util.Enumeration;
 import java.util.Formatter;
-import java.util.List;
 
 /**
  * An HTTP reverse proxy/gateway servlet. It is designed to be extended for customization
@@ -92,10 +91,10 @@ public class ProxyServlet extends HttpServlet {
 
   /** A integer parameter name to set the socket read timeout (millis) */
   public static final String P_READTIMEOUT = "http.read.timeout";
-  
+
   /** A boolean parameter whether to use JVM-defined system properties to configure various networking aspects. */
   public static final String P_USESYSTEMPROPERTIES = "useSystemProperties";
-  
+
   /** The parameter name for the target (destination) URI to proxy to. */
   protected static final String P_TARGET_URI = "targetUri";
   protected static final String ATTR_TARGET_URI =
@@ -178,7 +177,7 @@ public class ProxyServlet extends HttpServlet {
     if (connectTimeoutString != null) {
       this.connectTimeout = Integer.parseInt(connectTimeoutString);
     }
-    
+
     String readTimeoutString = getConfigParam(P_READTIMEOUT);
     if (readTimeoutString != null) {
       this.readTimeout = Integer.parseInt(readTimeoutString);
@@ -191,7 +190,7 @@ public class ProxyServlet extends HttpServlet {
 
     initTarget();//sets target*
 
-    proxyClient = createHttpClient(buildRequestConfig(), buildSocketConfig());
+    proxyClient = createHttpClient();
   }
 
   /**
@@ -210,8 +209,13 @@ public class ProxyServlet extends HttpServlet {
    * Sub-classes can override specific behaviour of {@link org.apache.http.config.SocketConfig}.
    */
   protected SocketConfig buildSocketConfig() {
+
+    if (readTimeout < 1) {
+      return null;
+    }
+
     return SocketConfig.custom()
-            .setSoTimeout(readTimeout == -1 ? 0 : readTimeout)
+            .setSoTimeout(readTimeout)
             .build();
   }
 
@@ -233,10 +237,10 @@ public class ProxyServlet extends HttpServlet {
    * HttpClient offers many opportunities for customization.
    * In any case, it should be thread-safe.
    */
-  protected HttpClient createHttpClient(final RequestConfig requestConfig, final SocketConfig socketConfig) {
+  protected HttpClient createHttpClient() {
     HttpClientBuilder clientBuilder = HttpClientBuilder.create()
-                                        .setDefaultRequestConfig(requestConfig)
-                                        .setDefaultSocketConfig(socketConfig);
+                                        .setDefaultRequestConfig(buildRequestConfig())
+                                        .setDefaultSocketConfig(buildSocketConfig());
     if (useSystemProperties)
       clientBuilder = clientBuilder.useSystemProperties();
     return clientBuilder.build();
@@ -244,7 +248,7 @@ public class ProxyServlet extends HttpServlet {
 
   /**
    * The http client used.
-   * @see #createHttpClient(RequestConfig, SocketConfig)
+   * @see #createHttpClient()
    */
   protected HttpClient getProxyClient() {
     return proxyClient;
@@ -404,8 +408,8 @@ public class ProxyServlet extends HttpServlet {
     }
   }
 
-  /** 
-   * Copy request headers from the servlet client to the proxy request. 
+  /**
+   * Copy request headers from the servlet client to the proxy request.
    * This is easily overridden to add your own.
    */
   protected void copyRequestHeaders(HttpServletRequest servletRequest, HttpRequest proxyRequest) {
