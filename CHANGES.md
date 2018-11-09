@@ -1,6 +1,16 @@
 
 # Version 1.11 (unreleased)
 
+\#150 Setting the read timeout in the RequestConfig is not enough.
+The read timeout must be set in the SocketConfig as well.
+Setting the read timeout only in the RequestConfig can cause hangs which could
+block the whole proxy forever.
+Attention: Method signature of createHttpClient(RequestConfig) changed to
+createHttpClient().
+Please override buildRequestConfig() and buildSocketConfig() to configure the
+Apache HttpClient.
+Thanks Martin Wegner.
+
 \#139: Use Java system properties for http proxy (and other settings) by default.
 This is a regression; it used to work this way in 1.8 and prior.
 Thanks Thorsten Möller.
