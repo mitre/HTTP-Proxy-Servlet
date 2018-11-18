@@ -111,7 +111,7 @@ public class ProxyServlet extends HttpServlet {
   protected boolean doPreserveHost = false;
   protected boolean doPreserveCookies = false;
   protected boolean doHandleRedirects = false;
-  protected boolean useSystemProperties = false;
+  protected boolean useSystemProperties = true;
   protected int connectTimeout = -1;
   protected int readTimeout = -1;
 

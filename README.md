@@ -30,9 +30,6 @@ In the mean time, you'll have to add the jar files for this and its dependencies
 This proxy supports HttpClient 4.3, and newer version too.
 If you need to support _older_ HttpClient versions, namely 4.1 and 4.2, then use  the 1.8 version of this proxy.
 
-As of version 1.4 of the proxy, it will by default recognize "http.proxy" and
- most other standard Java system properties.
-
 As of version 1.5 of the proxy, there is the ability to parameterize your proxy URL, allowing you to use
 the same web.xml servlet specification for multiple target servers. It follows the
 [URI Template RFC, Level 1](http://tools.ietf.org/html/rfc6570). Special query
@@ -42,6 +39,8 @@ specified in the web.xml.  To use this, you must use a subclass of the base serv
 IMPORTANT! The template substitutions must be placed in the query string, even when using
 HTTP POST. Other application parameters can be in your POSTed url-encoded-form string; just not
 proxyArgs.
+
+See [CHANGES.md](CHANGES.md) for a history of changes.
 
 Build & Installation
 ------------
@@ -189,7 +188,7 @@ Create a new configuration property
     }  
 ```
 
-Then create register Smiley's proxy servlet with Jetty through the Dropwizard service's App `run()` method.
+Then register Smiley's proxy servlet with Jetty through the Dropwizard service's App `run()` method.
 
 ```
 @Override
