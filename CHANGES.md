@@ -1,7 +1,10 @@
 
 # Version 1.11 (unreleased)
 
-\#151: Copy `HttpOnly` flag of proxy coookie to request clients, for fixing security vulnerabilities in cookies.
+\#149: Introduced overrideable method rewritePathInfoFromRequest.
+Thanks Oren Efraty.
+
+\#151: Copy `HttpOnly` flag of proxy cookie to request clients, for fixing security vulnerabilities in cookies.
 This also updates `javax.servlet-api` to `v3.0.1`.
 
 \#150 Setting the read timeout in the `RequestConfig` is not enough.

@@ -66,7 +66,7 @@ import java.util.Formatter;
  *
  * @author David Smiley dsmiley@apache.org
  */
-@SuppressWarnings({ "deprecation", "serial" })
+@SuppressWarnings({"deprecation", "serial", "WeakerAccess"})
 public class ProxyServlet extends HttpServlet {
 
   /* INIT PARAMETER NAME CONSTANTS */
@@ -574,7 +574,7 @@ public class ProxyServlet extends HttpServlet {
     StringBuilder uri = new StringBuilder(500);
     uri.append(getTargetUri(servletRequest));
     // Handle the path given to the servlet
-    String pathInfo = servletRequest.getPathInfo();
+    String pathInfo = rewritePathInfoFromRequest(servletRequest);
     if (pathInfo != null) {//ex: /my/path.html
       // getPathInfo() returns decoded string, so we need encodeUriQuery to encode "%" characters
       uri.append(encodeUriQuery(pathInfo, true));
@@ -608,6 +608,14 @@ public class ProxyServlet extends HttpServlet {
 
   protected String rewriteQueryStringFromRequest(HttpServletRequest servletRequest, String queryString) {
     return queryString;
+  }
+
+  /**
+   * Allow overrides of {@link javax.servlet.http.HttpServletRequest#getPathInfo()}.
+   * Useful when url-pattern of servlet-mapping (web.xml) requires manipulation.
+   */
+  protected String rewritePathInfoFromRequest(HttpServletRequest servletRequest) {
+    return servletRequest.getPathInfo();
   }
 
   /**
