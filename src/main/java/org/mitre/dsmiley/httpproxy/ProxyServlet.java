@@ -91,6 +91,9 @@ public class ProxyServlet extends HttpServlet {
 
   /** A integer parameter name to set the socket read timeout (millis) */
   public static final String P_READTIMEOUT = "http.read.timeout";
+  
+  /** A integer parameter name to set the connection request timeout (millis) */
+  public static final String P_CONNECTIONREQUESTTIMEOUT = "http.connectionrequest.timeout";
 
   /** A boolean parameter whether to use JVM-defined system properties to configure various networking aspects. */
   public static final String P_USESYSTEMPROPERTIES = "useSystemProperties";
@@ -114,6 +117,7 @@ public class ProxyServlet extends HttpServlet {
   protected boolean useSystemProperties = true;
   protected int connectTimeout = -1;
   protected int readTimeout = -1;
+  protected int connectionRequestTimeout = -1;
 
   //These next 3 are cached here, and should only be referred to in initialization logic. See the
   // ATTR_* parameters.
@@ -182,6 +186,11 @@ public class ProxyServlet extends HttpServlet {
     if (readTimeoutString != null) {
       this.readTimeout = Integer.parseInt(readTimeoutString);
     }
+    
+    String connectionRequestTimeout = getConfigParam(P_CONNECTIONREQUESTTIMEOUT);
+    if (connectionRequestTimeout != null) {
+      this.connectionRequestTimeout = Integer.parseInt(connectionRequestTimeout);
+    }
 
     String useSystemPropertiesString = getConfigParam(P_USESYSTEMPROPERTIES);
     if (useSystemPropertiesString != null) {
@@ -202,6 +211,7 @@ public class ProxyServlet extends HttpServlet {
             .setCookieSpec(CookieSpecs.IGNORE_COOKIES) // we handle them in the servlet instead
             .setConnectTimeout(connectTimeout)
             .setSocketTimeout(readTimeout)
+            .setConnectionRequestTimeout(connectionRequestTimeout)
             .build();
   }
 
