@@ -1,6 +1,9 @@
 
 # Version 1.11 (unreleased)
 
+\#153: New settings: http.maxConnections and http.connectionrequest.timeout
+Thanks Gotzon Illarramendi.
+
 \#149: Introduced overrideable method rewritePathInfoFromRequest.
 Thanks Oren Efraty.
 
