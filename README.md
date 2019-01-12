@@ -22,10 +22,10 @@ This proxy depends on [Apache HttpClient](http://hc.apache.org/httpcomponents-cl
 At some point I may write an alternative that uses the JDK and thus doesn't have any dependencies, which is desirable.
 In the mean time, you'll have to add the jar files for this and its dependencies:
 
-     +- org.apache.httpcomponents:httpclient:jar:4.5.2:compile
-        +- org.apache.httpcomponents:httpcore:jar:4.4.4:compile
+     +- org.apache.httpcomponents:httpclient:jar:4.5.6:compile
+        +- org.apache.httpcomponents:httpcore:jar:4.4.10:compile
         |  +- commons-logging:commons-logging:jar:1.2:compile
-        |  \- commons-codec:commons-codec:jar:1.9:compile
+        |  \- commons-codec:commons-codec:jar:1.10:compile
 
 This proxy supports HttpClient 4.3, and newer version too.
 If you need to support _older_ HttpClient versions, namely 4.1 and 4.2, then use  the 1.8 version of this proxy.
@@ -55,7 +55,7 @@ add this to your dependencies in your pom like so:
     <dependency>
         <groupId>org.mitre.dsmiley.httpproxy</groupId>
         <artifactId>smiley-http-proxy-servlet</artifactId>
-        <version>1.10</version>
+        <version>1.11</version>
     </dependency>
 
 Ivy and other dependency managers can be used as well.
@@ -74,6 +74,9 @@ The following is a list of parameters that can be configured
 + http.protocol.handle-redirects: A boolean parameter name to have auto-handle redirects
 + http.socket.timeout: A integer parameter name to set the socket connection timeout (millis)
 + http.read.timeout: A integer parameter name to set the socket read timeout (millis)
++ http.connectionrequest.timeout: A integer parameter name to set the connection request timeout (millis)
++ http.maxConnections: A integer parameter name to set max connection number
++ useSystemProperties: A boolean parameter whether to use JVM-defined system properties to configure various networking aspects.
 + targetUri: The parameter name for the target (destination) URI to proxy to.
 
 
