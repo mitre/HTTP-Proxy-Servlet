@@ -3,7 +3,7 @@
 
   <groupId>org.mitre.dsmiley.httpproxy</groupId>
   <artifactId>smiley-http-proxy-servlet</artifactId>
-  <version>1.11</version>
+  <version>1.12-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>Smiley's HTTP Proxy Servlet</name>
@@ -35,7 +35,7 @@
     <url>https://github.com/dsmiley/HTTP-Proxy-Servlet</url>
     <connection>scm:git:https://dsmiley@github.com/dsmiley/HTTP-Proxy-Servlet.git</connection>
     <developerConnection>scm:git:git@github.com:dsmiley/HTTP-Proxy-Servlet.git</developerConnection>
-    <tag>smiley-http-proxy-servlet-1.11</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <properties>
