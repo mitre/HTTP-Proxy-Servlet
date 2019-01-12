@@ -119,7 +119,33 @@
           </compilerArgs>
         </configuration>
       </plugin>
-
+      <!-- For OSGI -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifestEntries>
+              <Bundle-Version>${project.version}</Bundle-Version>
+              <Tool>Bundlor ${project.version}</Tool>
+              <Bundle-Name>${project.artifactId}</Bundle-Name>
+              <Bundle-SymbolicName>org.mitre.dsmiley.http-proxy-servlet</Bundle-SymbolicName>
+              <Export-Package>org.mitre.dsmiley.httpproxy;version="0"</Export-Package>
+              <Import-Package>org.apache.http;version="0",
+ org.apache.http.client;version="0",
+ org.apache.http.entity;version="0",
+ org.apache.http.impl.client;version="0",
+ org.apache.http.message;version="0",
+ org.apache.http.util; version="0",
+ org.apache.http.client.utils;version="0",
+ org.apache.http.client.methods;version="0",
+ javax.servlet;version="0",
+ javax.servlet.http;version="0",
+ javax.net.ssl;version="0", org.apache.http.client.config;version="0"</Import-Package>
+            </manifestEntries>
+          </archive>
+        </configuration>
+      </plugin>
       <!-- See
       http://central.sonatype.org/pages/apache-maven.html#nexus-staging-maven-plugin-for-deployment-and-release
 

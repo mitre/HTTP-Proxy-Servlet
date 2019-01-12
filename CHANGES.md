@@ -1,6 +1,9 @@
 
 # Version 1.11 (unreleased)
 
+\#155: Add OSGI manifiest headers.
+Thanks Abhishek Jain.
+
 \#153: New settings: http.maxConnections and http.connectionrequest.timeout
 Thanks Gotzon Illarramendi.
 
