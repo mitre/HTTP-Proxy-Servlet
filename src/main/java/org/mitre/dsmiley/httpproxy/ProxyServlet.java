@@ -693,7 +693,7 @@ public class ProxyServlet extends HttpServlet {
    * @param in example: name=value&amp;foo=bar#fragment
    * @param encodePercent determine whether percent characters need to be encoded
    */
-  protected static CharSequence encodeUriQuery(CharSequence in, boolean encodePercent) {
+  protected CharSequence encodeUriQuery(CharSequence in, boolean encodePercent) {
     //Note that I can't simply use URI.java to encode because it will escape pre-existing escaped things.
     StringBuilder outBuf = null;
     Formatter formatter = null;
