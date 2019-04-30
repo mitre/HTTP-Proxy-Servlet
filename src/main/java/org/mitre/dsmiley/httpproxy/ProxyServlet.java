@@ -489,6 +489,10 @@ public class ProxyServlet extends HttpServlet {
 
       String protoHeaderName = "X-Forwarded-Proto";
       String protoHeader = servletRequest.getScheme();
+      String existingProtoHeader = servletRequest.getHeader(protoHeaderName);
+      if (existingProtoHeader != null) {
+        protoHeader = existingProtoHeader;
+      }
       proxyRequest.setHeader(protoHeaderName, protoHeader);
     }
   }
