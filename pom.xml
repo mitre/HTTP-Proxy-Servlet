@@ -3,7 +3,7 @@
 
   <groupId>org.mitre.dsmiley.httpproxy</groupId>
   <artifactId>smiley-http-proxy-servlet</artifactId>
-  <version>1.12-SNAPSHOT</version>
+  <version>1.12</version>
   <packaging>jar</packaging>
 
   <name>Smiley's HTTP Proxy Servlet</name>
