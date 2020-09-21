@@ -45,6 +45,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpCookie;
 import java.net.URI;
@@ -584,8 +585,23 @@ public class ProxyServlet extends HttpServlet {
           throws IOException {
     HttpEntity entity = proxyResponse.getEntity();
     if (entity != null) {
-      OutputStream servletOutputStream = servletResponse.getOutputStream();
-      entity.writeTo(servletOutputStream);
+      if (entity.isChunked()) {
+        InputStream is = entity.getContent();
+        try {
+          byte[] buffer = new byte[2 * 1024];
+          int read;
+          OutputStream os = servletResponse.getOutputStream();
+          while ((read = is.read(buffer)) != -1) {
+            os.write(buffer, 0, read);
+            os.flush();
+          }
+        } finally {
+          closeQuietly(is);
+        }
+      } else {
+        OutputStream servletOutputStream = servletResponse.getOutputStream();
+        entity.writeTo(servletOutputStream);
+      }
     }
   }
 
