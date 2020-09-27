@@ -586,14 +586,17 @@ public class ProxyServlet extends HttpServlet {
     HttpEntity entity = proxyResponse.getEntity();
     if (entity != null) {
       if (entity.isChunked()) {
+        // Flush intermediate results before blocking on input -- needed for SSE
         InputStream is = entity.getContent();
         try {
-          byte[] buffer = new byte[2 * 1024];
+          byte[] buffer = new byte[10 * 1024];
           int read;
           OutputStream os = servletResponse.getOutputStream();
           while ((read = is.read(buffer)) != -1) {
             os.write(buffer, 0, read);
-            os.flush();
+            if (is.available() == 0) { // next is.read will block
+              os.flush();
+            }
           }
         } finally {
           closeQuietly(is);
