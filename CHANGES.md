@@ -1,5 +1,8 @@
 # Version 1.12 (unreleased)
 
+\#158: More extension points RE HttpClient building and cookies.
+Thanks Mark Michaelis.
+
 # Version 1.11 2019-01-12
 
 \#155: Add OSGI manifiest headers.
