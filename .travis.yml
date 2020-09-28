@@ -5,9 +5,8 @@ sudo: false
 script: mvn -Dhttpclient.version=$HTTPCLIENT_VERSION -Dhttpclient.test.version=$HTTPCLIENT_TEST_VERSION clean verify $JDOC
 
 jdk:
-  - openjdk7
-  - oraclejdk8
-  - oraclejdk9
+  - openjdk8
+  - openjdk11
 
 # We use httpclient test jar providing LocalTestServer.java; no longer in 4.4+.
 # We only do javadoc test for the latest version (as it's the only official one)

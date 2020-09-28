@@ -1,5 +1,7 @@
 # Version 1.12 (unreleased)
 
+Java 8 is now the minimum java version the servlet works with.
+
 \#158: More extension points RE HttpClient building and cookies.
 Thanks Mark Michaelis.
 
