@@ -31,7 +31,6 @@ import org.apache.http.client.utils.URIUtils;
 import org.apache.http.config.SocketConfig;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpEntityEnclosingRequest;
 import org.apache.http.message.BasicHttpRequest;
@@ -259,7 +258,7 @@ public class ProxyServlet extends HttpServlet {
    * In any case, it should be thread-safe.
    */
   protected HttpClient createHttpClient() {
-    HttpClientBuilder clientBuilder = HttpClientBuilder.create()
+    HttpClientBuilder clientBuilder = getHttpClientBuilder()
                                         .setDefaultRequestConfig(buildRequestConfig())
                                         .setDefaultSocketConfig(buildSocketConfig());
     
@@ -267,7 +266,29 @@ public class ProxyServlet extends HttpServlet {
     
     if (useSystemProperties)
       clientBuilder = clientBuilder.useSystemProperties();
+    return buildHttpClient(clientBuilder);
+  }
+
+  /**
+   * Creates a HttpClient from the given builder. Meant as postprocessor
+   * to possibly adapt the client builder prior to creating the
+   * HttpClient.
+   *
+   * @param clientBuilder pre-configured client builder
+   * @return HttpClient
+   */
+  protected HttpClient buildHttpClient(HttpClientBuilder clientBuilder) {
     return clientBuilder.build();
+  }
+
+  /**
+   * Creates a {@code HttpClientBuilder}. Meant as preprocessor to possibly
+   * adapt the client builder prior to any configuration got applied.
+   *
+   * @return HttpClient builder
+   */
+  protected HttpClientBuilder getHttpClientBuilder() {
+    return HttpClientBuilder.create();
   }
 
   /**
@@ -528,26 +549,56 @@ public class ProxyServlet extends HttpServlet {
    */
   protected void copyProxyCookie(HttpServletRequest servletRequest,
                                  HttpServletResponse servletResponse, String headerValue) {
-    //build path for resulting cookie
-    String path = servletRequest.getContextPath(); // path starts with / or is empty string
-    path += servletRequest.getServletPath(); // servlet path starts with / or is empty string
-    if(path.isEmpty()){
-      path = "/";
-    }
-
     for (HttpCookie cookie : HttpCookie.parse(headerValue)) {
-      //set cookie name prefixed w/ a proxy value so it won't collide w/ other cookies
-      String proxyCookieName = doPreserveCookies ? cookie.getName() : getCookieNamePrefix(cookie.getName()) + cookie.getName();
-      Cookie servletCookie = new Cookie(proxyCookieName, cookie.getValue());
-      servletCookie.setComment(cookie.getComment());
-      servletCookie.setMaxAge((int) cookie.getMaxAge());
-      servletCookie.setPath(path); //set to the path of the proxy servlet
-      // don't set cookie domain
-      servletCookie.setSecure(cookie.getSecure());
-      servletCookie.setVersion(cookie.getVersion());
-      servletCookie.setHttpOnly(cookie.isHttpOnly());
+      Cookie servletCookie = createProxyCookie(servletRequest, cookie);
       servletResponse.addCookie(servletCookie);
     }
+  }
+
+  /**
+   * Creates a proxy cookie from the original cookie.
+   *
+   * @param servletRequest original request
+   * @param cookie original cookie
+   * @return proxy cookie
+   */
+  protected Cookie createProxyCookie(HttpServletRequest servletRequest, HttpCookie cookie) {
+    String proxyCookieName = getProxyCookieName(cookie);
+    Cookie servletCookie = new Cookie(proxyCookieName, cookie.getValue());
+    servletCookie.setPath(buildProxyCookiePath(servletRequest)); //set to the path of the proxy servlet
+    servletCookie.setComment(cookie.getComment());
+    servletCookie.setMaxAge((int) cookie.getMaxAge());
+    // don't set cookie domain
+    servletCookie.setSecure(cookie.getSecure());
+    servletCookie.setVersion(cookie.getVersion());
+    servletCookie.setHttpOnly(cookie.isHttpOnly());
+    return servletCookie;
+  }
+
+  /**
+   * Set cookie name prefixed with a proxy value so it won't collide with other cookies.
+   *
+   * @param cookie cookie to get proxy cookie name for
+   * @return non-conflicting proxy cookie name
+   */
+  protected String getProxyCookieName(HttpCookie cookie) {
+    //
+    return doPreserveCookies ? cookie.getName() : getCookieNamePrefix(cookie.getName()) + cookie.getName();
+  }
+
+  /**
+   * Create path for proxy cookie.
+   *
+   * @param servletRequest original request
+   * @return proxy cookie path
+   */
+  protected String buildProxyCookiePath(HttpServletRequest servletRequest) {
+    String path = servletRequest.getContextPath(); // path starts with / or is empty string
+    path += servletRequest.getServletPath(); // servlet path starts with / or is empty string
+    if (path.isEmpty()) {
+      path = "/";
+    }
+    return path;
   }
 
   /**

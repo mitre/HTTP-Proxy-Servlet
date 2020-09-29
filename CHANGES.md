@@ -1,5 +1,10 @@
 # Version 1.12 (unreleased)
 
+Java 8 is now the minimum java version the servlet works with.
+
+\#158: More extension points RE HttpClient building and cookies.
+Thanks Mark Michaelis.
+
 # Version 1.11 2019-01-12
 
 \#155: Add OSGI manifiest headers.
