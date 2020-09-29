@@ -58,6 +58,7 @@
 
   <dependencies>
 
+    <!-- Probably works with 3.0 as well -->
     <dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>javax.servlet-api</artifactId>

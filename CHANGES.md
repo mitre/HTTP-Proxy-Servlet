@@ -2,8 +2,13 @@
 
 Java 8 is now the minimum java version the servlet works with.
 
+Servlet API 3.1.0 is now the minimum servlet API supported.
+
 \#158: More extension points RE HttpClient building and cookies.
 Thanks Mark Michaelis.
+
+\#176: Flush chunked responses to support Server Sent Events (SSE).
+Thanks Matthias Bläsing
 
 # Version 1.11 2019-01-12
 

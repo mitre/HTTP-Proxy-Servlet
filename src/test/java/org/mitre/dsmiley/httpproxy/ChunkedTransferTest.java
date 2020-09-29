@@ -15,9 +15,6 @@
  */
 package org.mitre.dsmiley.httpproxy;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertTrue;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,6 +35,9 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertTrue;
 
 public class ChunkedTransferTest {
 
@@ -112,8 +112,7 @@ public class ChunkedTransferTest {
 
     URL url = new URL(String.format("http://localhost:%d/chatProxied/test", serverPort));
 
-    InputStream is = url.openStream();
-    try {
+    try (InputStream is = url.openStream()) {
       byte[] readData = readUntilBlocked(is);
       assertTrue("No data received (message1)", readData.length > 0);
       assertArrayEquals("Received data: '" + toString(readData) + "'  (message1)", data1, readData);
@@ -121,8 +120,6 @@ public class ChunkedTransferTest {
       readData = readUntilBlocked(is);
       assertTrue("No data received  (message2)", readData.length > 0);
       assertArrayEquals("Received data: '" + toString(readData) + "'  (message2)", data2, readData);
-    } finally {
-      is.close();
     }
   }
 
@@ -135,12 +132,12 @@ public class ChunkedTransferTest {
     byte[] buffer = new byte[10 * 1024];
     do {
       int read = is.read(buffer);
-      if( read >= 0) {
+      if (read >= 0) {
         baos.write(buffer, 0, read);
       } else {
         break;
       }
-    } while(is.available() > 0);
+    } while (is.available() > 0);
     return baos.toByteArray();
   }
 }
