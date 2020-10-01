@@ -52,12 +52,13 @@ versions are deployed to maven-central.  If you are using maven then you can
 add this to your dependencies in your pom like so:
 (Note: the version below is not necessarily the latest.)
 
-    <dependency>
-        <groupId>org.mitre.dsmiley.httpproxy</groupId>
-        <artifactId>smiley-http-proxy-servlet</artifactId>
-        <version>1.11</version>
-    </dependency>
-
+```xml
+<dependency>
+    <groupId>org.mitre.dsmiley.httpproxy</groupId>
+    <artifactId>smiley-http-proxy-servlet</artifactId>
+    <version>1.11</version>
+</dependency>
+```
 Ivy and other dependency managers can be used as well.
 
 
@@ -84,22 +85,24 @@ The following is a list of parameters that can be configured
 
 Here's an example excerpt of a web.xml file to communicate to a Solr server:
 
-    <servlet>
-        <servlet-name>solr</servlet-name>
-        <servlet-class>org.mitre.dsmiley.httpproxy.ProxyServlet</servlet-class>
-        <init-param>
-          <param-name>targetUri</param-name>
-          <param-value>http://solrserver:8983/solr</param-value>
-        </init-param>
-        <init-param>
-          <param-name>log</param-name>
-          <param-value>true</param-value>
-        </init-param>
-    </servlet>
-    <servlet-mapping>
-      <servlet-name>solr</servlet-name>
-      <url-pattern>/solr/*</url-pattern>
-    </servlet-mapping>
+```xml
+<servlet>
+  <servlet-name>solr</servlet-name>
+  <servlet-class>org.mitre.dsmiley.httpproxy.ProxyServlet</servlet-class>
+  <init-param>
+    <param-name>targetUri</param-name>
+    <param-value>http://solrserver:8983/solr</param-value>
+  </init-param>
+  <init-param>
+    <param-name>log</param-name>
+    <param-value>true</param-value>
+  </init-param>
+</servlet>
+<servlet-mapping>
+  <servlet-name>solr</servlet-name>
+  <url-pattern>/solr/*</url-pattern>
+</servlet-mapping>
+```
 
 Here's an example with a parameterized proxy URL matching query parameters
 _subHost, _port, and _path such as
@@ -107,23 +110,25 @@ _subHost, _port, and _path such as
 proxy servlet class. The leading underscore is not mandatory but it's good to differentiate
 them from the normal query parameters in case of a conflict.:
 
-    <servlet>
-      <servlet-name>clusterProxy</servlet-name>
-      <servlet-class>org.mitre.dsmiley.httpproxy.URITemplateProxyServlet</servlet-class>
-      <init-param>
-        <param-name>targetUri</param-name>
-        <param-value>http://{_subHost}.behindfirewall.mycompany.com:{_port}/{_path}</param-value>
-      </init-param>
-      <init-param>
-        <param-name>log</param-name>
-        <param-value>true</param-value>
-      </init-param>
-    </servlet>
+```xml
+<servlet>
+  <servlet-name>clusterProxy</servlet-name>
+  <servlet-class>org.mitre.dsmiley.httpproxy.URITemplateProxyServlet</servlet-class>
+  <init-param>
+    <param-name>targetUri</param-name>
+    <param-value>http://{_subHost}.behindfirewall.mycompany.com:{_port}/{_path}</param-value>
+  </init-param>
+  <init-param>
+    <param-name>log</param-name>
+    <param-value>true</param-value>
+  </init-param>
+</servlet>
 
-    <servlet-mapping>
-      <servlet-name>clusterProxy</servlet-name>
-      <url-pattern>/mywebapp/cluster/*</url-pattern>
-    </servlet-mapping>
+<servlet-mapping>
+  <servlet-name>clusterProxy</servlet-name>
+  <url-pattern>/mywebapp/cluster/*</url-pattern>
+</servlet-mapping>
+```
 
 ### SpringMVC
 
@@ -159,7 +164,7 @@ public class SolrProxyServletConfiguration implements EnvironmentAware {
 
 and properties in `application.yml`:
 
-```
+```yaml
 proxy:
     solr:
         servlet_url: /solr/*
@@ -181,7 +186,7 @@ targetUri: http://foo.com/api
 
 Create a new configuration property
 
-```
+```java
     @NotEmpty
     private String targetUri = "";
 
@@ -193,11 +198,10 @@ Create a new configuration property
 
 Then register Smiley's proxy servlet with Jetty through the Dropwizard service's App `run()` method.
 
-```
+```java
 @Override
     public void run(final ShepherdServiceConfiguration configuration,
         final Environment environment) {
-
 
         environment.getApplicationContext()
             .addServlet("org.mitre.dsmiley.httpproxy.ProxyServlet", "foo/*")
