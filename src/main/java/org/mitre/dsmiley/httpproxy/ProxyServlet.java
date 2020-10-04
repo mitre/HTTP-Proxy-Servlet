@@ -263,6 +263,7 @@ public class ProxyServlet extends HttpServlet {
                                         .setDefaultSocketConfig(buildSocketConfig());
     
     clientBuilder.setMaxConnTotal(maxConnections);
+    clientBuilder.setMaxConnPerRoute(maxConnections);
     
     if (useSystemProperties)
       clientBuilder = clientBuilder.useSystemProperties();
