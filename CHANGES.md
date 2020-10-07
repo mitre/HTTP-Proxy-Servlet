@@ -10,6 +10,11 @@ Thanks Mark Michaelis.
 \#176: Flush chunked responses to support Server Sent Events (SSE).
 Thanks Matthias Bläsing
 
+\#181: Ensure the configured maximum number of connections can actually be
+established in a reverse proxy scenario. Ensure proxy connection is shutdown
+when client connection is closed.
+Thanks Matthias Bläsing
+
 # Version 1.11 2019-01-12
 
 \#155: Add OSGI manifiest headers.
