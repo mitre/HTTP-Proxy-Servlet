@@ -263,6 +263,7 @@ public class ProxyServlet extends HttpServlet {
                                         .setDefaultSocketConfig(buildSocketConfig());
     
     clientBuilder.setMaxConnTotal(maxConnections);
+    clientBuilder.setMaxConnPerRoute(maxConnections);
     
     if (useSystemProperties)
       clientBuilder = clientBuilder.useSystemProperties();
@@ -373,7 +374,7 @@ public class ProxyServlet extends HttpServlet {
       }
 
     } catch (Exception e) {
-      handleRequestException(proxyRequest, e);
+      handleRequestException(proxyRequest, proxyResponse, e);
     } finally {
       // make sure the entire entity was consumed, so the connection is released
       if (proxyResponse != null)
@@ -383,11 +384,18 @@ public class ProxyServlet extends HttpServlet {
     }
   }
 
-  protected void handleRequestException(HttpRequest proxyRequest, Exception e) throws ServletException, IOException {
+  protected void handleRequestException(HttpRequest proxyRequest, HttpResponse proxyResonse, Exception e) throws ServletException, IOException {
     //abort request, according to best practice with HttpClient
     if (proxyRequest instanceof AbortableHttpRequest) {
       AbortableHttpRequest abortableHttpRequest = (AbortableHttpRequest) proxyRequest;
       abortableHttpRequest.abort();
+    }
+    // If the response is a chunked response, it is read to completion when
+    // #close is called. If the sending site does not timeout or keeps sending,
+    // the connection will be kept open indefinitely. Closing the respone
+    // object terminates the stream.
+    if (proxyResonse instanceof Closeable) {
+      ((Closeable) proxyResonse).close();
     }
     if (e instanceof RuntimeException)
       throw (RuntimeException)e;
@@ -639,19 +647,16 @@ public class ProxyServlet extends HttpServlet {
       if (entity.isChunked()) {
         // Flush intermediate results before blocking on input -- needed for SSE
         InputStream is = entity.getContent();
-        try {
-          byte[] buffer = new byte[10 * 1024];
-          int read;
-          OutputStream os = servletResponse.getOutputStream();
-          while ((read = is.read(buffer)) != -1) {
-            os.write(buffer, 0, read);
-            if (is.available() == 0) { // next is.read will block
-              os.flush();
-            }
+        OutputStream os = servletResponse.getOutputStream();
+        byte[] buffer = new byte[10 * 1024];
+        int read;
+        while ((read = is.read(buffer)) != -1) {
+          os.write(buffer, 0, read);
+          if (is.available() == 0) { // next is.read will block
+            os.flush();
           }
-        } finally {
-          closeQuietly(is);
         }
+        // Entity closing/cleanup is done in the caller (#service)
       } else {
         OutputStream servletOutputStream = servletResponse.getOutputStream();
         entity.writeTo(servletOutputStream);

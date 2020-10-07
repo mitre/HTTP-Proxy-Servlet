@@ -123,6 +123,72 @@ public class ChunkedTransferTest {
     }
   }
 
+  @Test
+  public void testChunkedTransferClosing() throws Exception {
+    /*
+     This test ensures, that the chunk encoded backing connection is closed,
+     when the closing of the proxy (frontend) connection is detected.
+
+     The idea is, that in the servlet the closing of the backing connection can
+     be detected, because the output stream is closed and an IOException is
+     raised. If no exception is raised when writing multiple chunks, it must
+     be assumed, that the backing connection is not closed.
+     */
+    final CountDownLatch guardForSecondRead = new CountDownLatch(1);
+    final CountDownLatch guardForEnd = new CountDownLatch(1);
+    final byte[] data1 = "event: message\ndata: Dummy Data1\n\n".getBytes(StandardCharsets.UTF_8);
+    final byte[] data2 = "event: message\ndata: Dummy Data2\n\n".getBytes(StandardCharsets.UTF_8);
+
+    ServletHolder servletHolder = servletHandler.addServletWithMapping(ProxyServlet.class, "/chatProxied/*");
+    servletHolder.setInitParameter(ProxyServlet.P_LOG, "true");
+    servletHolder.setInitParameter(ProxyServlet.P_TARGET_URI, String.format("http://localhost:%d/chat/", serverPort));
+
+    ServletHolder dummyBackend = new ServletHolder(new HttpServlet() {
+      @Override
+      protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        resp.setContentType("text/event-stream");
+        OutputStream os = resp.getOutputStream();
+        // Write first message for client and flush it out
+        os.write(data1);
+        os.flush();
+        try {
+          // Wait for client to request the second message by counting down the
+          // latch - if the latch times out, the second message will not be
+          // send and the corresponding assert will fail
+          if (! guardForSecondRead.await(10, TimeUnit.SECONDS)) {
+            throw new IOException("Wait timed out");
+          }
+          try {
+            for(int i = 0; i < 100; i++) {
+              os.write(data2);
+              os.flush();
+              Thread.sleep(100);
+            }
+          } catch (IOException ex) {
+            // This point is reached when the output stream is closed - the
+            // count down latch is count down to indicate success
+            guardForEnd.countDown();
+          }
+        } catch (InterruptedException ex) {
+          throw new IOException(ex);
+        }
+      }
+    });
+    servletHandler.addServletWithMapping(dummyBackend, "/chat/*");
+
+    URL url = new URL(String.format("http://localhost:%d/chatProxied/test", serverPort));
+
+    try (InputStream is = url.openStream()) {
+      byte[] readData = readUntilBlocked(is);
+      assertTrue("No data received (message1)", readData.length > 0);
+      assertArrayEquals("Received data: '" + toString(readData) + "'  (message1)", data1, readData);
+    }
+    // Release sending of further messages
+    guardForSecondRead.countDown();
+    // Wait for the reporting of the closed connection
+    assertTrue(guardForEnd.await(10, TimeUnit.SECONDS));
+  }
+
   private static String toString(byte[] data) {
     return new String(data, StandardCharsets.UTF_8);
   }
