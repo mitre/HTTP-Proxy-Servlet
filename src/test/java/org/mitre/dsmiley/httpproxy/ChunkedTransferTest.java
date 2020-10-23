@@ -15,41 +15,77 @@
  */
 package org.mitre.dsmiley.httpproxy;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.apache.http.MalformedChunkCodingException;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.eclipse.jetty.server.Handler;
 
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.handler.gzip.GzipHandler;
 import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertTrue;
+import org.junit.runners.Parameterized.Parameters;
 
+@RunWith(Parameterized.class)
 public class ChunkedTransferTest {
+  @Parameters
+  public static List<Object[]> data() {
+    return Arrays.asList(new Object[][] { 
+      {false, false},
+      {false, true},
+      {true, false},
+      {true, true}
+    });
+  }
 
   private Server server;
   private ServletHandler servletHandler;
   private int serverPort;
+  private boolean supportBackendCompression;
+  private boolean handleCompressionApacheClient;
+
+  public ChunkedTransferTest(boolean supportBackendCompression, boolean handleCompressionApacheClient) {
+    this.supportBackendCompression = supportBackendCompression;
+    this.handleCompressionApacheClient = handleCompressionApacheClient;
+  }
 
   @Before
   public void setUp() throws Exception {
     server = new Server(0);
     servletHandler = new ServletHandler();
-    server.setHandler(servletHandler);
+    Handler serverHandler = servletHandler;
+    if(supportBackendCompression) {
+      GzipHandler gzipHandler = new GzipHandler();
+      gzipHandler.setHandler(serverHandler);
+      gzipHandler.setSyncFlush(true);
+      serverHandler = gzipHandler;
+    } else {
+      serverHandler = servletHandler;
+    }
+    server.setHandler(serverHandler);
     server.start();
 
     serverPort = ((ServerConnector) server.getConnectors()[0]).getLocalPort();
@@ -86,6 +122,7 @@ public class ChunkedTransferTest {
     ServletHolder servletHolder = servletHandler.addServletWithMapping(ProxyServlet.class, "/chatProxied/*");
     servletHolder.setInitParameter(ProxyServlet.P_LOG, "true");
     servletHolder.setInitParameter(ProxyServlet.P_TARGET_URI, String.format("http://localhost:%d/chat/", serverPort));
+    servletHolder.setInitParameter(ProxyServlet.P_HANDLECOMPRESSION, Boolean.toString(handleCompressionApacheClient));
 
     ServletHolder dummyBackend = new ServletHolder(new HttpServlet() {
       @Override
@@ -110,16 +147,19 @@ public class ChunkedTransferTest {
     });
     servletHandler.addServletWithMapping(dummyBackend, "/chat/*");
 
-    URL url = new URL(String.format("http://localhost:%d/chatProxied/test", serverPort));
+    HttpGet url = new HttpGet(String.format("http://localhost:%d/chatProxied/test", serverPort));
 
-    try (InputStream is = url.openStream()) {
-      byte[] readData = readUntilBlocked(is);
-      assertTrue("No data received (message1)", readData.length > 0);
-      assertArrayEquals("Received data: '" + toString(readData) + "'  (message1)", data1, readData);
-      guardForSecondRead.countDown();
-      readData = readUntilBlocked(is);
-      assertTrue("No data received  (message2)", readData.length > 0);
-      assertArrayEquals("Received data: '" + toString(readData) + "'  (message2)", data2, readData);
+    try (CloseableHttpClient chc = HttpClientBuilder.create().build();
+            CloseableHttpResponse chr = chc.execute(url)) {
+      try (InputStream is = chr.getEntity().getContent()) {
+        byte[] readData = readBlock(is);
+        assertTrue("No data received (message1)", readData.length > 0);
+        assertArrayEquals("Received data: '" + toString(readData) + "'  (message1)", data1, readData);
+        guardForSecondRead.countDown();
+        readData = readBlock(is);
+        assertTrue("No data received  (message2)", readData.length > 0);
+        assertArrayEquals("Received data: '" + toString(readData) + "'  (message2)", data2, readData);
+      }
     }
   }
 
@@ -142,6 +182,7 @@ public class ChunkedTransferTest {
     ServletHolder servletHolder = servletHandler.addServletWithMapping(ProxyServlet.class, "/chatProxied/*");
     servletHolder.setInitParameter(ProxyServlet.P_LOG, "true");
     servletHolder.setInitParameter(ProxyServlet.P_TARGET_URI, String.format("http://localhost:%d/chat/", serverPort));
+    servletHolder.setInitParameter(ProxyServlet.P_HANDLECOMPRESSION, Boolean.toString(handleCompressionApacheClient));
 
     ServletHolder dummyBackend = new ServletHolder(new HttpServlet() {
       @Override
@@ -176,12 +217,20 @@ public class ChunkedTransferTest {
     });
     servletHandler.addServletWithMapping(dummyBackend, "/chat/*");
 
-    URL url = new URL(String.format("http://localhost:%d/chatProxied/test", serverPort));
+    HttpGet url = new HttpGet(String.format("http://localhost:%d/chatProxied/test", serverPort));
 
-    try (InputStream is = url.openStream()) {
-      byte[] readData = readUntilBlocked(is);
-      assertTrue("No data received (message1)", readData.length > 0);
-      assertArrayEquals("Received data: '" + toString(readData) + "'  (message1)", data1, readData);
+    try (CloseableHttpClient chc = HttpClientBuilder.create().build()) {
+      CloseableHttpResponse chr = chc.execute(url);
+      try (InputStream is = chr.getEntity().getContent()) {
+        byte[] readData = readBlock(is);
+        assertTrue("No data received (message1)", readData.length > 0);
+        assertArrayEquals("Received data: '" + toString(readData) + "'  (message1)", data1, readData);
+        chr.close();
+      } catch (MalformedChunkCodingException ex) {
+        // this is expected
+      } finally {
+        chr.close();
+      }
     }
     // Release sending of further messages
     guardForSecondRead.countDown();
@@ -193,17 +242,9 @@ public class ChunkedTransferTest {
     return new String(data, StandardCharsets.UTF_8);
   }
 
-  private static byte[] readUntilBlocked(InputStream is) throws IOException {
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+  private static byte[] readBlock(InputStream is) throws IOException {
     byte[] buffer = new byte[10 * 1024];
-    do {
-      int read = is.read(buffer);
-      if (read >= 0) {
-        baos.write(buffer, 0, read);
-      } else {
-        break;
-      }
-    } while (is.available() > 0);
-    return baos.toByteArray();
+    int read = is.read(buffer);
+    return Arrays.copyOfRange(buffer, 0, read);
   }
 }

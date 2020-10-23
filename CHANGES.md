@@ -15,6 +15,14 @@ established in a reverse proxy scenario. Ensure proxy connection is shutdown
 when client connection is closed.
 Thanks Matthias Bläsing
 
+\#183: Compression handling in the apache http client is disabled by default.
+This allows passing through compression methods not supported by apache http
+client. It requires though, that compression filters in the servlet container
+respect already set `Content-Encoding` headers and don't try to compress the
+outputstream again. The old behaviour can be restored by setting the init
+parameter `handleCompression` to `true`.
+Thanks Matthias Bläsing
+
 # Version 1.11 2019-01-12
 
 \#155: Add OSGI manifiest headers.

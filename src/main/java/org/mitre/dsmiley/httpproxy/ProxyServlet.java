@@ -102,6 +102,9 @@ public class ProxyServlet extends HttpServlet {
   /** A boolean parameter whether to use JVM-defined system properties to configure various networking aspects. */
   public static final String P_USESYSTEMPROPERTIES = "useSystemProperties";
 
+  /** A boolean parameter to enable handling of compression in the servlet. If it is false, compressed streams are passed through unmodified. */
+  public static final String P_HANDLECOMPRESSION = "handleCompression";
+
   /** The parameter name for the target (destination) URI to proxy to. */
   protected static final String P_TARGET_URI = "targetUri";
   protected static final String ATTR_TARGET_URI =
@@ -119,6 +122,7 @@ public class ProxyServlet extends HttpServlet {
   protected boolean doPreserveCookies = false;
   protected boolean doHandleRedirects = false;
   protected boolean useSystemProperties = true;
+  protected boolean doHandleCompression = false;
   protected int connectTimeout = -1;
   protected int readTimeout = -1;
   protected int connectionRequestTimeout = -1;
@@ -207,6 +211,11 @@ public class ProxyServlet extends HttpServlet {
       this.useSystemProperties = Boolean.parseBoolean(useSystemPropertiesString);
     }
 
+    String doHandleCompression = getConfigParam(P_HANDLECOMPRESSION);
+    if (doHandleCompression != null) {
+      this.doHandleCompression = Boolean.parseBoolean(doHandleCompression);
+    }
+
     initTarget();//sets target*
 
     proxyClient = createHttpClient();
@@ -261,10 +270,13 @@ public class ProxyServlet extends HttpServlet {
     HttpClientBuilder clientBuilder = getHttpClientBuilder()
                                         .setDefaultRequestConfig(buildRequestConfig())
                                         .setDefaultSocketConfig(buildSocketConfig());
-    
+
     clientBuilder.setMaxConnTotal(maxConnections);
     clientBuilder.setMaxConnPerRoute(maxConnections);
-    
+    if(! doHandleCompression) {
+      clientBuilder.disableContentCompression();
+    }
+
     if (useSystemProperties)
       clientBuilder = clientBuilder.useSystemProperties();
     return buildHttpClient(clientBuilder);
@@ -486,6 +498,10 @@ public class ProxyServlet extends HttpServlet {
       return;
     if (hopByHopHeaders.containsHeader(headerName))
       return;
+    // If compression is handled in the servlet, apache http client needs to
+    // control the Accept-Encoding header, not the client
+    if (doHandleCompression && headerName.equalsIgnoreCase(HttpHeaders.ACCEPT_ENCODING))
+      return;
 
     @SuppressWarnings("unchecked")
     Enumeration<String> headers = servletRequest.getHeaders(headerName);
@@ -652,7 +668,20 @@ public class ProxyServlet extends HttpServlet {
         int read;
         while ((read = is.read(buffer)) != -1) {
           os.write(buffer, 0, read);
-          if (is.available() == 0) { // next is.read will block
+          /*-
+           * Issue in Apache http client/JDK: if the stream from client is
+           * compressed, apache http client will delegate to GzipInputStream.
+           * The #available implementation of InflaterInputStream (parent of
+           * GzipInputStream) return 1 until EOF is reached. This is not
+           * consistent with InputStream#available, which defines:
+           *
+           *   A single read or skip of this many bytes will not block,
+           *   but may read or skip fewer bytes.
+           *
+           *  To work around this, a flush is issued always if compression
+            *  is handled by apache http client
+           */
+          if (doHandleCompression || is.available() == 0 /* next is.read will block */) {
             os.flush();
           }
         }
