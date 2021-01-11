@@ -125,8 +125,8 @@ public class ProxyServletTest
   //  differently on sending them vs not sending them.
   private static String[] testUrlSuffixes = new String[]{
           "","/pathInfo","/pathInfo/%23%25abc","?q=v","/p?q=v",
-          "/p?query=note:Leitbild",//colon  Issue#4
-          "/p?id=p%20i", "/p%20i" // encoded space in param then in path
+          "/p?query=note%3ALeitbild",//colon  Issue#4
+          "/p?id=p+i", "/p%20i" // encoded space in param then in path
   };
   //TODO add "/p//doubleslash//f.txt" however HTTPUnit gets in the way. See issue #24
 
