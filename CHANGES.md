@@ -23,6 +23,8 @@ outputstream again. The old behaviour can be restored by setting the init
 parameter `handleCompression` to `true`.
 Thanks Matthias Bläsing
 
+\#190: Percent encoded question marks in the path should stay encoded.
+
 # Version 1.11 2019-01-12
 
 \#155: Add OSGI manifiest headers.

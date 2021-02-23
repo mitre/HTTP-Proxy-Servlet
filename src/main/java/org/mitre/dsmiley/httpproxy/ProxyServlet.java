@@ -832,7 +832,7 @@ public class ProxyServlet extends HttpServlet {
   static {
     char[] c_unreserved = "_-!.~'()*".toCharArray();//plus alphanum
     char[] c_punct = ",;:$&+=".toCharArray();
-    char[] c_reserved = "?/[]@".toCharArray();//plus punct
+    char[] c_reserved = "/[]@".toCharArray();//plus punct.  Exclude '?'; RFC-2616 3.2.2
 
     asciiQueryChars = new BitSet(128);
     for(char c = 'a'; c <= 'z'; c++) asciiQueryChars.set((int)c);
