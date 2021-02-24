@@ -106,7 +106,8 @@ public class ProxyServlet extends HttpServlet {
   public static final String P_HANDLECOMPRESSION = "handleCompression";
 
   /** The parameter name for the target (destination) URI to proxy to. */
-  protected static final String P_TARGET_URI = "targetUri";
+  public static final String P_TARGET_URI = "targetUri";
+  
   protected static final String ATTR_TARGET_URI =
           ProxyServlet.class.getSimpleName() + ".targetUri";
   protected static final String ATTR_TARGET_HOST =
