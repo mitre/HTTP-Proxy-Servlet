@@ -128,7 +128,8 @@ public class ProxyServletTest
           "/p?query=note:Leitbild",//colon  Issue#4
           "/p?query=note%3ALeitbild",
           "/p?id=p%20i", "/p%20i", // encoded space in param then in path
-          "/p?id=p+i"
+          "/p?id=p+i",
+          "/pathwithquestionmark%3F%3F?from=1&to=10" // encoded question marks
   };
   //TODO add "/p//doubleslash//f.txt" however HTTPUnit gets in the way. See issue #24
 

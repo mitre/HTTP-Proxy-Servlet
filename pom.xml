@@ -42,7 +42,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <!-- works with v4.3 and forward; see .travis.yml -->
-    <httpclient.version>4.5.6</httpclient.version>
+    <httpclient.version>[4.3,5.0)</httpclient.version>
     <!-- the last version to provide LocalTestServer.java -->
     <httpclient.test.version>4.3.6</httpclient.test.version>
   </properties>
@@ -75,7 +75,7 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.12</version>
+      <version>4.13.1</version>
       <scope>test</scope>
     </dependency>
 

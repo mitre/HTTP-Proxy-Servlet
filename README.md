@@ -20,12 +20,12 @@ If you need something more sophisticated than there are some alternatives listed
 
 This proxy depends on [Apache HttpClient](http://hc.apache.org/httpcomponents-client-ga/), which offers another point of extension for this proxy.
 At some point I may write an alternative that uses the JDK and thus doesn't have any dependencies, which is desirable.
-In the mean time, you'll have to add the jar files for this and its dependencies:
+In the meantime, you'll have to add the jar files for this and its dependencies:
 
-     +- org.apache.httpcomponents:httpclient:jar:4.5.6:compile
-        +- org.apache.httpcomponents:httpcore:jar:4.4.10:compile
+     +- org.apache.httpcomponents:httpclient:jar:4.5.13:compile
+        +- org.apache.httpcomponents:httpcore:jar:4.4.13:compile
         |  +- commons-logging:commons-logging:jar:1.2:compile
-        |  \- commons-codec:commons-codec:jar:1.10:compile
+        |  \- commons-codec:commons-codec:jar:1.11:compile
 
 This proxy supports HttpClient 4.3, and newer version too.
 If you need to support _older_ HttpClient versions, namely 4.1 and 4.2, then use  the 1.8 version of this proxy.

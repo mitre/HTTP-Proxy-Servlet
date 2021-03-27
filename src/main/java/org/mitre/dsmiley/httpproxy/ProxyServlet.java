@@ -106,7 +106,8 @@ public class ProxyServlet extends HttpServlet {
   public static final String P_HANDLECOMPRESSION = "handleCompression";
 
   /** The parameter name for the target (destination) URI to proxy to. */
-  protected static final String P_TARGET_URI = "targetUri";
+  public static final String P_TARGET_URI = "targetUri";
+  
   protected static final String ATTR_TARGET_URI =
           ProxyServlet.class.getSimpleName() + ".targetUri";
   protected static final String ATTR_TARGET_HOST =
@@ -832,7 +833,7 @@ public class ProxyServlet extends HttpServlet {
   static {
     char[] c_unreserved = "_-!.~'()*".toCharArray();//plus alphanum
     char[] c_punct = ",;:$&+=".toCharArray();
-    char[] c_reserved = "?/[]@".toCharArray();//plus punct
+    char[] c_reserved = "/[]@".toCharArray();//plus punct.  Exclude '?'; RFC-2616 3.2.2
 
     asciiQueryChars = new BitSet(128);
     for(char c = 'a'; c <= 'z'; c++) asciiQueryChars.set((int)c);
