@@ -26,6 +26,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -133,7 +134,7 @@ public class URITemplateProxyServlet extends ProxyServlet {
         newQueryBuf.append('&');
       newQueryBuf.append(nameVal.getKey()).append('=');
       if (nameVal.getValue() != null)
-        newQueryBuf.append(nameVal.getValue());
+        newQueryBuf.append( URLEncoder.encode(nameVal.getValue(), "UTF-8"));
     }
     servletRequest.setAttribute(ATTR_QUERY_STRING, newQueryBuf.toString());
 

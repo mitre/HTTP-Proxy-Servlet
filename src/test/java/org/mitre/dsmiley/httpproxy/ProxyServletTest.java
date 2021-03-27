@@ -126,14 +126,23 @@ public class ProxyServletTest
   private static String[] testUrlSuffixes = new String[]{
           "","/pathInfo","/pathInfo/%23%25abc","?q=v","/p?q=v",
           "/p?query=note:Leitbild",//colon  Issue#4
+          "/p?query=note%3ALeitbild",
           "/p?id=p%20i", "/p%20i", // encoded space in param then in path
+          "/p?id=p+i",
           "/pathwithquestionmark%3F%3F?from=1&to=10" // encoded question marks
   };
   //TODO add "/p//doubleslash//f.txt" however HTTPUnit gets in the way. See issue #24
 
+  protected boolean doTestUrlSuffix(String urlSuffix) {
+    return true;
+  }
+
   @Test
   public void testGet() throws Exception {
     for (String urlSuffix : testUrlSuffixes) {
+      if (doTestUrlSuffix(urlSuffix) == false) {
+        continue;
+      }
       execAssert(makeGetMethodRequest(sourceBaseUri + urlSuffix));
     }
   }
@@ -141,6 +150,9 @@ public class ProxyServletTest
   @Test
   public void testPost() throws Exception {
     for (String urlSuffix : testUrlSuffixes) {
+      if (doTestUrlSuffix(urlSuffix) == false) {
+        continue;
+      }
       execAndAssert(makePostMethodRequest(sourceBaseUri + urlSuffix));
     }
   }

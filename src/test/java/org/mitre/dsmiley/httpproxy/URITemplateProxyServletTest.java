@@ -17,15 +17,19 @@
 package org.mitre.dsmiley.httpproxy;
 
 import com.meterware.httpunit.WebRequest;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Properties;
 
 public class URITemplateProxyServletTest extends ProxyServletTest {
+  private static final Log log = LogFactory.getLog(ProxyServletTest.class);
 
   String urlParams;
 
@@ -71,6 +75,17 @@ public class URITemplateProxyServletTest extends ProxyServletTest {
         expectedUri = expectedUri.substring(0, expectedUri.length() - urlParams.length());
     }
     return new URI(this.targetBaseUri).getPath() + expectedUri;
+  }
+
+  @Override
+  protected boolean doTestUrlSuffix(String urlSuffix) {
+    // %20 because template proxy normalizes to "+"
+    // ":" is invalid (ought to be encoded) and this proxy normalizes to encoded
+    if (urlSuffix.contains("%20") || urlSuffix.contains(":")) {
+      log.info("Skipping check of urlSuffix: " + urlSuffix + " because this test normalizes it");
+      return false;
+    }
+    return true;
   }
 
   @Override @Test
