@@ -523,11 +523,11 @@ public class ProxyServletTest
     return execAndAssert(request, expectedUri);
   }
 
-  protected WebResponse execAssert(GetMethodWebRequest request) throws Exception {
+  private WebResponse execAssert(GetMethodWebRequest request) throws Exception {
     return execAndAssert(request,null);
   }
 
-  protected WebResponse execAndAssert(PostMethodWebRequest request) throws Exception {
+  private WebResponse execAndAssert(PostMethodWebRequest request) throws Exception {
     request.setParameter("abc","ABC");
 
     WebResponse rsp = execAndAssert(request, null);
@@ -574,7 +574,7 @@ public class ProxyServletTest
     return makeMethodRequest(url,GetMethodWebRequest.class);
   }
 
-  protected PostMethodWebRequest makePostMethodRequest(final String url) {
+  private PostMethodWebRequest makePostMethodRequest(final String url) {
     return makeMethodRequest(url,PostMethodWebRequest.class);
   }
 
