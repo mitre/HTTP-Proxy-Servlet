@@ -1,4 +1,8 @@
-# Version 1.12 (unreleased)
+# Version 1.13 (unreleased)
+
+_Nothing yet._
+
+# Version 1.12 released on 2021-04-03
 
 Java 8 is now the minimum java version the servlet works with.
 
