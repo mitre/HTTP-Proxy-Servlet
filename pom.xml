@@ -211,6 +211,7 @@
         <artifactId>maven-javadoc-plugin</artifactId>
         <version>3.2.0</version>
         <configuration>
+          <!-- keep in sync with release -->
           <source>8</source>
           <additionalJOptions>
             <additionalJOption>-Xdoclint:all</additionalJOption>
@@ -262,6 +263,14 @@
                 </goals>
               </execution>
             </executions>
+            <configuration>
+              <!-- keep in sync with reporting -->
+              <source>8</source>
+              <additionalJOptions>
+                <additionalJOption>-Xdoclint:all</additionalJOption>
+                <additionalJOption>-Xdoclint:-missing</additionalJOption>
+              </additionalJOptions>
+            </configuration>
           </plugin>
 
           <plugin>
