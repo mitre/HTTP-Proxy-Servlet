@@ -41,7 +41,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-    <!-- works with v4.3 and forward; see .travis.yml -->
+    <!-- works with v4.3 and forward; see .github/workflows/maven.yml -->
     <httpclient.version>[4.3,5.0)</httpclient.version>
     <!-- the last version to provide LocalTestServer.java -->
     <httpclient.test.version>4.3.6</httpclient.test.version>
