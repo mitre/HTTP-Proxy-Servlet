@@ -87,16 +87,16 @@ public class ProxyServlet extends HttpServlet {
   /** A boolean parameter name to have auto-handle redirects */
   public static final String P_HANDLEREDIRECTS = "http.protocol.handle-redirects"; // ClientPNames.HANDLE_REDIRECTS
 
-  /** A integer parameter name to set the socket connection timeout (millis) */
+  /** An integer parameter name to set the socket connection timeout (millis) */
   public static final String P_CONNECTTIMEOUT = "http.socket.timeout"; // CoreConnectionPNames.SO_TIMEOUT
 
-  /** A integer parameter name to set the socket read timeout (millis) */
+  /** An integer parameter name to set the socket read timeout (millis) */
   public static final String P_READTIMEOUT = "http.read.timeout";
   
-  /** A integer parameter name to set the connection request timeout (millis) */
+  /** An integer parameter name to set the connection request timeout (millis) */
   public static final String P_CONNECTIONREQUESTTIMEOUT = "http.connectionrequest.timeout";
 
-  /** A integer parameter name to set max connection number */
+  /** An integer parameter name to set max connection number */
   public static final String P_MAXCONNECTIONS = "http.maxConnections";
   
   /** A boolean parameter whether to use JVM-defined system properties to configure various networking aspects. */
