@@ -211,6 +211,6 @@ Then register Smiley's proxy servlet with Jetty through the Dropwizard service's
 Alternatives
 -------------
 This servlet is intentionally simple and limited in scope.  As such it may not meet your needs, so consider looking at these alternatives:
-* Jetty's ProxyServlet: https://www.eclipse.org/jetty/documentation/9.4.x/proxy-servlet.html  This is perhaps the closest competitor (simple, limited scope, no dependencies), and may very well already be on your classpath.
+* Jetty's ProxyServlet: https://www.eclipse.org/jetty/javadoc/jetty-9/org/eclipse/jetty/proxy/ProxyServlet.html  This is perhaps the closest competitor (simple, limited scope, no dependencies), and may very well already be on your classpath.
 * Netflix's Zuul: https://github.com/Netflix/zuul
 * Charon: https://github.com/mkopylec/charon-spring-boot-starter
