@@ -56,7 +56,7 @@ add this to your dependencies in your pom like so:
 <dependency>
     <groupId>org.mitre.dsmiley.httpproxy</groupId>
     <artifactId>smiley-http-proxy-servlet</artifactId>
-    <version>1.11</version>
+    <version>1.12</version>
 </dependency>
 ```
 Ivy and other dependency managers can be used as well.
@@ -146,7 +146,7 @@ If you are using **Spring Boot**, then consider this basic configuration:
 public class SolrProxyServletConfiguration implements EnvironmentAware {
 
   @Bean
-  public ServletRegistrationBean servletRegistrationBean(){
+  public ServletRegistrationBean servletRegistrationBean() {
     ServletRegistrationBean servletRegistrationBean = new ServletRegistrationBean(new ProxyServlet(), propertyResolver.getProperty("servlet_url"));
     servletRegistrationBean.addInitParameter(ProxyServlet.P_TARGET_URI, propertyResolver.getProperty("target_url"));
     servletRegistrationBean.addInitParameter(ProxyServlet.P_LOG, propertyResolver.getProperty("logging_enabled", "false"));
