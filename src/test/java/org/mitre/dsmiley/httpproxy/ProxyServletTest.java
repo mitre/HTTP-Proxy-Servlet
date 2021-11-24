@@ -209,6 +209,7 @@ public class ProxyServletTest
   public void testProxyWithUnescapedChars() throws Exception {
     execAssert(makeGetMethodRequest(sourceBaseUri + "?fq={!f=field}"), "?fq=%7B!f=field%7D");//has squiggly brackets
     execAssert(makeGetMethodRequest(sourceBaseUri + "?fq=%7B!f=field%7D"));//already escaped; don't escape twice
+    execAssert(makeGetMethodRequest(sourceBaseUri + "/%5Babc%5D/xyz")); // already escaped brackets; don't escape twice
   }
 
   /** http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html */
