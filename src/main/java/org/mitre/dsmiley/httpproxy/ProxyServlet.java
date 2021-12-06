@@ -92,13 +92,13 @@ public class ProxyServlet extends HttpServlet {
 
   /** An integer parameter name to set the socket read timeout (millis) */
   public static final String P_READTIMEOUT = "http.read.timeout";
-  
+
   /** An integer parameter name to set the connection request timeout (millis) */
   public static final String P_CONNECTIONREQUESTTIMEOUT = "http.connectionrequest.timeout";
 
   /** An integer parameter name to set max connection number */
   public static final String P_MAXCONNECTIONS = "http.maxConnections";
-  
+
   /** A boolean parameter whether to use JVM-defined system properties to configure various networking aspects. */
   public static final String P_USESYSTEMPROPERTIES = "useSystemProperties";
 
@@ -107,7 +107,7 @@ public class ProxyServlet extends HttpServlet {
 
   /** The parameter name for the target (destination) URI to proxy to. */
   public static final String P_TARGET_URI = "targetUri";
-  
+
   protected static final String ATTR_TARGET_URI =
           ProxyServlet.class.getSimpleName() + ".targetUri";
   protected static final String ATTR_TARGET_HOST =
@@ -196,12 +196,12 @@ public class ProxyServlet extends HttpServlet {
     if (readTimeoutString != null) {
       this.readTimeout = Integer.parseInt(readTimeoutString);
     }
-    
+
     String connectionRequestTimeout = getConfigParam(P_CONNECTIONREQUESTTIMEOUT);
     if (connectionRequestTimeout != null) {
       this.connectionRequestTimeout = Integer.parseInt(connectionRequestTimeout);
     }
-    
+
     String maxConnections = getConfigParam(P_MAXCONNECTIONS);
     if (maxConnections != null) {
       this.maxConnections = Integer.parseInt(maxConnections);
@@ -833,8 +833,7 @@ public class ProxyServlet extends HttpServlet {
   static {
     char[] c_unreserved = "_-!.~'()*".toCharArray();//plus alphanum
     char[] c_punct = ",;:$&+=".toCharArray();
-    char[] c_reserved = "/[]@".toCharArray();//plus punct.  Exclude '?'; RFC-2616 3.2.2
-
+    char[] c_reserved = "/@".toCharArray();//plus punct.  Exclude '?'; RFC-2616 3.2.2. Exclude '[', ']'; https://www.ietf.org/rfc/rfc1738.txt, unsafe characters
     asciiQueryChars = new BitSet(128);
     for(char c = 'a'; c <= 'z'; c++) asciiQueryChars.set(c);
     for(char c = 'A'; c <= 'Z'; c++) asciiQueryChars.set(c);
