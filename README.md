@@ -161,6 +161,31 @@ public class SolrProxyServletConfiguration implements EnvironmentAware {
   }
 }
 ```
+if you use Spring Boot 2.x,you can try this:
+```java
+@Configuration
+public class SolrProxyServletConfiguration implements EnvironmentAware {
+
+    @Bean
+    public ServletRegistrationBean servletRegistrationBean() {
+        Properties properties= (Properties) bindResult.get();
+        ServletRegistrationBean servletRegistrationBean = new ServletRegistrationBean(new ProxyServlet(), properties.getProperty("servlet_url"));
+        servletRegistrationBean.addInitParameter(ProxyServlet.P_TARGET_URI, properties.getProperty("target_url"));
+        servletRegistrationBean.addInitParameter(ProxyServlet.P_LOG, properties.getProperty("logging_enabled", "false"));
+        return servletRegistrationBean;
+    }
+
+    private BindResult bindResult;
+
+    @Override
+    public void setEnvironment(Environment environment) {
+        Iterable sources = ConfigurationPropertySources.get(environment);
+        Binder binder = new Binder(sources);
+        BindResult bindResult = binder.bind("proxy.solr", Properties.class);
+        this.bindResult = bindResult;
+    }
+}
+```
 
 and properties in `application.yml`:
 
