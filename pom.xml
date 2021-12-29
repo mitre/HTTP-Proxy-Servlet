@@ -158,7 +158,7 @@
       http://central.sonatype.org/pages/apache-maven.html#nexus-staging-maven-plugin-for-deployment-and-release
 
       mvn release:clean release:prepare
-      mvn release:perform
+      mvn release:perform -Prelease
       -->
 
       <plugin>

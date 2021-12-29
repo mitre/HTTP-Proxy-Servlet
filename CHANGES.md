@@ -1,5 +1,9 @@
 # Version 1.13 (unreleased)
 
+_(no changes)_
+
+# Version 1.12.1 released on 2021-12-28
+
 \#215: '[' and ']' should be encoded as they are unsafe characters. https://www.ietf.org/rfc/rfc1738.txt
 Thanks @phuongnq
 

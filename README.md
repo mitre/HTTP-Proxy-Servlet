@@ -8,7 +8,7 @@ This is hardly the first proxy, so why did I write it and thus why might you use
  * It's simple -- a single source file implementation
  * It's tested -- have confidence it works ![Build Status](https://github.com/mitre/HTTP-Proxy-Servlet/actions/workflows/maven.yml/badge.svg)
  * It's securable -- via Java EE web.xml or via a servlet filter such as [Spring-Security]([http://static.springsource.org/spring-security/site/)
- * It's extendible -- via simple class extension
+ * It's extendable -- via simple class extension
  * It's embeddable -- into your Java web application making testing your app easier
 
 I have seen many quick'n'dirty proxies posted in source form on the web such as in a blog.
@@ -56,7 +56,7 @@ add this to your dependencies in your pom like so:
 <dependency>
     <groupId>org.mitre.dsmiley.httpproxy</groupId>
     <artifactId>smiley-http-proxy-servlet</artifactId>
-    <version>1.12</version>
+    <version>1.12.1</version>
 </dependency>
 ```
 Ivy and other dependency managers can be used as well.
