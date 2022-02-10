@@ -29,6 +29,7 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.AbortableHttpRequest;
 import org.apache.http.client.utils.URIUtils;
 import org.apache.http.config.SocketConfig;
+import org.apache.http.cookie.SM;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicHeader;
@@ -46,11 +47,11 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.ref.SoftReference;
 import java.net.HttpCookie;
 import java.net.URI;
-import java.util.BitSet;
-import java.util.Enumeration;
-import java.util.Formatter;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * An HTTP reverse proxy/gateway servlet. It is designed to be extended for customization
@@ -140,6 +141,7 @@ public class ProxyServlet extends HttpServlet {
   protected HttpHost targetHost;//URIUtils.extractHost(targetUriObj);
 
   private HttpClient proxyClient;
+  private static volatile Map<String, SoftReference<Set<HttpCookie>>> rootPathCookies = new ConcurrentHashMap<>();// key: sessionId, value: proxyCookies
 
   @Override
   public String getServletInfo() {
@@ -522,7 +524,35 @@ public class ProxyServlet extends HttpServlet {
       } else if (!doPreserveCookies && headerName.equalsIgnoreCase(org.apache.http.cookie.SM.COOKIE)) {
         headerValue = getRealCookie(headerValue);
       }
-      proxyRequest.addHeader(headerName, headerValue);
+      String finalHeaderValue = null;
+      String sessionId = servletRequest.getSession().getId();
+      SoftReference<Set<HttpCookie>> setSoftReference = rootPathCookies.get(sessionId);
+      Set<HttpCookie> proxyCookies = null;
+      if(setSoftReference != null && (proxyCookies = setSoftReference.get()) != null){
+        StringBuilder cookieBuilder = null;
+        if(SM.COOKIE.equalsIgnoreCase(headerName) || SM.COOKIE2.equalsIgnoreCase(headerName)){
+          cookieBuilder = new StringBuilder(headerValue);
+        }else {
+          cookieBuilder = new StringBuilder();
+        }
+        for(HttpCookie proxyCookie : proxyCookies){
+          if(!cookieBuilder.toString().contains(proxyCookie.toString())){
+            if(cookieBuilder.length()!=0){
+               cookieBuilder.append("; ");
+            }
+            cookieBuilder.append(proxyCookie.toString());
+          }
+        }
+        finalHeaderValue = cookieBuilder.toString();
+      }
+      if(SM.COOKIE.equalsIgnoreCase(headerName) || SM.COOKIE2.equalsIgnoreCase(headerName)){
+        proxyRequest.addHeader(headerName,finalHeaderValue);
+      }else{
+        proxyRequest.addHeader(headerName, headerValue);
+        if(finalHeaderValue != null){
+          proxyRequest.addHeader(SM.COOKIE,finalHeaderValue);
+        }
+      }
     }
   }
 
@@ -594,13 +624,39 @@ public class ProxyServlet extends HttpServlet {
     String proxyCookieName = getProxyCookieName(cookie);
     Cookie servletCookie = new Cookie(proxyCookieName, cookie.getValue());
     //set to the path of the proxy servlet
-    servletCookie.setPath(COOKIE_ROOT_PATH.equals(cookie.getPath()) ? COOKIE_ROOT_PATH : buildProxyCookiePath(servletRequest));
+    String proxyCookiePath = buildProxyCookiePath(servletRequest);
+    servletCookie.setPath(proxyCookiePath);
     servletCookie.setComment(cookie.getComment());
     servletCookie.setMaxAge((int) cookie.getMaxAge());
     // don't set cookie domain
     servletCookie.setSecure(cookie.getSecure());
     servletCookie.setVersion(cookie.getVersion());
     servletCookie.setHttpOnly(cookie.isHttpOnly());
+    if(COOKIE_ROOT_PATH.equals(cookie.getPath())){
+      String sessionId = servletRequest.getSession().getId();
+      SoftReference<Set<HttpCookie>> reference = rootPathCookies.get(sessionId);
+      List<String> expiredKey = new LinkedList<>();
+      if(reference == null || reference.get() == null){
+        rootPathCookies.forEach((k,v)->{
+          if(v.get() == null){
+            expiredKey.add(k);
+          }
+        });
+        for(String ek : expiredKey){
+          rootPathCookies.remove(ek);
+        }
+        synchronized (servletRequest.getSession()){
+          if((reference = rootPathCookies.get(sessionId)) == null || reference.get() == null){
+            Set<HttpCookie> httpCookiesSet = new HashSet<>();
+            reference = new SoftReference<Set<HttpCookie>>(httpCookiesSet);
+            rootPathCookies.put(sessionId,reference) ;
+          }
+        }
+      }
+      if(reference.get() != null){
+         reference.get().add(cookie);
+      }
+    }
     return servletCookie;
   }
 
