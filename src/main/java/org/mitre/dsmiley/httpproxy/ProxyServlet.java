@@ -113,6 +113,9 @@ public class ProxyServlet extends HttpServlet {
   protected static final String ATTR_TARGET_HOST =
           ProxyServlet.class.getSimpleName() + ".targetHost";
 
+  /**default root path of cookie**/
+  private static String COOKIE_ROOT_PATH = "/";
+
   /* MISC */
 
   protected boolean doLog = false;
@@ -590,7 +593,8 @@ public class ProxyServlet extends HttpServlet {
   protected Cookie createProxyCookie(HttpServletRequest servletRequest, HttpCookie cookie) {
     String proxyCookieName = getProxyCookieName(cookie);
     Cookie servletCookie = new Cookie(proxyCookieName, cookie.getValue());
-    servletCookie.setPath(buildProxyCookiePath(servletRequest)); //set to the path of the proxy servlet
+    //set to the path of the proxy servlet
+    servletCookie.setPath(COOKIE_ROOT_PATH.equals(cookie.getPath()) ? COOKIE_ROOT_PATH : buildProxyCookiePath(servletRequest));
     servletCookie.setComment(cookie.getComment());
     servletCookie.setMaxAge((int) cookie.getMaxAge());
     // don't set cookie domain
@@ -621,7 +625,7 @@ public class ProxyServlet extends HttpServlet {
     String path = servletRequest.getContextPath(); // path starts with / or is empty string
     path += servletRequest.getServletPath(); // servlet path starts with / or is empty string
     if (path.isEmpty()) {
-      path = "/";
+      path = COOKIE_ROOT_PATH;
     }
     return path;
   }
@@ -680,7 +684,7 @@ public class ProxyServlet extends HttpServlet {
            *   but may read or skip fewer bytes.
            *
            *  To work around this, a flush is issued always if compression
-            *  is handled by apache http client
+           *  is handled by apache http client
            */
           if (doHandleCompression || is.available() == 0 /* next is.read will block */) {
             os.flush();
