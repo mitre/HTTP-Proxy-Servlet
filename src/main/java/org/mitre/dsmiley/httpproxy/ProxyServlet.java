@@ -85,6 +85,9 @@ public class ProxyServlet extends HttpServlet {
   /** A boolean parameter name to keep COOKIES as-is  */
   public static final String P_PRESERVECOOKIES = "preserveCookies";
 
+  /** A boolean parameter name to cache root path cookies **/
+  public static final String P_CACHEROOTPATHCOOKIES = "cacheRootPathCookies";
+
   /** A boolean parameter name to have auto-handle redirects */
   public static final String P_HANDLEREDIRECTS = "http.protocol.handle-redirects"; // ClientPNames.HANDLE_REDIRECTS
 
@@ -125,6 +128,8 @@ public class ProxyServlet extends HttpServlet {
   protected boolean doSendUrlFragment = true;
   protected boolean doPreserveHost = false;
   protected boolean doPreserveCookies = false;
+  /**Whether to enable cache session cookies, The default value is invalid**/
+  protected boolean doCacheRootPathCookies = false;
   protected boolean doHandleRedirects = false;
   protected boolean useSystemProperties = true;
   protected boolean doHandleCompression = false;
@@ -141,6 +146,8 @@ public class ProxyServlet extends HttpServlet {
   protected HttpHost targetHost;//URIUtils.extractHost(targetUriObj);
 
   private HttpClient proxyClient;
+  /**Caches proxy cookies corresponding to the current ssession , If the current session is invalid (session timeout), or the JVM's fullGC chooses to clear the SoftReference data,
+   * Use the SoftReference function to clear the cookies of an expired session. Avoid memory leaks caused by caching when memory is running low **/
   private static volatile Map<String, SoftReference<Set<HttpCookie>>> rootPathCookies = new ConcurrentHashMap<>();// key: sessionId, value: proxyCookies
 
   @Override
@@ -185,6 +192,11 @@ public class ProxyServlet extends HttpServlet {
     String preserveCookiesString = getConfigParam(P_PRESERVECOOKIES);
     if (preserveCookiesString != null) {
       this.doPreserveCookies = Boolean.parseBoolean(preserveCookiesString);
+    }
+
+    String cacheRootPathCookies = getConfigParam(P_CACHEROOTPATHCOOKIES);
+    if (cacheRootPathCookies != null) {
+      this.doCacheRootPathCookies = Boolean.parseBoolean(cacheRootPathCookies);
     }
 
     String handleRedirectsString = getConfigParam(P_HANDLEREDIRECTS);
@@ -274,8 +286,8 @@ public class ProxyServlet extends HttpServlet {
    */
   protected HttpClient createHttpClient() {
     HttpClientBuilder clientBuilder = getHttpClientBuilder()
-                                        .setDefaultRequestConfig(buildRequestConfig())
-                                        .setDefaultSocketConfig(buildSocketConfig());
+            .setDefaultRequestConfig(buildRequestConfig())
+            .setDefaultSocketConfig(buildSocketConfig());
 
     clientBuilder.setMaxConnTotal(maxConnections);
     clientBuilder.setMaxConnPerRoute(maxConnections);
@@ -337,7 +349,7 @@ public class ProxyServlet extends HttpServlet {
 
   @Override
   protected void service(HttpServletRequest servletRequest, HttpServletResponse servletResponse)
-      throws ServletException, IOException {
+          throws ServletException, IOException {
     //initialize request attributes from caches if unset by a subclass by this point
     if (servletRequest.getAttribute(ATTR_TARGET_URI) == null) {
       servletRequest.setAttribute(ATTR_TARGET_URI, targetUri);
@@ -353,7 +365,7 @@ public class ProxyServlet extends HttpServlet {
     HttpRequest proxyRequest;
     //spec: RFC 2616, sec 4.3: either of these two headers signal that there is a message body.
     if (servletRequest.getHeader(HttpHeaders.CONTENT_LENGTH) != null ||
-        servletRequest.getHeader(HttpHeaders.TRANSFER_ENCODING) != null) {
+            servletRequest.getHeader(HttpHeaders.TRANSFER_ENCODING) != null) {
       proxyRequest = newProxyRequestWithEntity(method, proxyRequestUri, servletRequest);
     } else {
       proxyRequest = new BasicHttpRequest(method, proxyRequestUri);
@@ -435,7 +447,7 @@ public class ProxyServlet extends HttpServlet {
   }
 
   protected HttpRequest newProxyRequestWithEntity(String method, String proxyRequestUri,
-                                                HttpServletRequest servletRequest)
+                                                  HttpServletRequest servletRequest)
           throws IOException {
     HttpEntityEnclosingRequest eProxyRequest =
             new BasicHttpEntityEnclosingRequest(method, proxyRequestUri);
@@ -472,8 +484,8 @@ public class ProxyServlet extends HttpServlet {
   static {
     hopByHopHeaders = new HeaderGroup();
     String[] headers = new String[] {
-        "Connection", "Keep-Alive", "Proxy-Authenticate", "Proxy-Authorization",
-        "TE", "Trailers", "Transfer-Encoding", "Upgrade" };
+            "Connection", "Keep-Alive", "Proxy-Authenticate", "Proxy-Authorization",
+            "TE", "Trailers", "Transfer-Encoding", "Upgrade" };
     for (String header : headers) {
       hopByHopHeaders.addHeader(new BasicHeader(header, null));
     }
@@ -524,35 +536,42 @@ public class ProxyServlet extends HttpServlet {
       } else if (!doPreserveCookies && headerName.equalsIgnoreCase(org.apache.http.cookie.SM.COOKIE)) {
         headerValue = getRealCookie(headerValue);
       }
+      if(doCacheRootPathCookies){
+        addRootPathCookies(servletRequest, proxyRequest, headerName, headerValue);
+      }else {
+        proxyRequest.addHeader(headerName, headerValue);
+      }
+    }
+  }
+
+  /**
+   * Add root path  cookies
+   * @param servletRequest
+   * @param proxyRequest
+   * @param headerName
+   * @param headerValue
+   */
+  private void addRootPathCookies(HttpServletRequest servletRequest, HttpRequest proxyRequest, String headerName, String headerValue) {
+    if(SM.COOKIE.equalsIgnoreCase(headerName) || SM.COOKIE2.equalsIgnoreCase(headerName)){
       String finalHeaderValue = null;
       String sessionId = servletRequest.getSession().getId();
       SoftReference<Set<HttpCookie>> setSoftReference = rootPathCookies.get(sessionId);
       Set<HttpCookie> proxyCookies = null;
       if(setSoftReference != null && (proxyCookies = setSoftReference.get()) != null){
-        StringBuilder cookieBuilder = null;
-        if(SM.COOKIE.equalsIgnoreCase(headerName) || SM.COOKIE2.equalsIgnoreCase(headerName)){
-          cookieBuilder = new StringBuilder(headerValue);
-        }else {
-          cookieBuilder = new StringBuilder();
-        }
+        StringBuilder cookieBuilder =  new StringBuilder(headerValue);//Cookies in the current request
         for(HttpCookie proxyCookie : proxyCookies){
           if(!cookieBuilder.toString().contains(proxyCookie.toString())){
             if(cookieBuilder.length()!=0){
-               cookieBuilder.append("; ");
+              cookieBuilder.append("; ");
             }
-            cookieBuilder.append(proxyCookie.toString());
+            cookieBuilder.append(proxyCookie.toString()); //Append cached root path cookies
           }
         }
         finalHeaderValue = cookieBuilder.toString();
       }
-      if(SM.COOKIE.equalsIgnoreCase(headerName) || SM.COOKIE2.equalsIgnoreCase(headerName)){
-        proxyRequest.addHeader(headerName,finalHeaderValue);
-      }else{
-        proxyRequest.addHeader(headerName, headerValue);
-        if(finalHeaderValue != null){
-          proxyRequest.addHeader(SM.COOKIE,finalHeaderValue);
-        }
-      }
+      proxyRequest.addHeader(headerName,finalHeaderValue);
+    }else{
+      proxyRequest.addHeader(headerName, headerValue);
     }
   }
 
@@ -585,7 +604,7 @@ public class ProxyServlet extends HttpServlet {
    * This is easily overwritten to filter out certain headers if desired.
    */
   protected void copyResponseHeader(HttpServletRequest servletRequest,
-                                  HttpServletResponse servletResponse, Header header) {
+                                    HttpServletResponse servletResponse, Header header) {
     String headerName = header.getName();
     if (hopByHopHeaders.containsHeader(headerName))
       return;
@@ -632,11 +651,24 @@ public class ProxyServlet extends HttpServlet {
     servletCookie.setSecure(cookie.getSecure());
     servletCookie.setVersion(cookie.getVersion());
     servletCookie.setHttpOnly(cookie.isHttpOnly());
+    if(doCacheRootPathCookies){
+      cacheRootPathCookies(servletRequest, cookie);
+    }
+    return servletCookie;
+  }
+
+  /**
+   * cache root path cookies
+   * @param servletRequest
+   * @param cookie
+   */
+  private void cacheRootPathCookies(HttpServletRequest servletRequest, HttpCookie cookie) {
     if(COOKIE_ROOT_PATH.equals(cookie.getPath())){
       String sessionId = servletRequest.getSession().getId();
       SoftReference<Set<HttpCookie>> reference = rootPathCookies.get(sessionId);
       List<String> expiredKey = new LinkedList<>();
       if(reference == null || reference.get() == null){
+        //Facilitate the data that has been cleaned by FULLGC at a time, and remove the expired data
         rootPathCookies.forEach((k,v)->{
           if(v.get() == null){
             expiredKey.add(k);
@@ -645,6 +677,7 @@ public class ProxyServlet extends HttpServlet {
         for(String ek : expiredKey){
           rootPathCookies.remove(ek);
         }
+
         synchronized (servletRequest.getSession()){
           if((reference = rootPathCookies.get(sessionId)) == null || reference.get() == null){
             Set<HttpCookie> httpCookiesSet = new HashSet<>();
@@ -654,10 +687,9 @@ public class ProxyServlet extends HttpServlet {
         }
       }
       if(reference.get() != null){
-         reference.get().add(cookie);
+        reference.get().add(cookie);
       }
     }
-    return servletCookie;
   }
 
   /**
