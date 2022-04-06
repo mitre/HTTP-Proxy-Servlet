@@ -594,7 +594,7 @@ public class ProxyServlet extends HttpServlet {
     servletCookie.setComment(cookie.getComment());
     servletCookie.setMaxAge((int) cookie.getMaxAge());
     // don't set cookie domain
-    servletCookie.setSecure(cookie.getSecure());
+    servletCookie.setSecure(servletRequest.isSecure() && cookie.getSecure());
     servletCookie.setVersion(cookie.getVersion());
     servletCookie.setHttpOnly(cookie.isHttpOnly());
     return servletCookie;
