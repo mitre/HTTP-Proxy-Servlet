@@ -4,7 +4,7 @@
   <groupId>org.mitre.dsmiley.httpproxy</groupId>
   <artifactId>smiley-http-proxy-servlet</artifactId>
   <version>1.13-SNAPSHOT</version>
-  <packaging>jar</packaging>
+  <packaging>war</packaging>
 
   <name>Smiley's HTTP Proxy Servlet</name>
   <description>An HTTP Proxy (aka gateway) in the form of a Java servlet. An

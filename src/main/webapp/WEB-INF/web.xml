@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+  xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
+  id="WebApp_ID" version="3.1">
+
+  <display-name>eneAuthProxy</display-name>
+
+  <welcome-file-list>
+    <welcome-file>index.html</welcome-file>
+  </welcome-file-list>
+
+  <filter>
+    <filter-name>CorsFilter</filter-name>
+    <filter-class>org.apache.catalina.filters.CorsFilter</filter-class>
+    <init-param>
+      <param-name>cors.allowed.origins</param-name>
+      <param-value>*</param-value>
+    </init-param>
+    <init-param>
+      <param-name>cors.supportsCredentials</param-name>
+      <param-value>true</param-value>
+    </init-param>
+    <init-param>
+      <param-name>cors.allowed.methods</param-name>
+      <param-value>GET,POST,HEAD,OPTIONS,PUT,DELETE</param-value>
+    </init-param>
+    <init-param>
+      <param-name>cors.allowed.headers</param-name>
+      <param-value>
+        Content-Type,X-Requested-With,accept,Origin,Access-Control-Request-Method,Access-Control-Request-Headers,Authorization
+      </param-value>
+    </init-param>
+  </filter>
+
+
+  <!-- You will most likely want this to be the first filter in the chain
+  (therefore the first <filter-mapping> in the web.xml file), so that you can get
+  the most accurate measurement of latency. -->
+  <!--
+  <filter-mapping>
+    <filter-name>prometheusFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+
+  <filter-mapping>
+    <filter-name>CorsFilter</filter-name>
+    <url-pattern>/config/*</url-pattern>
+  </filter-mapping>
+  -->
+  <servlet>
+    <servlet-name>authProxy</servlet-name>
+    <servlet-class>org.mitre.dsmiley.httpproxy.ProxyServlet</servlet-class>
+    <init-param>
+      <param-name>targetUri</param-name>
+      <param-value>https://api.manager.ece.iiasa.ac.at/legacy</param-value>
+    </init-param>
+    <init-param>
+      <param-name>log</param-name>
+      <param-value>true</param-value>
+    </init-param>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>authProxy</servlet-name>
+    <url-pattern>/config/v1/*</url-pattern>
+  </servlet-mapping>
+</web-app>
