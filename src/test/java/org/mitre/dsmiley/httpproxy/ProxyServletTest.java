@@ -402,6 +402,35 @@ public class ProxyServletTest
     assertEquals("JSESSIONID=1234; COOKIE2=567", captureCookieValue.toString());
   }
 
+  @Test
+  public void testPreserveCookiePath() throws Exception {
+    servletRunner = new ServletRunner();
+
+    Properties servletProps = new Properties();
+    servletProps.setProperty("http.protocol.handle-redirects", "false");
+    servletProps.setProperty(ProxyServlet.P_LOG, "true");
+    servletProps.setProperty(ProxyServlet.P_FORWARDEDFOR, "true");
+    servletProps.setProperty(ProxyServlet.P_PRESERVECOOKIES, "true");
+    servletProps.setProperty(ProxyServlet.P_PRESERVECOOKIEPATH, "true");
+    setUpServlet(servletProps);
+
+    sc = servletRunner.newClient();
+    sc.getClientProperties().setAutoRedirect(false);//don't want httpunit itself to redirect
+
+    final String HEADER = "Set-Cookie";
+    localTestServer.register("/targetPath*", new RequestInfoHandler() {
+      public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
+        response.setHeader(HEADER, "JSESSIONID=1234; Path=/proxy/path/that/we/want; Expires=Wed, 13 Jan 2021 22:23:01 GMT; Domain=.foo.bar.com; HttpOnly");
+        super.handle(request, response, context);
+      }
+    });
+
+    GetMethodWebRequest req = makeGetMethodRequest(sourceBaseUri);
+    WebResponse rsp = execAndAssert(req, "");
+    // note httpunit doesn't set all cookie fields, ignores max-agent, secure, etc.
+    assertEquals("JSESSIONID=1234;path=/proxy/path/that/we/want", rsp.getHeaderField(HEADER));
+  }
+
   /**
    * If we're proxying a remote service that tries to set cookies, we need to make sure the cookies are not captured
    * by the httpclient in the ProxyServlet, otherwise later requests from ALL users will all access the remote proxy
