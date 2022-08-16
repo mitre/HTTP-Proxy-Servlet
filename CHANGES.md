@@ -1,6 +1,6 @@
 # Version 1.13 (unreleased)
 
-_(no changes)_
+\#231: Added support of preserveCookiePath configuration parameter. It allows to keep cookie path unchanged in Set-Cookie server response header.
 
 # Version 1.12.1 released on 2021-12-28
 
