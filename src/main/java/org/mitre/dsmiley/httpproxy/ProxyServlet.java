@@ -84,6 +84,9 @@ public class ProxyServlet extends HttpServlet {
   /** A boolean parameter name to keep COOKIES as-is  */
   public static final String P_PRESERVECOOKIES = "preserveCookies";
 
+  /** A boolean parameter name to keep COOKIE path as-is  */
+  public static final String P_PRESERVECOOKIEPATH = "preserveCookiePath";
+
   /** A boolean parameter name to have auto-handle redirects */
   public static final String P_HANDLEREDIRECTS = "http.protocol.handle-redirects"; // ClientPNames.HANDLE_REDIRECTS
 
@@ -121,6 +124,7 @@ public class ProxyServlet extends HttpServlet {
   protected boolean doSendUrlFragment = true;
   protected boolean doPreserveHost = false;
   protected boolean doPreserveCookies = false;
+  protected boolean doPreserveCookiePath = false;
   protected boolean doHandleRedirects = false;
   protected boolean useSystemProperties = true;
   protected boolean doHandleCompression = false;
@@ -180,6 +184,11 @@ public class ProxyServlet extends HttpServlet {
     String preserveCookiesString = getConfigParam(P_PRESERVECOOKIES);
     if (preserveCookiesString != null) {
       this.doPreserveCookies = Boolean.parseBoolean(preserveCookiesString);
+    }
+
+    String preserveCookiePathString = getConfigParam(P_PRESERVECOOKIEPATH);
+    if (preserveCookiePathString != null) {
+      this.doPreserveCookiePath = Boolean.parseBoolean(preserveCookiePathString);
     }
 
     String handleRedirectsString = getConfigParam(P_HANDLEREDIRECTS);
@@ -590,7 +599,10 @@ public class ProxyServlet extends HttpServlet {
   protected Cookie createProxyCookie(HttpServletRequest servletRequest, HttpCookie cookie) {
     String proxyCookieName = getProxyCookieName(cookie);
     Cookie servletCookie = new Cookie(proxyCookieName, cookie.getValue());
-    servletCookie.setPath(buildProxyCookiePath(servletRequest)); //set to the path of the proxy servlet
+    servletCookie.setPath(this.doPreserveCookiePath ?
+       cookie.getPath() : // preserve original cookie path
+       buildProxyCookiePath(servletRequest) //set to the path of the proxy servlet
+    );
     servletCookie.setComment(cookie.getComment());
     servletCookie.setMaxAge((int) cookie.getMaxAge());
     // don't set cookie domain

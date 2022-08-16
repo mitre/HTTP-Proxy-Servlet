@@ -72,6 +72,7 @@ The following is a list of parameters that can be configured
 + forwardip: A boolean parameter name to enable forwarding of the client IP
 + preserveHost: A boolean parameter name to keep HOST parameter as-is  
 + preserveCookies: A boolean parameter name to keep COOKIES as-is
++ preserveCookiePath: A boolean parameter name to keep cookie path unchanged in Set-Cookie server response header
 + http.protocol.handle-redirects: A boolean parameter name to have auto-handle redirects
 + http.socket.timeout: A integer parameter name to set the socket connection timeout (millis)
 + http.read.timeout: A integer parameter name to set the socket read timeout (millis)
