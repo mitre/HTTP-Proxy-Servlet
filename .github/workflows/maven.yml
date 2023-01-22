@@ -13,28 +13,12 @@ jobs:
     strategy:
       matrix:
        include:
-         - HTTPCLIENT_VERSION: 4.3.6
-           HTTPCLIENT_TEST_VERSION: 4.3.6
-           JDOC: ""
-         - HTTPCLIENT_VERSION: 4.4.1
-           HTTPCLIENT_TEST_VERSION: 4.3.6
-           JDOC: ""
          - HTTPCLIENT_VERSION: 4.5.13
            HTTPCLIENT_TEST_VERSION: 4.3.6
            JDOC: "site"           
            
     steps:
     - uses: actions/checkout@v2
-    - name: Set up JDK 1.8
-      uses: actions/setup-java@v1
-      with:
-        java-version: 1.8
-    - name: Build with Maven
-      env:
-          HTTPCLIENT_VERSION: ${{ matrix.HTTPCLIENT_VERSION }}
-          HTTPCLIENT_TEST_VERSION: ${{ matrix.HTTPCLIENT_TEST_VERSION }}
-          JDOC: ${{ matrix.JDOC }}
-      run: mvn -B -Dhttpclient.version=$HTTPCLIENT_VERSION -Dhttpclient.test.version=$HTTPCLIENT_TEST_VERSION verify $JDOC
     - name: Set up JDK 11
       uses: actions/setup-java@v1
       with:
