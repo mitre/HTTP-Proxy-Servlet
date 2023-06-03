@@ -16,10 +16,6 @@
 
 package org.mitre.dsmiley.httpproxy;
 
-//import org.apache.http.NameValuePair;
-//import org.apache.http.client.utils.URIUtils;
-//import org.apache.http.client.utils.URLEncodedUtils;
-
 import org.apache.hc.client5.http.utils.URIUtils;
 import org.apache.hc.core5.http.NameValuePair;
 import org.apache.hc.core5.net.URLEncodedUtils;
