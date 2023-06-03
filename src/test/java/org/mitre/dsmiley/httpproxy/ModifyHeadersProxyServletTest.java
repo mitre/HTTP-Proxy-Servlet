@@ -80,7 +80,7 @@ public class ModifyHeadersProxyServletTest extends ProxyServletTest {
     public static final String RESPONSE_HEADER = "RESPONSE_HEADER";
 
     @Override
-    protected void copyRequestHeader(HttpServletRequest servletRequest, HttpRequest proxyRequest, String headerName) {
+    protected void copyRequestHeader(HttpServletRequest servletRequest, org.apache.hc.core5.http.HttpRequest proxyRequest, String headerName) {
       if (REQUEST_HEADER.equalsIgnoreCase(headerName)) {
         proxyRequest.addHeader(headerName, "REQUEST_VALUE_MODIFIED");
       } else {
@@ -90,7 +90,7 @@ public class ModifyHeadersProxyServletTest extends ProxyServletTest {
 
     @Override
     protected void copyResponseHeader(HttpServletRequest servletRequest,
-                                      HttpServletResponse servletResponse, Header header) {
+                                      HttpServletResponse servletResponse, org.apache.hc.core5.http.Header header) {
       if (RESPONSE_HEADER.equalsIgnoreCase(header.getName())) {
         servletResponse.addHeader(header.getName(), "RESPONSE_VALUE_MODIFIED");
       } else {
