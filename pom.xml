@@ -41,8 +41,8 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-    <!-- works with v4.3 and forward; see .github/workflows/maven.yml -->
-    <httpclient.version>[4.5.13,5.0)</httpclient.version>
+    <!-- works with v5.2.1; see .github/workflows/maven.yml -->
+    <httpclient.version>5.2.1</httpclient.version>
     <!-- the last version to provide LocalTestServer.java -->
     <httpclient.test.version>4.3.6</httpclient.test.version>
   </properties>
@@ -63,8 +63,8 @@
     </dependency>
 
     <dependency>
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpclient</artifactId>
+      <groupId>org.apache.httpcomponents.client5</groupId>
+      <artifactId>httpclient5</artifactId>
       <version>${httpclient.version}</version>
     </dependency>
 

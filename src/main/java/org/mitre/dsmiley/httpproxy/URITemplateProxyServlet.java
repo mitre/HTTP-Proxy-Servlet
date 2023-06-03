@@ -16,9 +16,13 @@
 
 package org.mitre.dsmiley.httpproxy;
 
-import org.apache.http.NameValuePair;
-import org.apache.http.client.utils.URIUtils;
-import org.apache.http.client.utils.URLEncodedUtils;
+//import org.apache.http.NameValuePair;
+//import org.apache.http.client.utils.URIUtils;
+//import org.apache.http.client.utils.URLEncodedUtils;
+
+import org.apache.hc.client5.http.utils.URIUtils;
+import org.apache.hc.core5.http.NameValuePair;
+import org.apache.hc.core5.net.URLEncodedUtils;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -27,6 +31,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -96,7 +101,7 @@ public class URITemplateProxyServlet extends ProxyServlet {
     List<NameValuePair> pairs;
     try {
       //note: HttpClient 4.2 lets you parse the string without building the URI
-      pairs = URLEncodedUtils.parse(new URI(queryString), "UTF-8");
+      pairs = URLEncodedUtils.parse(new URI(queryString), StandardCharsets.UTF_8);
     } catch (URISyntaxException e) {
       throw new ServletException("Unexpected URI parsing error on " + queryString, e);
     }
