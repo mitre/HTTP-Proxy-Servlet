@@ -32,7 +32,7 @@ If you need to support _older_ HttpClient versions:
 * use 1.8 version of this proxy for HttpClient versions 4.1 and 4.2
 * use 1.12 version of this proxy for HttpClient versions 4.3 and 4.4
 
-As of version 2.0 of the proxy, `jakarta servlet-api` is supported by default. If you still need to support `javax servlet-api`, you must specify the `javax` classifier on the dependency declaration as follows:
+As of version 2.0 of the proxy, the proxy switched to the `jakarta servlet-api`, while nonetheless retaining support for the `javax servlet-api` version for those that need it.  To use that, specify the `javax` classifier on the dependency declaration as follows:
 ```xml
 <dependency>
     <groupId>org.mitre.dsmiley.httpproxy</groupId>
