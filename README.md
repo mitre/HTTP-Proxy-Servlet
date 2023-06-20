@@ -27,8 +27,20 @@ In the meantime, you'll have to add the jar files for this and its dependencies:
         |  +- commons-logging:commons-logging:jar:1.2:compile
         |  \- commons-codec:commons-codec:jar:1.11:compile
 
-This proxy supports HttpClient 4.3, and newer version too.
-If you need to support _older_ HttpClient versions, namely 4.1 and 4.2, then use  the 1.8 version of this proxy.
+This proxy supports HttpClient 4.5, and newer version too.
+If you need to support _older_ HttpClient versions:
+* use 1.8 version of this proxy for HttpClient versions 4.1 and 4.2
+* use 1.12 version of this proxy for HttpClient versions 4.3 and 4.4
+
+As of version 2.0 of the proxy, the proxy switched to the `jakarta servlet-api`, while nonetheless retaining support for the `javax servlet-api` version for those that need it.  To use that, specify the `javax` classifier on the dependency declaration as follows:
+```xml
+<dependency>
+    <groupId>org.mitre.dsmiley.httpproxy</groupId>
+    <artifactId>smiley-http-proxy-servlet</artifactId>
+    <version>${smiley-http-proxy-servlet.version}</version>
+    <classifier>javax</classifier>
+</dependency>
+```
 
 As of version 1.5 of the proxy, there is the ability to parameterize your proxy URL, allowing you to use
 the same web.xml servlet specification for multiple target servers. It follows the
