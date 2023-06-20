@@ -2,7 +2,7 @@
 
 \#231: Added support of preserveCookiePath configuration parameter. It allows to keep cookie path unchanged in Set-Cookie server response header.
 
-\#237: `jakarta servlet-api` is now supported by default. `javax servlet-api` support is still available via the artifact having the `javax` classifier.
+\#237: Switched to the `jakarta servlet-api`.  However, legacy `javax servlet-api` support is still available via the `javax` classifier.
 
 # Version 1.12.1 released on 2021-12-28
 
