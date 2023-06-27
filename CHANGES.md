@@ -4,6 +4,8 @@
 
 \#237: Switched to the `jakarta servlet-api`.  However, legacy `javax servlet-api` support is still available via the `javax` classifier.
 
+\#240: Require Java 11 as the minimum version
+
 # Version 1.12.1 released on 2021-12-28
 
 \#215: '[' and ']' should be encoded as they are unsafe characters. https://www.ietf.org/rfc/rfc1738.txt

@@ -42,7 +42,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <!-- works with v4.3 and forward; see .github/workflows/maven.yml -->
-    <httpclient.version>[4.5.13,5.0)</httpclient.version>
+    <httpclient.version>[4.5.14,5.0)</httpclient.version>
     <!-- the last version to provide LocalTestServer.java -->
     <httpclient.test.version>4.3.6</httpclient.test.version>
   </properties>
@@ -92,20 +92,20 @@
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-jcl</artifactId>
-      <version>2.17.0</version>
+      <version>2.20.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-core</artifactId>
-      <version>2.17.0</version>
+      <version>2.20.0</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-servlet</artifactId>
-      <version>11.0.13</version>
+      <version>11.0.15</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -115,11 +115,32 @@
 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>3.3.0</version>
+        <executions>
+          <execution>
+            <id>enforce-maven</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <requireMavenVersion>
+                  <version>3.2.5</version>
+                </requireMavenVersion>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.5.1</version>
         <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
+          <source>11</source>
+          <target>11</target>
           <compilerArgs>
             <arg>-Xlint:all,-serial,-deprecation</arg>
           </compilerArgs>
@@ -246,7 +267,7 @@
         <version>3.2.0</version>
         <configuration>
           <!-- keep in sync with release -->
-          <source>8</source>
+          <source>11</source>
           <additionalJOptions>
             <additionalJOption>-Xdoclint:all</additionalJOption>
             <additionalJOption>-Xdoclint:-missing</additionalJOption>
@@ -299,7 +320,7 @@
             </executions>
             <configuration>
               <!-- keep in sync with reporting -->
-              <source>8</source>
+              <source>11</source>
               <additionalJOptions>
                 <additionalJOption>-Xdoclint:all</additionalJOption>
                 <additionalJOption>-Xdoclint:-missing</additionalJOption>
