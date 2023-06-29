@@ -1,4 +1,6 @@
-# Version 2.0 (unreleased)
+# Version 2.1 (unreleased)
+
+# Version 2.0 released on 2023-06-28
 
 \#231: Added support of preserveCookiePath configuration parameter. It allows to keep cookie path unchanged in Set-Cookie server response header.
 
