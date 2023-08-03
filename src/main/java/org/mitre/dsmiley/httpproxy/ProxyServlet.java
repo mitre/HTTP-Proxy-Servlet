@@ -403,7 +403,7 @@ public class ProxyServlet extends HttpServlet {
     }
   }
 
-  protected void handleRequestException(HttpRequest proxyRequest, HttpResponse proxyResonse, Exception e) throws ServletException, IOException {
+  protected void handleRequestException(HttpRequest proxyRequest, HttpResponse proxyResponse, Exception e) throws ServletException, IOException {
     //abort request, according to best practice with HttpClient
     if (proxyRequest instanceof AbortableHttpRequest) {
       AbortableHttpRequest abortableHttpRequest = (AbortableHttpRequest) proxyRequest;
@@ -413,8 +413,8 @@ public class ProxyServlet extends HttpServlet {
     // #close is called. If the sending site does not timeout or keeps sending,
     // the connection will be kept open indefinitely. Closing the respone
     // object terminates the stream.
-    if (proxyResonse instanceof Closeable) {
-      ((Closeable) proxyResonse).close();
+    if (proxyResponse instanceof Closeable) {
+      ((Closeable) proxyResponse).close();
     }
     if (e instanceof RuntimeException)
       throw (RuntimeException)e;
