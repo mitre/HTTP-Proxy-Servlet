@@ -81,6 +81,9 @@ public class ProxyServlet extends HttpServlet {
   /** A boolean parameter name to keep HOST parameter as-is  */
   public static final String P_PRESERVEHOST = "preserveHost";
 
+  /** A boolean parameter name to keep Origin parameter as-is  */
+  public static final String P_PRESERVEORIGIN = "preserveOrigin";
+
   /** A boolean parameter name to keep COOKIES as-is  */
   public static final String P_PRESERVECOOKIES = "preserveCookies";
 
@@ -116,6 +119,8 @@ public class ProxyServlet extends HttpServlet {
   protected static final String ATTR_TARGET_HOST =
           ProxyServlet.class.getSimpleName() + ".targetHost";
 
+  public static final String ATTR_HTTP_HEADER_ORIGIN = "Origin";
+
   /* MISC */
 
   protected boolean doLog = false;
@@ -123,6 +128,7 @@ public class ProxyServlet extends HttpServlet {
   /** User agents shouldn't send the url fragment but what if it does? */
   protected boolean doSendUrlFragment = true;
   protected boolean doPreserveHost = false;
+  protected boolean doPreserveOrigin = true;
   protected boolean doPreserveCookies = false;
   protected boolean doPreserveCookiePath = false;
   protected boolean doHandleRedirects = false;
@@ -179,6 +185,11 @@ public class ProxyServlet extends HttpServlet {
     String preserveHostString = getConfigParam(P_PRESERVEHOST);
     if (preserveHostString != null) {
       this.doPreserveHost = Boolean.parseBoolean(preserveHostString);
+    }
+
+    String preserveOriginString = getConfigParam(P_PRESERVEORIGIN);
+    if (preserveOriginString != null) {
+      this.doPreserveOrigin = Boolean.parseBoolean(preserveOriginString);
     }
 
     String preserveCookiesString = getConfigParam(P_PRESERVECOOKIES);
@@ -509,6 +520,12 @@ public class ProxyServlet extends HttpServlet {
     // control the Accept-Encoding header, not the client
     if (doHandleCompression && headerName.equalsIgnoreCase(HttpHeaders.ACCEPT_ENCODING))
       return;
+
+    // In case the target server does not support CORS,
+    // just ignore the "Origin" to make the work done.
+    if(!doPreserveOrigin && ATTR_HTTP_HEADER_ORIGIN.equalsIgnoreCase(headerName)){
+      return;
+    }
 
     @SuppressWarnings("unchecked")
     Enumeration<String> headers = servletRequest.getHeaders(headerName);
