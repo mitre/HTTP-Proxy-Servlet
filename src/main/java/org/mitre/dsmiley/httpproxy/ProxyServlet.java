@@ -450,7 +450,8 @@ public class ProxyServlet extends HttpServlet {
   // Get the header value as a long in order to more correctly proxy very large requests
   private long getContentLength(HttpServletRequest request) {
     String contentLengthHeader = request.getHeader("Content-Length");
-    if (contentLengthHeader != null) {
+    // To avoid header with blank value
+    if (contentLengthHeader != null && contentLengthHeader.trim().length() != 0) {
       return Long.parseLong(contentLengthHeader);
     }
     return -1L;
