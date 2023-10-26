@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -100,9 +101,9 @@ public class URITemplateProxyServlet extends ProxyServlet {
     } catch (URISyntaxException e) {
       throw new ServletException("Unexpected URI parsing error on " + queryString, e);
     }
-    LinkedHashMap<String, String> params = new LinkedHashMap<String, String>();
+    LinkedHashMap<String, List<String>> params = new LinkedHashMap<>();
     for (NameValuePair pair : pairs) {
-      params.put(pair.getName(), pair.getValue());
+      params.computeIfAbsent(pair.getName(), k -> new ArrayList<>()).add(pair.getValue());
     }
 
     //Now rewrite the URL
@@ -110,11 +111,11 @@ public class URITemplateProxyServlet extends ProxyServlet {
     Matcher matcher = TEMPLATE_PATTERN.matcher(targetUriTemplate);
     while (matcher.find()) {
       String arg = matcher.group(1);
-      String replacement = params.remove(arg);//note we remove
+      List<String> replacement = params.remove(arg);//note we remove
       if (replacement == null) {
         throw new ServletException("Missing HTTP parameter "+arg+" to fill the template");
       }
-      matcher.appendReplacement(urlBuf, replacement);
+      matcher.appendReplacement(urlBuf, replacement.get(0));
     }
     matcher.appendTail(urlBuf);
     String newTargetUri = urlBuf.toString();
@@ -129,12 +130,14 @@ public class URITemplateProxyServlet extends ProxyServlet {
 
     //Determine the new query string based on removing the used names
     StringBuilder newQueryBuf = new StringBuilder(queryString.length());
-    for (Map.Entry<String, String> nameVal : params.entrySet()) {
-      if (newQueryBuf.length() > 0)
-        newQueryBuf.append('&');
-      newQueryBuf.append(nameVal.getKey()).append('=');
-      if (nameVal.getValue() != null)
-        newQueryBuf.append( URLEncoder.encode(nameVal.getValue(), "UTF-8"));
+    for (Map.Entry<String, List<String>> nameVal : params.entrySet()) {
+      for (String nameValElement : nameVal.getValue()) {
+        if (newQueryBuf.length() > 0)
+          newQueryBuf.append('&');
+        newQueryBuf.append(nameVal.getKey()).append('=');
+        if (nameVal.getValue() != null)
+          newQueryBuf.append(URLEncoder.encode(nameValElement, "UTF-8"));
+      }
     }
     servletRequest.setAttribute(ATTR_QUERY_STRING, newQueryBuf.toString());
 
