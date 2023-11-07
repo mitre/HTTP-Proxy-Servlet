@@ -562,6 +562,8 @@ public class ProxyServlet extends HttpServlet {
     String headerName = header.getName();
     if (hopByHopHeaders.containsHeader(headerName))
       return;
+    if (servletResponse.containsHeader(headerName))
+      return;
     String headerValue = header.getValue();
     if (headerName.equalsIgnoreCase(org.apache.http.cookie.SM.SET_COOKIE) ||
             headerName.equalsIgnoreCase(org.apache.http.cookie.SM.SET_COOKIE2)) {
