@@ -18,6 +18,10 @@ package org.mitre.dsmiley.httpproxy;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
@@ -27,11 +31,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.apache.http.MalformedChunkCodingException;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.eclipse.jetty.server.Handler;
 
 import org.eclipse.jetty.server.Server;
@@ -147,19 +146,22 @@ public class ChunkedTransferTest {
     });
     servletHandler.addServletWithMapping(dummyBackend, "/chat/*");
 
-    HttpGet url = new HttpGet(String.format("http://localhost:%d/chatProxied/test", serverPort));
+    HttpRequest request = HttpRequest.newBuilder()
+        .uri(URI.create(String.format("http://localhost:%d/chatProxied/test", serverPort)))
+        .GET()
+        .build();
 
-    try (CloseableHttpClient chc = HttpClientBuilder.create().build();
-            CloseableHttpResponse chr = chc.execute(url)) {
-      try (InputStream is = chr.getEntity().getContent()) {
-        byte[] readData = readBlock(is);
-        assertTrue("No data received (message1)", readData.length > 0);
-        assertArrayEquals("Received data: '" + toString(readData) + "'  (message1)", data1, readData);
-        guardForSecondRead.countDown();
-        readData = readBlock(is);
-        assertTrue("No data received  (message2)", readData.length > 0);
-        assertArrayEquals("Received data: '" + toString(readData) + "'  (message2)", data2, readData);
-      }
+    HttpClient client = HttpClient.newHttpClient();
+    HttpResponse<InputStream> response = client.send(request, HttpResponse.BodyHandlers.ofInputStream());
+    
+    try (InputStream is = response.body()) {
+      byte[] readData = readBlock(is);
+      assertTrue("No data received (message1)", readData.length > 0);
+      assertArrayEquals("Received data: '" + toString(readData) + "'  (message1)", data1, readData);
+      guardForSecondRead.countDown();
+      readData = readBlock(is);
+      assertTrue("No data received  (message2)", readData.length > 0);
+      assertArrayEquals("Received data: '" + toString(readData) + "'  (message2)", data2, readData);
     }
   }
 
@@ -217,21 +219,24 @@ public class ChunkedTransferTest {
     });
     servletHandler.addServletWithMapping(dummyBackend, "/chat/*");
 
-    HttpGet url = new HttpGet(String.format("http://localhost:%d/chatProxied/test", serverPort));
+    HttpRequest request = HttpRequest.newBuilder()
+        .uri(URI.create(String.format("http://localhost:%d/chatProxied/test", serverPort)))
+        .GET()
+        .build();
 
-    try (CloseableHttpClient chc = HttpClientBuilder.create().build()) {
-      CloseableHttpResponse chr = chc.execute(url);
-      try (InputStream is = chr.getEntity().getContent()) {
-        byte[] readData = readBlock(is);
-        assertTrue("No data received (message1)", readData.length > 0);
-        assertArrayEquals("Received data: '" + toString(readData) + "'  (message1)", data1, readData);
-        chr.close();
-      } catch (MalformedChunkCodingException ex) {
-        // this is expected
-      } finally {
-        chr.close();
-      }
+    HttpClient client = HttpClient.newHttpClient();
+    HttpResponse<InputStream> response = client.send(request, HttpResponse.BodyHandlers.ofInputStream());
+    
+    try (InputStream is = response.body()) {
+      byte[] readData = readBlock(is);
+      assertTrue("No data received (message1)", readData.length > 0);
+      assertArrayEquals("Received data: '" + toString(readData) + "'  (message1)", data1, readData);
+      // Close the stream early to test connection closing
+      is.close();
+    } catch (IOException ex) {
+      // this is expected - connection closed
     }
+    
     // Release sending of further messages
     guardForSecondRead.countDown();
     // Wait for the reporting of the closed connection

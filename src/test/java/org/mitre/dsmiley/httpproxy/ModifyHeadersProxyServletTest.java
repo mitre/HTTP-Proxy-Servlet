@@ -18,16 +18,17 @@ package org.mitre.dsmiley.httpproxy;
 
 import com.meterware.httpunit.GetMethodWebRequest;
 import com.meterware.httpunit.WebResponse;
-import org.apache.http.Header;
-import org.apache.http.HttpException;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
-import org.apache.http.protocol.HttpContext;
 import org.junit.Test;
 
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.http.HttpRequest;
+
+import org.eclipse.jetty.servlet.ServletHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
 
 import static org.junit.Assert.assertEquals;
 
@@ -44,14 +45,24 @@ public class ModifyHeadersProxyServletTest extends ProxyServletTest {
 
   @Test
   public void testModifyRequestHeader() throws Exception {
-    localTestServer.register("/targetPath*", new RequestInfoHandler() {
-      public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
-        Header headerToTest = request.getFirstHeader(ModifyHeadersProxyServlet.REQUEST_HEADER);
-        assertEquals("REQUEST_VALUE_MODIFIED", headerToTest.getValue());
-
-        super.handle(request, response, context);
+    // Stop the target server and restart with header checking servlet
+    targetServer.stop();
+    targetServer = new org.eclipse.jetty.server.Server(targetServerPort);
+    ServletHandler handler = new ServletHandler();
+    targetServer.setHandler(handler);
+    
+    ServletHolder holder = new ServletHolder(new HttpServlet() {
+      @Override
+      protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String headerValue = request.getHeader(ModifyHeadersProxyServlet.REQUEST_HEADER);
+        assertEquals("REQUEST_VALUE_MODIFIED", headerValue);
+        
+        // Call parent RequestInfoServlet behavior
+        new RequestInfoServlet().service(request, response);
       }
     });
+    handler.addServletWithMapping(holder, "/targetPath/*");
+    targetServer.start();
 
     GetMethodWebRequest req = makeGetMethodRequest(sourceBaseUri);
     req.setHeaderField(ModifyHeadersProxyServlet.REQUEST_HEADER, "INITIAL_VALUE");
@@ -61,12 +72,23 @@ public class ModifyHeadersProxyServletTest extends ProxyServletTest {
 
   @Test
   public void testModifyResponseHeader() throws Exception {
-    localTestServer.register("/targetPath*", new RequestInfoHandler() {
-      public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
+    // Stop the target server and restart with header setting servlet
+    targetServer.stop();
+    targetServer = new org.eclipse.jetty.server.Server(targetServerPort);
+    ServletHandler handler = new ServletHandler();
+    targetServer.setHandler(handler);
+    
+    ServletHolder holder = new ServletHolder(new HttpServlet() {
+      @Override
+      protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         response.setHeader(ModifyHeadersProxyServlet.RESPONSE_HEADER, "INITIAL_VALUE");
-        super.handle(request, response, context);
+        
+        // Call parent RequestInfoServlet behavior
+        new RequestInfoServlet().service(request, response);
       }
     });
+    handler.addServletWithMapping(holder, "/targetPath/*");
+    targetServer.start();
 
     GetMethodWebRequest req = makeGetMethodRequest(sourceBaseUri);
     WebResponse rsp = execAndAssert(req, "");
@@ -80,9 +102,9 @@ public class ModifyHeadersProxyServletTest extends ProxyServletTest {
     public static final String RESPONSE_HEADER = "RESPONSE_HEADER";
 
     @Override
-    protected void copyRequestHeader(HttpServletRequest servletRequest, HttpRequest proxyRequest, String headerName) {
+    protected void copyRequestHeader(HttpServletRequest servletRequest, HttpRequest.Builder proxyRequest, String headerName) {
       if (REQUEST_HEADER.equalsIgnoreCase(headerName)) {
-        proxyRequest.addHeader(headerName, "REQUEST_VALUE_MODIFIED");
+        proxyRequest.header(headerName, "REQUEST_VALUE_MODIFIED");
       } else {
         super.copyRequestHeader(servletRequest, proxyRequest, headerName);
       }
@@ -90,11 +112,11 @@ public class ModifyHeadersProxyServletTest extends ProxyServletTest {
 
     @Override
     protected void copyResponseHeader(HttpServletRequest servletRequest,
-                                      HttpServletResponse servletResponse, Header header) {
-      if (RESPONSE_HEADER.equalsIgnoreCase(header.getName())) {
-        servletResponse.addHeader(header.getName(), "RESPONSE_VALUE_MODIFIED");
+                                      HttpServletResponse servletResponse, String headerName, String headerValue) {
+      if (RESPONSE_HEADER.equalsIgnoreCase(headerName)) {
+        servletResponse.addHeader(headerName, "RESPONSE_VALUE_MODIFIED");
       } else {
-        super.copyResponseHeader(servletRequest, servletResponse, header);
+        super.copyResponseHeader(servletRequest, servletResponse, headerName, headerValue);
       }
     }
 

@@ -35,22 +35,17 @@ import java.util.Enumeration;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpEntityEnclosingRequest;
-import org.apache.http.HttpException;
-import org.apache.http.HttpHeaders;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.RequestLine;
-import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.localserver.LocalTestServer;
-import org.apache.http.protocol.HttpContext;
-import org.apache.http.protocol.HttpRequestHandler;
-import org.apache.http.util.EntityUtils;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.servlet.ServletHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -72,10 +67,10 @@ public class ProxyServletTest
   private static final Log log = LogFactory.getLog(ProxyServletTest.class);
 
   /**
-   * From Apache httpcomponents/httpclient. Note httpunit has a similar thing called PseudoServlet but it is
-   * not as good since you can't even make it echo the request back.
+   * Jetty server for target backend
    */
-  protected LocalTestServer localTestServer;
+  protected Server targetServer;
+  protected int targetServerPort;
 
   /** From Meterware httpunit. */
   protected ServletRunner servletRunner;
@@ -89,9 +84,13 @@ public class ProxyServletTest
 
   @Before
   public void setUp() throws Exception {
-    localTestServer = new LocalTestServer(null, null);
-    localTestServer.start();
-    localTestServer.register("/targetPath*", new RequestInfoHandler());//matches /targetPath and /targetPath/blahblah
+    // Start Jetty server as target
+    targetServer = new Server(0);
+    ServletHandler handler = new ServletHandler();
+    targetServer.setHandler(handler);
+    handler.addServletWithMapping(RequestInfoServlet.class, "/targetPath/*");
+    targetServer.start();
+    targetServerPort = ((ServerConnector) targetServer.getConnectors()[0]).getLocalPort();
 
     servletRunner = new ServletRunner();
 
@@ -108,7 +107,7 @@ public class ProxyServletTest
 
   protected void setUpServlet(Properties servletProps) {
     servletProps.putAll(servletProps);
-    targetBaseUri = "http://localhost:"+localTestServer.getServiceAddress().getPort()+"/targetPath";
+    targetBaseUri = "http://localhost:" + targetServerPort + "/targetPath";
     servletProps.setProperty("targetUri", targetBaseUri);
     servletRunner.registerServlet(servletPath + "/*", servletName, servletProps);//also matches /proxyMe (no path info)
     sourceBaseUri = "http://localhost/proxyMe";//localhost:0 is hard-coded in ServletUnitHttpRequest
@@ -117,7 +116,9 @@ public class ProxyServletTest
   @After
   public void tearDown() throws Exception {
    servletRunner.shutDown();
-   localTestServer.stop();
+   if (targetServer != null) {
+     targetServer.stop();
+   }
   }
 
   //note: we don't include fragments:   "/p?#f","/p?#" because
@@ -158,16 +159,30 @@ public class ProxyServletTest
   }
 
   @Test
-  public void testRedirect() throws IOException, SAXException {
+  public void testRedirect() throws Exception {
     final String COOKIE_SET_HEADER = "Set-Cookie";
-    localTestServer.register("/targetPath*",new HttpRequestHandler()
-    {
-      public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
-        response.setHeader(HttpHeaders.LOCATION,request.getFirstHeader("xxTarget").getValue());
-        response.setHeader(COOKIE_SET_HEADER,"JSESSIONID=1234; path=/;");
-        response.setStatusCode(HttpStatus.SC_MOVED_TEMPORARILY);
+    
+    // Stop the target server and restart with redirect servlet
+    targetServer.stop();
+    targetServer = new Server(targetServerPort);
+    ServletHandler handler = new ServletHandler();
+    targetServer.setHandler(handler);
+    
+    // Add a redirect servlet
+    ServletHolder redirectHolder = new ServletHolder(new HttpServlet() {
+      @Override
+      protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String targetHeader = request.getHeader("xxTarget");
+        if (targetHeader != null) {
+          response.setHeader("Location", targetHeader);
+          response.setHeader(COOKIE_SET_HEADER, "JSESSIONID=1234; path=/;");
+          response.setStatus(HttpServletResponse.SC_MOVED_TEMPORARILY);
+        }
       }
-    });//matches /targetPath and /targetPath/blahblah
+    });
+    handler.addServletWithMapping(redirectHolder, "/targetPath/*");
+    targetServer.start();
+    
     GetMethodWebRequest request = makeGetMethodRequest(sourceBaseUri + "/%64%69%72%2F");
     assertRedirect(request, "/dummy", "/dummy");//TODO represents a bug to fix
     assertRedirect(request, targetBaseUri+"/dummy?a=b", sourceBaseUri+"/dummy?a=b");
@@ -187,9 +202,9 @@ public class ProxyServletTest
     request.setHeaderField("xxTarget", origRedirect);
     WebResponse rsp = sc.getResponse(request);
 
-    assertEquals(HttpStatus.SC_MOVED_TEMPORARILY,rsp.getResponseCode());
+    assertEquals(HttpServletResponse.SC_MOVED_TEMPORARILY,rsp.getResponseCode());
     assertEquals("",rsp.getText());
-    String gotLocation = rsp.getHeaderField(HttpHeaders.LOCATION);
+    String gotLocation = rsp.getHeaderField("Location");
     assertEquals(resultRedirect, gotLocation);
     assertEquals("!Proxy!"+servletName+"JSESSIONID=1234;path="+servletPath,rsp.getHeaderField("Set-Cookie"));
   }
@@ -660,31 +675,41 @@ public class ProxyServletTest
   /**
    * Writes all information about the request back to the response.
    */
-  protected static class RequestInfoHandler implements HttpRequestHandler
+  public static class RequestInfoServlet extends HttpServlet
   {
-
-    public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
+    @Override
+    protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       PrintWriter pw = new PrintWriter(baos,false);
-      final RequestLine rl = request.getRequestLine();
-      pw.println("REQUESTLINE: " + rl);
+      
+      pw.println("REQUESTLINE: " + request.getMethod() + " " + request.getRequestURI() + 
+                 (request.getQueryString() != null ? "?" + request.getQueryString() : "") + 
+                 " " + request.getProtocol());
 
-      for (Header header : request.getAllHeaders()) {
-        pw.println(header.getName() + ": " + header.getValue());
+      Enumeration<String> headerNames = request.getHeaderNames();
+      while (headerNames.hasMoreElements()) {
+        String headerName = headerNames.nextElement();
+        Enumeration<String> headerValues = request.getHeaders(headerName);
+        while (headerValues.hasMoreElements()) {
+          pw.println(headerName + ": " + headerValues.nextElement());
+        }
       }
       pw.println("BODY: (below)");
       pw.flush();//done with pw now
 
-      if (request instanceof HttpEntityEnclosingRequest) {
-        HttpEntityEnclosingRequest enclosingRequest = (HttpEntityEnclosingRequest) request;
-        HttpEntity entity = enclosingRequest.getEntity();
-        byte[] body = EntityUtils.toByteArray(entity);
-        baos.write(body);
+      // Copy request body
+      InputStream is = request.getInputStream();
+      byte[] buffer = new byte[8192];
+      int bytesRead;
+      while ((bytesRead = is.read(buffer)) != -1) {
+        baos.write(buffer, 0, bytesRead);
       }
 
-      response.setStatusCode(200);
-      response.setReasonPhrase("TESTREASON");
-      response.setEntity(new ByteArrayEntity(baos.toByteArray()));
+      response.setStatus(200);
+      response.setHeader("X-Reason", "TESTREASON");
+      response.setContentType("text/plain");
+      response.setContentLength(baos.size());
+      response.getOutputStream().write(baos.toByteArray());
     }
   }
 }

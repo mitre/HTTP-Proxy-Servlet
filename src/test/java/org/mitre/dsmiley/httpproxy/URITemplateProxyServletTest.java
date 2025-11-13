@@ -47,9 +47,9 @@ public class URITemplateProxyServletTest extends ProxyServletTest {
   @Override
   protected void setUpServlet(Properties servletProps) {
     //Register a parameterized proxy servlet.
-    // for the test, host should be localhost, $2 should be localTestServer port, and path should be targetPath
+    // for the test, host should be localhost, $2 should be targetServerPort, and path should be targetPath
     String hostParam = "localhost";
-    String portParam = String.valueOf(localTestServer.getServiceAddress().getPort());
+    String portParam = String.valueOf(targetServerPort);
     String pathParam = "targetPath";
     urlParams = "_host=" + hostParam + "&_port=" + portParam + "&_path=" + pathParam;
     targetBaseUri = "http://" + hostParam + ":" + portParam + "/" + pathParam;
