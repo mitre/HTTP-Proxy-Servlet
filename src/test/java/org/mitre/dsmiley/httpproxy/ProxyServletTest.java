@@ -104,6 +104,19 @@ public class ProxyServletTest
     sc.getClientProperties().setAutoRedirect(false);//don't want httpunit itself to redirect
 
   }
+  
+  /**
+   * Helper to restart target server with a custom servlet
+   */
+  protected void replaceTargetServlet(HttpServlet servlet) throws Exception {
+    targetServer.stop();
+    targetServer = new Server(targetServerPort);
+    ServletHandler handler = new ServletHandler();
+    targetServer.setHandler(handler);
+    ServletHolder holder = new ServletHolder(servlet);
+    handler.addServletWithMapping(holder, "/targetPath/*");
+    targetServer.start();
+  }
 
   protected void setUpServlet(Properties servletProps) {
     servletProps.putAll(servletProps);
@@ -233,11 +246,13 @@ public class ProxyServletTest
   public void testHopByHopHeadersOnSource() throws Exception {
     //"Proxy-Authenticate" is a hop-by-hop header
     final String HEADER = "Proxy-Authenticate";
-    localTestServer.register("/targetPath*", new RequestInfoHandler() {
-      public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
-        assertNull(request.getFirstHeader(HEADER));
+    
+    replaceTargetServlet(new HttpServlet() {
+      @Override
+      protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        assertNull(request.getHeader(HEADER));
         response.setHeader(HEADER, "from-server");
-        super.handle(request, response, context);
+        new RequestInfoServlet().service(request, response);
       }
     });
 
@@ -251,11 +266,12 @@ public class ProxyServletTest
   public void testWithExistingXForwardedFor() throws Exception {
     final String FOR_HEADER = "X-Forwarded-For";
 
-    localTestServer.register("/targetPath*", new RequestInfoHandler() {
-      public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
-        Header xForwardedForHeader = request.getFirstHeader(FOR_HEADER);
-        assertEquals("192.168.1.1, 127.0.0.1", xForwardedForHeader.getValue());
-        super.handle(request, response, context);
+    replaceTargetServlet(new HttpServlet() {
+      @Override
+      protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String xForwardedForHeader = request.getHeader(FOR_HEADER);
+        assertEquals("192.168.1.1, 127.0.0.1", xForwardedForHeader);
+        new RequestInfoServlet().service(request, response);
       }
     });
 
@@ -269,13 +285,14 @@ public class ProxyServletTest
     final String FOR_HEADER = "X-Forwarded-For";
     final String PROTO_HEADER = "X-Forwarded-Proto";
 
-    localTestServer.register("/targetPath*", new RequestInfoHandler() {
-      public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
-        Header xForwardedForHeader = request.getFirstHeader(FOR_HEADER);
-        Header xForwardedProtoHeader = request.getFirstHeader(PROTO_HEADER);
-        assertEquals("127.0.0.1", xForwardedForHeader.getValue());
-        assertEquals("http", xForwardedProtoHeader.getValue());
-        super.handle(request, response, context);
+    replaceTargetServlet(new HttpServlet() {
+      @Override
+      protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String xForwardedForHeader = request.getHeader(FOR_HEADER);
+        String xForwardedProtoHeader = request.getHeader(PROTO_HEADER);
+        assertEquals("127.0.0.1", xForwardedForHeader);
+        assertEquals("http", xForwardedProtoHeader);
+        new RequestInfoServlet().service(request, response);
       }
     });
 
