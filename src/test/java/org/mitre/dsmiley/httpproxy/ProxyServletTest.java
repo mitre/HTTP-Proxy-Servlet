@@ -304,12 +304,12 @@ public class ProxyServletTest
   public void testCopyRequestHeaderToProxyRequest() throws Exception {
     final String HEADER = "HEADER_TO_TEST";
 
-    localTestServer.register("/targetPath*", new RequestInfoHandler() {
-      public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
-        Header headerToTest = request.getFirstHeader(HEADER);
-        assertEquals("VALUE_TO_TEST", headerToTest.getValue());
-
-        super.handle(request, response, context);
+    replaceTargetServlet(new HttpServlet() {
+      @Override
+      protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String headerToTest = request.getHeader(HEADER);
+        assertEquals("VALUE_TO_TEST", headerToTest);
+        new RequestInfoServlet().service(request, response);
       }
     });
 
@@ -323,10 +323,11 @@ public class ProxyServletTest
   public void testCopyProxiedRequestHeadersToResponse() throws Exception {
     final String HEADER = "HEADER_TO_TEST";
 
-    localTestServer.register("/targetPath*", new RequestInfoHandler() {
-      public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
+    replaceTargetServlet(new HttpServlet() {
+      @Override
+      protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         response.setHeader(HEADER, "VALUE_TO_TEST");
-        super.handle(request, response, context);
+        new RequestInfoServlet().service(request, response);
       }
     });
 
@@ -339,10 +340,11 @@ public class ProxyServletTest
   @Test
   public void testSetCookie() throws Exception {
     final String HEADER = "Set-Cookie";
-    localTestServer.register("/targetPath*", new RequestInfoHandler() {
-      public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
+    replaceTargetServlet(new HttpServlet() {
+      @Override
+      protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         response.setHeader(HEADER, "JSESSIONID=1234; Path=/proxy/path/that/we/dont/want; Expires=Wed, 13 Jan 2021 22:23:01 GMT; Domain=.foo.bar.com; HttpOnly");
-        super.handle(request, response, context);
+        new RequestInfoServlet().service(request, response);
       }
     });
 
@@ -355,10 +357,11 @@ public class ProxyServletTest
   @Test
   public void testSetCookie2() throws Exception {
     final String HEADER = "Set-Cookie2";
-    localTestServer.register("/targetPath*", new RequestInfoHandler() {
-      public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
+    replaceTargetServlet(new HttpServlet() {
+      @Override
+      protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         response.setHeader(HEADER, "JSESSIONID=1234; Path=/proxy/path/that/we/dont/want; Max-Age=3600; Domain=.foo.bar.com; Secure");
-        super.handle(request, response, context);
+        new RequestInfoServlet().service(request, response);
       }
     });
 
@@ -384,10 +387,11 @@ public class ProxyServletTest
     sc.getClientProperties().setAutoRedirect(false);//don't want httpunit itself to redirect
 
     final String HEADER = "Set-Cookie";
-    localTestServer.register("/targetPath*", new RequestInfoHandler() {
-      public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
+    replaceTargetServlet(new HttpServlet() {
+      @Override
+      protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         response.setHeader(HEADER, "JSESSIONID=1234; Path=/proxy/path/that/we/dont/want; Expires=Wed, 13 Jan 2021 22:23:01 GMT; Domain=.foo.bar.com; HttpOnly");
-        super.handle(request, response, context);
+        new RequestInfoServlet().service(request, response);
       }
     });
 
@@ -400,10 +404,11 @@ public class ProxyServletTest
   @Test
   public void testSetCookieHttpOnly() throws Exception { //See GH #50
     final String HEADER = "Set-Cookie";
-    localTestServer.register("/targetPath*", new RequestInfoHandler() {
-      public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
+    replaceTargetServlet(new HttpServlet() {
+      @Override
+      protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         response.setHeader(HEADER, "JSESSIONID=1234; Path=/proxy/path/that/we/dont/want/; HttpOnly");
-        super.handle(request, response, context);
+        new RequestInfoServlet().service(request, response);
       }
     });
 
@@ -417,10 +422,11 @@ public class ProxyServletTest
   public void testSendCookiesToProxy() throws Exception {
     final StringBuffer captureCookieValue = new StringBuffer();
     final String HEADER = "Cookie";
-    localTestServer.register("/targetPath*", new RequestInfoHandler() {
-      public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
-        captureCookieValue.append(request.getHeaders(HEADER)[0].getValue());
-        super.handle(request, response, context);
+    replaceTargetServlet(new HttpServlet() {
+      @Override
+      protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        captureCookieValue.append(request.getHeader(HEADER));
+        new RequestInfoServlet().service(request, response);
       }
     });
 
@@ -450,10 +456,11 @@ public class ProxyServletTest
     sc.getClientProperties().setAutoRedirect(false);//don't want httpunit itself to redirect
 
     final String HEADER = "Set-Cookie";
-    localTestServer.register("/targetPath*", new RequestInfoHandler() {
-      public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
+    replaceTargetServlet(new HttpServlet() {
+      @Override
+      protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         response.setHeader(HEADER, "JSESSIONID=1234; Path=/proxy/path/that/we/want; Expires=Wed, 13 Jan 2021 22:23:01 GMT; Domain=.foo.bar.com; HttpOnly");
-        super.handle(request, response, context);
+        new RequestInfoServlet().service(request, response);
       }
     });
 
@@ -472,15 +479,16 @@ public class ProxyServletTest
   public void testMultipleRequestsWithDiffCookies() throws Exception {
     final AtomicInteger requestCounter = new AtomicInteger(1);
     final StringBuffer captureCookieValue = new StringBuffer();
-    localTestServer.register("/targetPath*", new RequestInfoHandler() {
-      public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
+    replaceTargetServlet(new HttpServlet() {
+      @Override
+      protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         // there shouldn't be a cookie sent since each user request in this test is logging in for the first time
-        if (request.getFirstHeader("Cookie") != null) {
-            captureCookieValue.append(request.getFirstHeader("Cookie"));
+        if (request.getHeader("Cookie") != null) {
+            captureCookieValue.append(request.getHeader("Cookie"));
         } else {
             response.setHeader("Set-Cookie", "JSESSIONID=USER_" + requestCounter.getAndIncrement() + "_SESSION");
         }
-        super.handle(request, response, context);
+        new RequestInfoServlet().service(request, response);
       }
     });
 
@@ -501,28 +509,36 @@ public class ProxyServletTest
   @Test
   public void testRedirectWithBody() throws Exception {
     final String CONTENT = "-This-Shall-Not-Pass-";
-	localTestServer.register("/targetPath/test",new HttpRequestHandler()
-    {
-      public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
+    
+    // Stop and restart with a custom servlet for the redirect test
+    targetServer.stop();
+    targetServer = new Server(targetServerPort);
+    ServletHandler handler = new ServletHandler();
+    targetServer.setHandler(handler);
+    ServletHolder holder = new ServletHolder(new HttpServlet() {
+      @Override
+      protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         // Redirect to the requested URL with / appended
-        response.setHeader(HttpHeaders.LOCATION, targetBaseUri + "/test/");
-        response.setStatusCode(HttpStatus.SC_MOVED_TEMPORARILY);
-        response.setHeader(HttpHeaders.CONTENT_TYPE, "text/plain; charset=UTF-8");
+        response.setHeader("Location", targetBaseUri + "/test/");
+        response.setStatus(HttpServletResponse.SC_MOVED_TEMPORARILY);
+        response.setHeader("Content-Type", "text/plain; charset=UTF-8");
         // Set body of the response. We need it not-empty for the test.
-        response.setEntity(new ByteArrayEntity(CONTENT.getBytes("UTF-8")));
+        response.getOutputStream().write(CONTENT.getBytes("UTF-8"));
       }
     });
+    handler.addServletWithMapping(holder, "/targetPath/test");
+    targetServer.start();
     GetMethodWebRequest req = makeGetMethodRequest(sourceBaseUri + "/test");
     // We expect a redirect with a / at the end
     WebResponse rsp = sc.getResponse(req);
 
     // Expect the same status code as the handler.
-    assertEquals(HttpStatus.SC_MOVED_TEMPORARILY, rsp.getResponseCode());
+    assertEquals(HttpServletResponse.SC_MOVED_TEMPORARILY, rsp.getResponseCode());
     // Expect exact Content-Length
-    assertEquals(String.valueOf(CONTENT.length()), rsp.getHeaderField(HttpHeaders.CONTENT_LENGTH));
+    assertEquals(String.valueOf(CONTENT.length()), rsp.getHeaderField("Content-Length"));
     // Expect exact response
     assertEquals(CONTENT, rsp.getText());
-    assertEquals(sourceBaseUri + "/test/", rsp.getHeaderField(HttpHeaders.LOCATION));
+    assertEquals(sourceBaseUri + "/test/", rsp.getHeaderField("Location"));
   }
 
   @Test
@@ -541,10 +557,11 @@ public class ProxyServletTest
 
     final String HEADER = "Host";
     final String[] proxyHost = new String[1];
-    localTestServer.register("/targetPath*", new RequestInfoHandler() {
-      public void handle(HttpRequest request, HttpResponse response, HttpContext context) throws HttpException, IOException {
-    	  proxyHost[0] = request.getHeaders(HEADER)[0].getValue();
-        super.handle(request, response, context);
+    replaceTargetServlet(new HttpServlet() {
+      @Override
+      protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    	  proxyHost[0] = request.getHeader(HEADER);
+        new RequestInfoServlet().service(request, response);
       }
     });
 
@@ -601,7 +618,7 @@ public class ProxyServletTest
   protected WebResponse execAndAssert(WebRequest request, String expectedUri) throws Exception {
     WebResponse rsp = sc.getResponse( request );
 
-    assertEquals(HttpStatus.SC_OK,rsp.getResponseCode());
+    assertEquals(HttpServletResponse.SC_OK,rsp.getResponseCode());
     //HttpUnit doesn't pass the message; not a big deal
     //assertEquals("TESTREASON",rsp.getResponseMessage());
     final String text = rsp.getText();
