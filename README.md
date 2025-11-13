@@ -18,19 +18,8 @@ I suggest you use a well tested proxy instead of something non-tested that is pe
 
 If you need something more sophisticated than there are some alternatives listed at the bottom of this page.
 
-This proxy depends on [Apache HttpClient](http://hc.apache.org/httpcomponents-client-ga/), which offers another point of extension for this proxy.
-At some point I may write an alternative that uses the JDK and thus doesn't have any dependencies, which is desirable.
-In the meantime, you'll have to add the jar files for this and its dependencies:
-
-     +- org.apache.httpcomponents:httpclient:jar:4.5.13:compile
-        +- org.apache.httpcomponents:httpcore:jar:4.4.13:compile
-        |  +- commons-logging:commons-logging:jar:1.2:compile
-        |  \- commons-codec:commons-codec:jar:1.11:compile
-
-This proxy supports HttpClient 4.5, and newer version too.
-If you need to support _older_ HttpClient versions:
-* use 1.8 version of this proxy for HttpClient versions 4.1 and 4.2
-* use 1.12 version of this proxy for HttpClient versions 4.3 and 4.4
+This proxy now uses the JDK 11 HttpClient and is dependency-free (aside from the servlet API). 
+Previous versions used Apache HttpClient.
 
 As of version 2.0 of the proxy, the proxy switched to the `jakarta servlet-api`, while nonetheless retaining support for the `javax servlet-api` version for those that need it.  To use that, specify the `javax` classifier on the dependency declaration as follows:
 ```xml
