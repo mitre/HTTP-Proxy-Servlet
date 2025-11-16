@@ -223,7 +223,7 @@ public class ProxyServlet extends HttpServlet {
   /**
    * Extract host:port from URI
    */
-  private String extractHost(URI uri) {
+  protected String extractHost(URI uri) {
     String host = uri.getHost();
     int port = uri.getPort();
     if (port == -1) {

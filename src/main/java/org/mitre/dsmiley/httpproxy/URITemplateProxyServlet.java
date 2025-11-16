@@ -91,25 +91,7 @@ public class URITemplateProxyServlet extends ProxyServlet {
       queryString = queryString.substring(0, hash);
     }
     
-    LinkedHashMap<String, String> params = new LinkedHashMap<String, String>();
-    if (requestQueryString != null && !requestQueryString.isEmpty()) {
-      // Parse query string manually
-      String[] pairs = requestQueryString.split("&");
-      for (String pair : pairs) {
-        int idx = pair.indexOf("=");
-        if (idx > 0) {
-          String key = URLDecoder.decode(pair.substring(0, idx), StandardCharsets.UTF_8);
-          String value = URLDecoder.decode(pair.substring(idx + 1), StandardCharsets.UTF_8);
-          params.put(key, value);
-        } else if (idx == 0) {
-          // Ignore malformed parameter
-        } else {
-          // Parameter without value
-          String key = URLDecoder.decode(pair, StandardCharsets.UTF_8);
-          params.put(key, "");
-        }
-      }
-    }
+    LinkedHashMap<String, String> params = parseQueryParams(requestQueryString);
 
     //Now rewrite the URL
     StringBuffer urlBuf = new StringBuffer();//note: StringBuilder isn't supported by Matcher
@@ -131,8 +113,7 @@ public class URITemplateProxyServlet extends ProxyServlet {
     } catch (Exception e) {
       throw new ServletException("Rewritten targetUri is invalid: " + newTargetUri,e);
     }
-    String targetHost = extractHost(targetUriObj);
-    servletRequest.setAttribute(ATTR_TARGET_HOST, targetHost);
+    servletRequest.setAttribute(ATTR_TARGET_HOST, extractHost(targetUriObj));
 
     //Determine the new query string based on removing the used names
     StringBuilder newQueryBuf = new StringBuilder(queryString.length());
@@ -154,14 +135,28 @@ public class URITemplateProxyServlet extends ProxyServlet {
   }
   
   /**
-   * Extract host:port from URI (helper method)
+   * Parse query string into a map of key-value pairs
    */
-  private String extractHost(URI uri) {
-    String host = uri.getHost();
-    int port = uri.getPort();
-    if (port == -1) {
-      return host;
+  private LinkedHashMap<String, String> parseQueryParams(String requestQueryString) {
+    LinkedHashMap<String, String> params = new LinkedHashMap<String, String>();
+    if (requestQueryString != null && !requestQueryString.isEmpty()) {
+      // Parse query string manually
+      String[] pairs = requestQueryString.split("&");
+      for (String pair : pairs) {
+        int idx = pair.indexOf("=");
+        if (idx > 0) {
+          String key = URLDecoder.decode(pair.substring(0, idx), StandardCharsets.UTF_8);
+          String value = URLDecoder.decode(pair.substring(idx + 1), StandardCharsets.UTF_8);
+          params.put(key, value);
+        } else if (idx == 0) {
+          // Ignore malformed parameter
+        } else {
+          // Parameter without value
+          String key = URLDecoder.decode(pair, StandardCharsets.UTF_8);
+          params.put(key, "");
+        }
+      }
     }
-    return host + ":" + port;
+    return params;
   }
 }

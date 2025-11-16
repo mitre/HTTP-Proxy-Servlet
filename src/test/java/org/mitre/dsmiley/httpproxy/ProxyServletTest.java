@@ -71,6 +71,7 @@ public class ProxyServletTest
    */
   protected Server targetServer;
   protected int targetServerPort;
+  protected DelegatingServlet delegatingServlet;
 
   /** From Meterware httpunit. */
   protected ServletRunner servletRunner;
@@ -84,11 +85,12 @@ public class ProxyServletTest
 
   @Before
   public void setUp() throws Exception {
-    // Start Jetty server as target
+    // Start Jetty server as target with a delegating servlet that can be updated
     targetServer = new Server(0);
     ServletHandler handler = new ServletHandler();
     targetServer.setHandler(handler);
-    handler.addServletWithMapping(RequestInfoServlet.class, "/targetPath/*");
+    delegatingServlet = new DelegatingServlet(new RequestInfoServlet());
+    handler.addServletWithMapping(new ServletHolder(delegatingServlet), "/targetPath/*");
     targetServer.start();
     targetServerPort = ((ServerConnector) targetServer.getConnectors()[0]).getLocalPort();
 
@@ -106,16 +108,30 @@ public class ProxyServletTest
   }
   
   /**
-   * Helper to restart target server with a custom servlet
+   * Helper to replace the target servlet handler without restarting the server
    */
-  protected void replaceTargetServlet(HttpServlet servlet) throws Exception {
-    targetServer.stop();
-    targetServer = new Server(targetServerPort);
-    ServletHandler handler = new ServletHandler();
-    targetServer.setHandler(handler);
-    ServletHolder holder = new ServletHolder(servlet);
-    handler.addServletWithMapping(holder, "/targetPath/*");
-    targetServer.start();
+  protected void replaceTargetServlet(HttpServlet servlet) {
+    delegatingServlet.setDelegate(servlet);
+  }
+  
+  /**
+   * Delegating servlet that can have its delegate updated at runtime
+   */
+  protected static class DelegatingServlet extends HttpServlet {
+    private HttpServlet delegate;
+    
+    public DelegatingServlet(HttpServlet delegate) {
+      this.delegate = delegate;
+    }
+    
+    public void setDelegate(HttpServlet delegate) {
+      this.delegate = delegate;
+    }
+    
+    @Override
+    protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+      delegate.service(req, resp);
+    }
   }
 
   protected void setUpServlet(Properties servletProps) {
@@ -175,14 +191,7 @@ public class ProxyServletTest
   public void testRedirect() throws Exception {
     final String COOKIE_SET_HEADER = "Set-Cookie";
     
-    // Stop the target server and restart with redirect servlet
-    targetServer.stop();
-    targetServer = new Server(targetServerPort);
-    ServletHandler handler = new ServletHandler();
-    targetServer.setHandler(handler);
-    
-    // Add a redirect servlet
-    ServletHolder redirectHolder = new ServletHolder(new HttpServlet() {
+    replaceTargetServlet(new HttpServlet() {
       @Override
       protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String targetHeader = request.getHeader("xxTarget");
@@ -193,8 +202,6 @@ public class ProxyServletTest
         }
       }
     });
-    handler.addServletWithMapping(redirectHolder, "/targetPath/*");
-    targetServer.start();
     
     GetMethodWebRequest request = makeGetMethodRequest(sourceBaseUri + "/%64%69%72%2F");
     assertRedirect(request, "/dummy", "/dummy");//TODO represents a bug to fix
@@ -733,12 +740,7 @@ public class ProxyServletTest
       pw.flush();//done with pw now
 
       // Copy request body
-      InputStream is = request.getInputStream();
-      byte[] buffer = new byte[8192];
-      int bytesRead;
-      while ((bytesRead = is.read(buffer)) != -1) {
-        baos.write(buffer, 0, bytesRead);
-      }
+      request.getInputStream().transferTo(baos);
 
       response.setStatus(200);
       response.setHeader("X-Reason", "TESTREASON");
