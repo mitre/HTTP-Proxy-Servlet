@@ -33,8 +33,8 @@ import java.time.Duration;
 import java.util.BitSet;
 import java.util.Enumeration;
 import java.util.Formatter;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -80,15 +80,6 @@ public class ProxyServlet extends HttpServlet {
   /** An integer parameter name to set the socket read timeout (millis) */
   public static final String P_READTIMEOUT = "http.read.timeout";
 
-  /** An integer parameter name to set the connection request timeout (millis) */
-  public static final String P_CONNECTIONREQUESTTIMEOUT = "http.connectionrequest.timeout";
-
-  /** An integer parameter name to set max connection number */
-  public static final String P_MAXCONNECTIONS = "http.maxConnections";
-
-  /** A boolean parameter whether to use JVM-defined system properties to configure various networking aspects. */
-  public static final String P_USESYSTEMPROPERTIES = "useSystemProperties";
-
   /** A boolean parameter to enable handling of compression in the servlet. If it is false, compressed streams are passed through unmodified. */
   public static final String P_HANDLECOMPRESSION = "handleCompression";
 
@@ -110,12 +101,9 @@ public class ProxyServlet extends HttpServlet {
   protected boolean doPreserveCookies = false;
   protected boolean doPreserveCookiePath = false;
   protected boolean doHandleRedirects = false;
-  protected boolean useSystemProperties = true;
   protected boolean doHandleCompression = false;
   protected int connectTimeout = -1;
   protected int readTimeout = -1;
-  protected int connectionRequestTimeout = -1;
-  protected int maxConnections = -1;
 
   //These next 3 are cached here, and should only be referred to in initialization logic. See the
   // ATTR_* parameters.
@@ -190,21 +178,6 @@ public class ProxyServlet extends HttpServlet {
       this.readTimeout = Integer.parseInt(readTimeoutString);
     }
 
-    String connectionRequestTimeout = getConfigParam(P_CONNECTIONREQUESTTIMEOUT);
-    if (connectionRequestTimeout != null) {
-      this.connectionRequestTimeout = Integer.parseInt(connectionRequestTimeout);
-    }
-
-    String maxConnections = getConfigParam(P_MAXCONNECTIONS);
-    if (maxConnections != null) {
-      this.maxConnections = Integer.parseInt(maxConnections);
-    }
-
-    String useSystemPropertiesString = getConfigParam(P_USESYSTEMPROPERTIES);
-    if (useSystemPropertiesString != null) {
-      this.useSystemProperties = Boolean.parseBoolean(useSystemPropertiesString);
-    }
-
     String doHandleCompression = getConfigParam(P_HANDLECOMPRESSION);
     if (doHandleCompression != null) {
       this.doHandleCompression = Boolean.parseBoolean(doHandleCompression);
@@ -230,9 +203,6 @@ public class ProxyServlet extends HttpServlet {
     if (connectTimeout > 0) {
       builder.connectTimeout(Duration.ofMillis(connectTimeout));
     }
-    
-    // Note: JDK HttpClient doesn't have direct equivalents for all Apache HttpClient settings
-    // like connection request timeout or max connections per route
     
     return builder;
   }
@@ -305,7 +275,14 @@ public class ProxyServlet extends HttpServlet {
 
   @Override
   public void destroy() {
-    // JDK HttpClient doesn't need explicit cleanup
+    //Usually, clients implement Closeable (as of Java 21+):
+    if (proxyClient instanceof AutoCloseable) {
+      try {
+        ((AutoCloseable) proxyClient).close();
+      } catch (Exception e) {
+        log("While destroying servlet, shutting down HttpClient: "+e, e);
+      }
+    }
     super.destroy();
   }
 
@@ -321,6 +298,7 @@ public class ProxyServlet extends HttpServlet {
     }
 
     // Make the Request
+    //note: we won't transfer the protocol version because I'm not sure it would truly be compatible
     String method = servletRequest.getMethod();
     String proxyRequestUri = rewriteUrlFromRequest(servletRequest);
     
@@ -380,7 +358,7 @@ public class ProxyServlet extends HttpServlet {
     } catch (Exception e) {
       handleRequestException(proxyRequest, proxyResponse, e);
     } finally {
-      // Close response body if present
+      // make sure the entire entity was consumed, so the connection is released
       if (proxyResponse != null && proxyResponse.body() != null) {
         try {
           proxyResponse.body().close();
@@ -388,11 +366,16 @@ public class ProxyServlet extends HttpServlet {
           // Ignore
         }
       }
+      //Note: Don't need to close servlet outputStream:
+      // http://stackoverflow.com/questions/1159168/should-one-call-close-on-httpservletresponse-getoutputstream-getwriter
     }
   }
 
   protected void handleRequestException(HttpRequest proxyRequest, HttpResponse<InputStream> proxyResponse, Exception e) throws ServletException, IOException {
-    // Close the response if present
+    // If the response is a chunked response, it is read to completion when
+    // #close is called. If the sending site does not timeout or keeps sending,
+    // the connection will be kept open indefinitely. Closing the response
+    // object terminates the stream.
     if (proxyResponse != null && proxyResponse.body() != null) {
       try {
         proxyResponse.body().close();
@@ -436,16 +419,10 @@ public class ProxyServlet extends HttpServlet {
   /** These are the "hop-by-hop" headers that should not be copied.
    * http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html
    */
-  protected static final Set<String> hopByHopHeaders;
-  static {
-    hopByHopHeaders = new HashSet<>();
-    String[] headers = new String[] {
-        "Connection", "Keep-Alive", "Proxy-Authenticate", "Proxy-Authorization",
-        "TE", "Trailers", "Transfer-Encoding", "Upgrade" };
-    for (String header : headers) {
-      hopByHopHeaders.add(header.toLowerCase());
-    }
-  }
+  protected static final Set<String> hopByHopHeaders = Set.of(
+      "connection", "keep-alive", "proxy-authenticate", "proxy-authorization",
+      "te", "trailers", "transfer-encoding", "upgrade"
+  );
 
   /**
    * Copy request headers from the servlet client to the proxy request.
@@ -470,7 +447,7 @@ public class ProxyServlet extends HttpServlet {
     //Instead the content-length is effectively set via InputStreamEntity
     if (headerName.equalsIgnoreCase("Content-Length"))
       return;
-    if (hopByHopHeaders.contains(headerName.toLowerCase()))
+    if (hopByHopHeaders.contains(headerName.toLowerCase(Locale.ROOT)))
       return;
     // If compression is handled in the servlet, JDK http client needs to
     // control the Accept-Encoding header, not the client
@@ -513,8 +490,9 @@ public class ProxyServlet extends HttpServlet {
   /** Copy proxied response headers back to the servlet client. */
   protected void copyResponseHeaders(HttpResponse<InputStream> proxyResponse, HttpServletRequest servletRequest,
                                      HttpServletResponse servletResponse) {
-    for (String headerName : proxyResponse.headers().map().keySet()) {
-      for (String headerValue : proxyResponse.headers().allValues(headerName)) {
+    for (var entry : proxyResponse.headers().map().entrySet()) {
+      String headerName = entry.getKey();
+      for (String headerValue : entry.getValue()) {
         copyResponseHeader(servletRequest, servletResponse, headerName, headerValue);
       }
     }
@@ -525,7 +503,7 @@ public class ProxyServlet extends HttpServlet {
    */
   protected void copyResponseHeader(HttpServletRequest servletRequest,
                                   HttpServletResponse servletResponse, String headerName, String headerValue) {
-    if (hopByHopHeaders.contains(headerName.toLowerCase()))
+    if (hopByHopHeaders.contains(headerName.toLowerCase(Locale.ROOT)))
       return;
     if (headerName.equalsIgnoreCase("Set-Cookie") ||
             headerName.equalsIgnoreCase("Set-Cookie2")) {
@@ -646,11 +624,24 @@ public class ProxyServlet extends HttpServlet {
         int read;
         while ((read = is.read(buffer)) != -1) {
           os.write(buffer, 0, read);
-          // For chunked responses, always flush
+          /*-
+           * Issue in JDK HttpClient: if the stream from client is
+           * compressed, it may delegate to GzipInputStream.
+           * The #available implementation of InflaterInputStream (parent of
+           * GzipInputStream) return 1 until EOF is reached. This is not
+           * consistent with InputStream#available, which defines:
+           *
+           *   A single read or skip of this many bytes will not block,
+           *   but may read or skip fewer bytes.
+           *
+           *  To work around this, a flush is issued always if compression
+            *  is handled by the http client
+           */
           if (doHandleCompression || is.available() == 0 /* next is.read will block */) {
             os.flush();
           }
         }
+        // Entity closing/cleanup is done in the caller (#service)
       } else {
         OutputStream servletOutputStream = servletResponse.getOutputStream();
         entity.transferTo(servletOutputStream);
