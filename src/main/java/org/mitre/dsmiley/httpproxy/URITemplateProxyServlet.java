@@ -21,7 +21,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -94,7 +93,7 @@ public class URITemplateProxyServlet extends ProxyServlet {
     LinkedHashMap<String, String> params = parseQueryParams(requestQueryString);
 
     //Now rewrite the URL
-    StringBuffer urlBuf = new StringBuffer();//note: StringBuilder isn't supported by Matcher
+    StringBuilder urlBuf = new StringBuilder();
     Matcher matcher = TEMPLATE_PATTERN.matcher(targetUriTemplate);
     while (matcher.find()) {
       String arg = matcher.group(1);
@@ -122,7 +121,7 @@ public class URITemplateProxyServlet extends ProxyServlet {
         newQueryBuf.append('&');
       newQueryBuf.append(nameVal.getKey()).append('=');
       if (nameVal.getValue() != null)
-        newQueryBuf.append( URLEncoder.encode(nameVal.getValue(), "UTF-8"));
+        newQueryBuf.append( URLEncoder.encode(nameVal.getValue(), StandardCharsets.UTF_8));
     }
     servletRequest.setAttribute(ATTR_QUERY_STRING, newQueryBuf.toString());
 
@@ -135,7 +134,7 @@ public class URITemplateProxyServlet extends ProxyServlet {
   }
   
   /**
-   * Parse query string into a map of key-value pairs
+   * Parse query string into a map of key-value pairs.  NOTE: doesn't handle repeated keys
    */
   private LinkedHashMap<String, String> parseQueryParams(String requestQueryString) {
     LinkedHashMap<String, String> params = new LinkedHashMap<String, String>();

@@ -51,7 +51,7 @@ import java.util.Set;
  *
  * @author David Smiley dsmiley@apache.org
  */
-@SuppressWarnings({"deprecation", "serial", "WeakerAccess"})
+@SuppressWarnings({"deprecation", "WeakerAccess"})
 public class ProxyServlet extends HttpServlet {
 
   /* INIT PARAMETER NAME CONSTANTS */
@@ -189,10 +189,10 @@ public class ProxyServlet extends HttpServlet {
   }
 
   /**
-   * Sub-classes can override specific behaviour of the HttpClient builder.
+   * Subclasses can override specific behavior of the HttpClient builder.
    */
   protected HttpClient.Builder buildClientBuilder() {
-    HttpClient.Builder builder = HttpClient.newBuilder();
+    HttpClient.Builder builder = newHttpClientBuilder();
     
     if (doHandleRedirects) {
       builder.followRedirects(HttpClient.Redirect.NORMAL);
@@ -223,7 +223,7 @@ public class ProxyServlet extends HttpServlet {
   /**
    * Extract host:port from URI
    */
-  protected String extractHost(URI uri) {
+  protected static String extractHost(URI uri) {
     String host = uri.getHost();
     int port = uri.getPort();
     if (port == -1) {
@@ -261,7 +261,7 @@ public class ProxyServlet extends HttpServlet {
    *
    * @return HttpClient builder
    */
-  protected HttpClient.Builder getHttpClientBuilder() {
+  protected HttpClient.Builder newHttpClientBuilder() {
     return HttpClient.newBuilder();
   }
 
