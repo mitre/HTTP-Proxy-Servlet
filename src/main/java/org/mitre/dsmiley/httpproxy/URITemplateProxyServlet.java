@@ -134,10 +134,10 @@ public class URITemplateProxyServlet extends ProxyServlet {
   }
   
   /**
-   * Parse query string into a map of key-value pairs.  NOTE: doesn't handle repeated keys
+   * Parse a query string into a map of key-value pairs.  NOTE: doesn't handle repeated keys
    */
   private LinkedHashMap<String, String> parseQueryParams(String requestQueryString) {
-    LinkedHashMap<String, String> params = new LinkedHashMap<String, String>();
+    LinkedHashMap<String, String> params = new LinkedHashMap<>();
     if (requestQueryString != null && !requestQueryString.isEmpty()) {
       // Parse query string manually
       String[] pairs = requestQueryString.split("&");

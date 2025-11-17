@@ -47,7 +47,7 @@ import java.util.Set;
  *   portable across servlet engines, and is embeddable into another web application.
  * </p>
  * <p>
- *   Inspiration: http://httpd.apache.org/docs/2.0/mod/mod_proxy.html
+ *   Inspiration: <a href="http://httpd.apache.org/docs/2.0/mod/mod_proxy.html">mod_proxy</a>
  * </p>
  *
  * @author David Smiley dsmiley@apache.org
@@ -372,17 +372,6 @@ public class ProxyServlet extends HttpServlet {
   }
 
   protected void handleRequestException(HttpRequest proxyRequest, HttpResponse<InputStream> proxyResponse, Exception e) throws ServletException, IOException {
-    // If the response is a chunked response, it is read to completion when
-    // #close is called. If the sending site does not timeout or keeps sending,
-    // the connection will be kept open indefinitely. Closing the response
-    // object terminates the stream.
-    if (proxyResponse != null && proxyResponse.body() != null) {
-      try {
-        proxyResponse.body().close();
-      } catch (IOException ex) {
-        // Ignore
-      }
-    }
     if (e instanceof RuntimeException)
       throw (RuntimeException)e;
     if (e instanceof ServletException)

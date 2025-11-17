@@ -21,6 +21,16 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
+import com.meterware.servletunit.ServletRunner;
+import com.meterware.servletunit.ServletUnitClient;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -29,18 +39,11 @@ import java.io.PrintWriter;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.eclipse.jetty.server.Server;
@@ -52,15 +55,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
-import com.meterware.httpunit.GetMethodWebRequest;
-import com.meterware.httpunit.PostMethodWebRequest;
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
-import com.meterware.servletunit.ServletRunner;
-import com.meterware.servletunit.ServletUnitClient;
-
 /**
- * @author David Smiley - dsmiley@mitre.org
+ * @author David Smiley - dsmiley@apache.org
  */
 @SuppressWarnings({ "deprecation", "rawtypes" })
 public class ProxyServletTest
@@ -506,7 +502,8 @@ public class ProxyServletTest
     targetServletHandler.addServletWithMapping(
         new ServletHolder(new HttpServlet() {
           @Override
-          protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+          protected void service(HttpServletRequest request, HttpServletResponse response) throws
+              IOException {
             // Redirect to the requested URL with / appended
             response.setHeader("Location", targetBaseUri + "/test/");
             response.setStatus(HttpServletResponse.SC_MOVED_TEMPORARILY);
@@ -559,7 +556,7 @@ public class ProxyServletTest
   }
 
   @Test
-  public void testHttpProxy() throws Exception {
+  public void testHttpProxy() {
     System.setProperty("http.proxyHost", "foo.blah.nonexisting.dns.name");
     servletRunner = new ServletRunner();
 
@@ -578,7 +575,8 @@ public class ProxyServletTest
       execAssert(req);
       fail("UnknownHostException expected.");
     } catch (Exception e) {
-      System.out.println(e.toString());
+      System.out.println("expected exception, assuming confused by bogus proxy host");
+      e.printStackTrace(System.out);
       // Expected assuming that our proxy host defined above does not exist.
     } finally {
       System.clearProperty("http.proxyHost");
@@ -699,7 +697,8 @@ public class ProxyServletTest
   public static class RequestInfoServlet extends HttpServlet
   {
     @Override
-    protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    protected void service(HttpServletRequest request, HttpServletResponse response) throws
+        IOException {
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       PrintWriter pw = new PrintWriter(baos,false);
       
