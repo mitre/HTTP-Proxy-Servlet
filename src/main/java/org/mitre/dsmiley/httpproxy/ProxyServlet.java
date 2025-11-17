@@ -604,19 +604,18 @@ public class ProxyServlet extends HttpServlet {
   protected void copyResponseEntity(HttpResponse<InputStream> proxyResponse, HttpServletResponse servletResponse,
                                     HttpRequest proxyRequest, HttpServletRequest servletRequest)
           throws IOException {
-    InputStream entity = proxyResponse.body();
-    if (entity != null) {
+    InputStream inputStream = proxyResponse.body(); // will be closed by caller
+    if (inputStream != null) {
       // Check if chunked based on headers
       List<String> transferEncoding = proxyResponse.headers().allValues("Transfer-Encoding");
       boolean isChunked = transferEncoding.stream().anyMatch(te -> te.toLowerCase(Locale.ROOT).contains("chunked"));
       
       if (isChunked) {
         // Flush intermediate results before blocking on input -- needed for SSE
-        InputStream is = entity;
         OutputStream os = servletResponse.getOutputStream();
         byte[] buffer = new byte[10 * 1024];
         int read;
-        while ((read = is.read(buffer)) != -1) {
+        while ((read = inputStream.read(buffer)) != -1) {
           os.write(buffer, 0, read);
           /*-
            * if the stream from client is
@@ -631,14 +630,14 @@ public class ProxyServlet extends HttpServlet {
            *  To work around this, a flush is issued always if compression
            *  is handled by the http client
            */
-          if (doHandleCompression || is.available() == 0 /* next is.read will block */) {
+          if (doHandleCompression || inputStream.available() == 0 /* next is.read will block */) {
             os.flush();
           }
         }
         // Entity closing/cleanup is done in the caller (#service)
       } else {
         OutputStream servletOutputStream = servletResponse.getOutputStream();
-        entity.transferTo(servletOutputStream);
+        inputStream.transferTo(servletOutputStream);
       }
     }
   }
