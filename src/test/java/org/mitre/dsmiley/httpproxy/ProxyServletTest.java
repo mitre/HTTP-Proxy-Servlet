@@ -93,7 +93,6 @@ public class ProxyServletTest
     targetServer.start();
     targetServerPort = ((ServerConnector) targetServer.getConnectors()[0]).getLocalPort();
 
-    System.setProperty("jdk.httpclient.allowRestrictedHeaders", "host");
     servletRunner = new ServletRunner();
 
     Properties servletProps = new Properties();

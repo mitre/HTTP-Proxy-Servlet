@@ -186,6 +186,12 @@ public class ProxyServlet extends HttpServlet {
 
     initTarget();//sets target*
 
+    // restricts this for some reason
+    String allowRestrictedHeadersProp = "jdk.httpclient.allowRestrictedHeaders";
+    if (System.getProperty(allowRestrictedHeadersProp) == null) {
+      System.setProperty(allowRestrictedHeadersProp, "host");
+    }
+
     proxyClient = createHttpClient();
   }
 
