@@ -73,6 +73,8 @@ public class ChunkedTransferTest {
 
   @Before
   public void setUp() throws Exception {
+    System.setProperty("jdk.httpclient.allowRestrictedHeaders", "host");
+
     server = new Server(0);
     servletHandler = new ServletHandler();
     Handler serverHandler = servletHandler;
@@ -120,7 +122,7 @@ public class ChunkedTransferTest {
 
     ServletHolder servletHolder = servletHandler.addServletWithMapping(ProxyServlet.class, "/chatProxied/*");
     servletHolder.setInitParameter(ProxyServlet.P_LOG, "true");
-    servletHolder.setInitParameter(ProxyServlet.P_TARGET_URI, String.format("http://localhost:%d/chat/", serverPort));
+    servletHolder.setInitParameter(ProxyServlet.P_TARGET_URI, String.format("http://localhost:%d/chat", serverPort));
     servletHolder.setInitParameter(ProxyServlet.P_HANDLECOMPRESSION, Boolean.toString(handleCompressionApacheClient));
 
     ServletHolder dummyBackend = new ServletHolder(new HttpServlet() {
@@ -183,7 +185,7 @@ public class ChunkedTransferTest {
 
     ServletHolder servletHolder = servletHandler.addServletWithMapping(ProxyServlet.class, "/chatProxied/*");
     servletHolder.setInitParameter(ProxyServlet.P_LOG, "true");
-    servletHolder.setInitParameter(ProxyServlet.P_TARGET_URI, String.format("http://localhost:%d/chat/", serverPort));
+    servletHolder.setInitParameter(ProxyServlet.P_TARGET_URI, String.format("http://localhost:%d/chat", serverPort));
     servletHolder.setInitParameter(ProxyServlet.P_HANDLECOMPRESSION, Boolean.toString(handleCompressionApacheClient));
 
     ServletHolder dummyBackend = new ServletHolder(new HttpServlet() {

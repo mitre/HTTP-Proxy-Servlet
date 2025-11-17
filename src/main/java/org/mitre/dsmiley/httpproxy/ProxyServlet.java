@@ -52,7 +52,7 @@ import java.util.Set;
  *
  * @author David Smiley dsmiley@apache.org
  */
-@SuppressWarnings({"deprecation", "WeakerAccess"})
+@SuppressWarnings({"WeakerAccess"})
 public class ProxyServlet extends HttpServlet {
 
   /* INIT PARAMETER NAME CONSTANTS */
@@ -425,6 +425,12 @@ public class ProxyServlet extends HttpServlet {
       String headerName = enumerationOfHeaderNames.nextElement();
       copyRequestHeader(servletRequest, proxyRequest, headerName);
     }
+
+    // If compression is handled by the servlet, add Accept-Encoding header for JDK HttpClient
+    // JDK HttpClient doesn't automatically add this like Apache HttpClient did
+    if (doHandleCompression) {
+      proxyRequest.header("Accept-Encoding", "gzip");
+    }
   }
 
   /**
@@ -443,7 +449,6 @@ public class ProxyServlet extends HttpServlet {
     if (doHandleCompression && headerName.equalsIgnoreCase("Accept-Encoding"))
       return;
 
-    @SuppressWarnings("unchecked")
     Enumeration<String> headers = servletRequest.getHeaders(headerName);
     while (headers.hasMoreElements()) {//sometimes more than one value
       String headerValue = headers.nextElement();
@@ -603,7 +608,7 @@ public class ProxyServlet extends HttpServlet {
     if (entity != null) {
       // Check if chunked based on headers
       List<String> transferEncoding = proxyResponse.headers().allValues("Transfer-Encoding");
-      boolean isChunked = transferEncoding.stream().anyMatch(te -> te.toLowerCase().contains("chunked"));
+      boolean isChunked = transferEncoding.stream().anyMatch(te -> te.toLowerCase(Locale.ROOT).contains("chunked"));
       
       if (isChunked) {
         // Flush intermediate results before blocking on input -- needed for SSE
@@ -614,7 +619,7 @@ public class ProxyServlet extends HttpServlet {
         while ((read = is.read(buffer)) != -1) {
           os.write(buffer, 0, read);
           /*-
-           * Issue in JDK HttpClient: if the stream from client is
+           * if the stream from client is
            * compressed, it may delegate to GzipInputStream.
            * The #available implementation of InflaterInputStream (parent of
            * GzipInputStream) return 1 until EOF is reached. This is not
@@ -624,7 +629,7 @@ public class ProxyServlet extends HttpServlet {
            *   but may read or skip fewer bytes.
            *
            *  To work around this, a flush is issued always if compression
-            *  is handled by the http client
+           *  is handled by the http client
            */
           if (doHandleCompression || is.available() == 0 /* next is.read will block */) {
             os.flush();

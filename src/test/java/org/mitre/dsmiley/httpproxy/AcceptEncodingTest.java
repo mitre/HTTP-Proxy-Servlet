@@ -47,6 +47,8 @@ public class AcceptEncodingTest {
 
   @Before
   public void setUp() throws Exception {
+    System.setProperty("jdk.httpclient.allowRestrictedHeaders", "host");
+
     server = new Server(0);
     servletHandler = new ServletHandler();
     Handler serverHandler = servletHandler;
@@ -80,12 +82,12 @@ public class AcceptEncodingTest {
 
     ServletHolder servletHolder = servletHandler.addServletWithMapping(ProxyServlet.class, "/acceptEncodingProxyHandleCompression/*");
     servletHolder.setInitParameter(ProxyServlet.P_LOG, "true");
-    servletHolder.setInitParameter(ProxyServlet.P_TARGET_URI, String.format("http://localhost:%d/acceptEncoding/", serverPort));
+    servletHolder.setInitParameter(ProxyServlet.P_TARGET_URI, String.format("http://localhost:%d/acceptEncoding", serverPort));
     servletHolder.setInitParameter(ProxyServlet.P_HANDLECOMPRESSION, Boolean.TRUE.toString());
 
     ServletHolder servletHolder2 = servletHandler.addServletWithMapping(ProxyServlet.class, "/acceptEncodingProxy/*");
     servletHolder2.setInitParameter(ProxyServlet.P_LOG, "true");
-    servletHolder2.setInitParameter(ProxyServlet.P_TARGET_URI, String.format("http://localhost:%d/acceptEncoding/", serverPort));
+    servletHolder2.setInitParameter(ProxyServlet.P_TARGET_URI, String.format("http://localhost:%d/acceptEncoding", serverPort));
     servletHolder2.setInitParameter(ProxyServlet.P_HANDLECOMPRESSION, Boolean.FALSE.toString());
 
     ServletHolder dummyBackend = new ServletHolder(new HttpServlet() {
