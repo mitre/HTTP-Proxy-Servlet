@@ -186,8 +186,8 @@ public class ProxyServlet extends HttpServlet {
 
     initTarget();//sets target*
 
-    // restricts this for some reason
-    String allowRestrictedHeadersProp = "jdk.httpclient.allowRestrictedHeaders";
+    // the JDK restricts this for some reason
+    String allowRestrictedHeadersProp = "jdk.httpclient.allowRestrictedHeaders"; // comma delim
     if (System.getProperty(allowRestrictedHeadersProp) == null) {
       System.setProperty(allowRestrictedHeadersProp, "host");
     }
@@ -208,8 +208,6 @@ public class ProxyServlet extends HttpServlet {
     if (connectTimeout > 0) {
       builder.connectTimeout(Duration.ofMillis(connectTimeout));
     }
-
-    builder.proxy(ProxySelector.getDefault());
 
     return builder;
   }
@@ -411,8 +409,9 @@ public class ProxyServlet extends HttpServlet {
     return -1L;
   }
 
-  /** These are the "hop-by-hop" headers that should not be copied.
-   * http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html
+  /**
+   * These are the "hop-by-hop" headers that should not be copied.
+   * <a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html">RFC-2616</a>
    */
   protected static final Set<String> hopByHopHeaders = Set.of(
       "connection", "keep-alive", "proxy-authenticate", "proxy-authorization",
@@ -425,7 +424,6 @@ public class ProxyServlet extends HttpServlet {
    */
   protected void copyRequestHeaders(HttpServletRequest servletRequest, HttpRequest.Builder proxyRequest) {
     // Get an Enumeration of all of the header names sent by the client
-    @SuppressWarnings("unchecked")
     Enumeration<String> enumerationOfHeaderNames = servletRequest.getHeaderNames();
     while (enumerationOfHeaderNames.hasMoreElements()) {
       String headerName = enumerationOfHeaderNames.nextElement();
