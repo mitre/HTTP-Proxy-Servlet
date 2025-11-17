@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpCookie;
+import java.net.ProxySelector;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -193,17 +194,17 @@ public class ProxyServlet extends HttpServlet {
    */
   protected HttpClient.Builder buildClientBuilder() {
     HttpClient.Builder builder = newHttpClientBuilder();
-    
-    if (doHandleRedirects) {
-      builder.followRedirects(HttpClient.Redirect.NORMAL);
-    } else {
-      builder.followRedirects(HttpClient.Redirect.NEVER);
-    }
+
+    builder.followRedirects(doHandleRedirects
+        ? HttpClient.Redirect.NORMAL
+        : HttpClient.Redirect.NEVER);
     
     if (connectTimeout > 0) {
       builder.connectTimeout(Duration.ofMillis(connectTimeout));
     }
-    
+
+    builder.proxy(ProxySelector.getDefault());
+
     return builder;
   }
 
@@ -256,7 +257,7 @@ public class ProxyServlet extends HttpServlet {
   }
 
   /**
-   * Creates a {@code HttpClient.Builder}. Meant as preprocessor to possibly
+   * Creates a {@code HttpClient.Builder}. Meant as a pre-processor to possibly
    * adapt the client builder prior to any configuration got applied.
    *
    * @return HttpClient builder
@@ -309,7 +310,6 @@ public class ProxyServlet extends HttpServlet {
     HttpRequest.BodyPublisher bodyPublisher;
     if (servletRequest.getHeader("Content-Length") != null ||
         servletRequest.getHeader("Transfer-Encoding") != null) {
-      long contentLength = getContentLength(servletRequest);
       bodyPublisher = HttpRequest.BodyPublishers.ofInputStream(() -> {
         try {
           return servletRequest.getInputStream();
@@ -330,10 +330,10 @@ public class ProxyServlet extends HttpServlet {
     
     // Copy request headers
     copyRequestHeaders(servletRequest, proxyRequestBuilder);
+
     setXForwardedForHeader(servletRequest, proxyRequestBuilder);
-    
+
     HttpRequest proxyRequest = proxyRequestBuilder.build();
-    
     HttpResponse<InputStream> proxyResponse = null;
     try {
       // Execute the request

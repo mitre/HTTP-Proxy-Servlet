@@ -88,7 +88,7 @@ public class ProxyServletTest
 
   @Before
   public void setUp() throws Exception {
-    // Start Jetty server as target with a delegating servlet that can be updated
+    // Start Jetty server as target
     targetServer = new Server(0);
     targetServletHandler = new ServletHandler();
     targetServer.setHandler(targetServletHandler);
@@ -97,6 +97,7 @@ public class ProxyServletTest
     targetServer.start();
     targetServerPort = ((ServerConnector) targetServer.getConnectors()[0]).getLocalPort();
 
+    System.setProperty("jdk.httpclient.allowRestrictedHeaders", "host");
     servletRunner = new ServletRunner();
 
     Properties servletProps = new Properties();
@@ -123,6 +124,12 @@ public class ProxyServletTest
    if (targetServer != null) {
      targetServer.stop();
    }
+  }
+  
+  protected void replaceTargetServlet(HttpServlet servlet) throws Exception {
+    targetServletHolder.stop();
+    targetServletHolder.setServlet(servlet);
+    targetServletHolder.start();
   }
 
   //note: we don't include fragments:   "/p?#f","/p?#" because
@@ -166,7 +173,7 @@ public class ProxyServletTest
   public void testRedirect() throws Exception {
     final String COOKIE_SET_HEADER = "Set-Cookie";
 
-    targetServletHolder.setServlet(new HttpServlet() {
+    replaceTargetServlet(new HttpServlet() {
       @Override
       protected void service(HttpServletRequest request1, HttpServletResponse response) {
         String targetHeader = request1.getHeader("xxTarget");
@@ -229,7 +236,7 @@ public class ProxyServletTest
     //"Proxy-Authenticate" is a hop-by-hop header
     final String HEADER = "Proxy-Authenticate";
 
-    targetServletHolder.setServlet(new HttpServlet() {
+    replaceTargetServlet(new HttpServlet() {
       @Override
       protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         assertNull(request.getHeader(HEADER));
@@ -248,7 +255,7 @@ public class ProxyServletTest
   public void testWithExistingXForwardedFor() throws Exception {
     final String FOR_HEADER = "X-Forwarded-For";
 
-    targetServletHolder.setServlet(new HttpServlet() {
+    replaceTargetServlet(new HttpServlet() {
       @Override
       protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String xForwardedForHeader = request.getHeader(FOR_HEADER);
@@ -267,7 +274,7 @@ public class ProxyServletTest
     final String FOR_HEADER = "X-Forwarded-For";
     final String PROTO_HEADER = "X-Forwarded-Proto";
 
-    targetServletHolder.setServlet(new HttpServlet() {
+    replaceTargetServlet(new HttpServlet() {
       @Override
       protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String xForwardedForHeader = request.getHeader(FOR_HEADER);
@@ -286,7 +293,7 @@ public class ProxyServletTest
   public void testCopyRequestHeaderToProxyRequest() throws Exception {
     final String HEADER = "HEADER_TO_TEST";
 
-    targetServletHolder.setServlet(new HttpServlet() {
+    replaceTargetServlet(new HttpServlet() {
       @Override
       protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String headerToTest = request.getHeader(HEADER);
@@ -305,7 +312,7 @@ public class ProxyServletTest
   public void testCopyProxiedRequestHeadersToResponse() throws Exception {
     final String HEADER = "HEADER_TO_TEST";
 
-    targetServletHolder.setServlet(new HttpServlet() {
+    replaceTargetServlet(new HttpServlet() {
       @Override
       protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         response.setHeader(HEADER, "VALUE_TO_TEST");
@@ -322,7 +329,7 @@ public class ProxyServletTest
   @Test
   public void testSetCookie() throws Exception {
     final String HEADER = "Set-Cookie";
-    targetServletHolder.setServlet(new HttpServlet() {
+    replaceTargetServlet(new HttpServlet() {
       @Override
       protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         response.setHeader(HEADER, "JSESSIONID=1234; Path=/proxy/path/that/we/dont/want; Expires=Wed, 13 Jan 2021 22:23:01 GMT; Domain=.foo.bar.com; HttpOnly");
@@ -339,7 +346,7 @@ public class ProxyServletTest
   @Test
   public void testSetCookie2() throws Exception {
     final String HEADER = "Set-Cookie2";
-    targetServletHolder.setServlet(new HttpServlet() {
+    replaceTargetServlet(new HttpServlet() {
       @Override
       protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         response.setHeader(HEADER, "JSESSIONID=1234; Path=/proxy/path/that/we/dont/want; Max-Age=3600; Domain=.foo.bar.com; Secure");
@@ -369,7 +376,7 @@ public class ProxyServletTest
     sc.getClientProperties().setAutoRedirect(false);//don't want httpunit itself to redirect
 
     final String HEADER = "Set-Cookie";
-    targetServletHolder.setServlet(new HttpServlet() {
+    replaceTargetServlet(new HttpServlet() {
       @Override
       protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         response.setHeader(HEADER, "JSESSIONID=1234; Path=/proxy/path/that/we/dont/want; Expires=Wed, 13 Jan 2021 22:23:01 GMT; Domain=.foo.bar.com; HttpOnly");
@@ -386,7 +393,7 @@ public class ProxyServletTest
   @Test
   public void testSetCookieHttpOnly() throws Exception { //See GH #50
     final String HEADER = "Set-Cookie";
-    targetServletHolder.setServlet(new HttpServlet() {
+    replaceTargetServlet(new HttpServlet() {
       @Override
       protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         response.setHeader(HEADER, "JSESSIONID=1234; Path=/proxy/path/that/we/dont/want/; HttpOnly");
@@ -404,7 +411,7 @@ public class ProxyServletTest
   public void testSendCookiesToProxy() throws Exception {
     final StringBuffer captureCookieValue = new StringBuffer();
     final String HEADER = "Cookie";
-    targetServletHolder.setServlet(new HttpServlet() {
+    replaceTargetServlet(new HttpServlet() {
       @Override
       protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         captureCookieValue.append(request.getHeader(HEADER));
@@ -438,13 +445,15 @@ public class ProxyServletTest
     sc.getClientProperties().setAutoRedirect(false);//don't want httpunit itself to redirect
 
     final String HEADER = "Set-Cookie";
-    targetServletHolder.setServlet(new HttpServlet() {
+    targetServletHolder.stop();
+    replaceTargetServlet(new HttpServlet() {
       @Override
       protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         response.setHeader(HEADER, "JSESSIONID=1234; Path=/proxy/path/that/we/want; Expires=Wed, 13 Jan 2021 22:23:01 GMT; Domain=.foo.bar.com; HttpOnly");
         new RequestInfoServlet().service(request, response);
       }
     });
+    targetServletHolder.start();
 
     GetMethodWebRequest req = makeGetMethodRequest(sourceBaseUri);
     WebResponse rsp = execAndAssert(req, "");
@@ -462,7 +471,7 @@ public class ProxyServletTest
     final AtomicInteger requestCounter = new AtomicInteger(1);
     final StringBuffer captureCookieValue = new StringBuffer();
     // there shouldn't be a cookie sent since each user request in this test is logging in for the first time
-    targetServletHolder.setServlet(new HttpServlet() {
+    replaceTargetServlet(new HttpServlet() {
       @Override
       protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         // there shouldn't be a cookie sent since each user request in this test is logging in for the first time
@@ -535,7 +544,7 @@ public class ProxyServletTest
 
     final String HEADER = "Host";
     final String[] proxyHost = new String[1];
-    targetServletHolder.setServlet(new HttpServlet() {
+    replaceTargetServlet(new HttpServlet() {
       @Override
       protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
     	  proxyHost[0] = request.getHeader(HEADER);
@@ -550,14 +559,12 @@ public class ProxyServletTest
   }
 
   @Test
-  @org.junit.Ignore("P_USESYSTEMPROPERTIES not supported with JDK HttpClient")
-  public void testUseSystemProperties() throws Exception {
+  public void testHttpProxy() throws Exception {
     System.setProperty("http.proxyHost", "foo.blah.nonexisting.dns.name");
     servletRunner = new ServletRunner();
 
     Properties servletProps = new Properties();
     servletProps.setProperty(ProxyServlet.P_LOG, "true");
-    // servletProps.setProperty(ProxyServlet.P_USESYSTEMPROPERTIES, "true"); // Not supported with JDK HttpClient
     // Must use a non-local URL because localhost is in http.nonProxyHosts by default.
     targetBaseUri = "http://www.google.com";
     servletProps.setProperty(ProxyServlet.P_TARGET_URI, targetBaseUri);
@@ -570,7 +577,8 @@ public class ProxyServletTest
     try {
       execAssert(req);
       fail("UnknownHostException expected.");
-    } catch (UnknownHostException e) {
+    } catch (Exception e) {
+      System.out.println(e.toString());
       // Expected assuming that our proxy host defined above does not exist.
     } finally {
       System.clearProperty("http.proxyHost");
@@ -710,12 +718,12 @@ public class ProxyServletTest
       pw.println("BODY: (below)");
       pw.flush();//done with pw now
 
-      // Copy request body
-      request.getInputStream().transferTo(baos);
-
       response.setStatus(200);
       response.setHeader("X-Reason", "TESTREASON");
       response.setContentType("text/plain");
+
+      // Copy request body
+      request.getInputStream().transferTo(baos);
       response.setContentLength(baos.size());
       response.getOutputStream().write(baos.toByteArray());
     }
