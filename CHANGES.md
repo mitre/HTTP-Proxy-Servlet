@@ -1,4 +1,8 @@
-# Version 2.1 (unreleased)
+# Version 3.0 (unreleased)
+
+Servlet API 6.0.0 is now the minimum servlet API supported. 
+
+\#259: The SameSite attribute in cookies is now preserved. 
 
 # Version 2.0 released on 2023-06-28
 

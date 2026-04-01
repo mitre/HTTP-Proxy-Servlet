@@ -38,8 +38,8 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.servlet.ServletHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
+import org.eclipse.jetty.ee10.servlet.ServletHolder;
 import org.junit.After;
 import static org.junit.Assert.assertEquals;
 import org.junit.Before;
@@ -48,14 +48,15 @@ import org.junit.Test;
 public class ParallelConnectionsTest {
 
   private Server server;
-  private ServletHandler servletHandler;
+  private ServletContextHandler context;
   private int serverPort;
 
   @Before
   public void setUp() throws Exception {
     server = new Server(0);
-    servletHandler = new ServletHandler();
-    server.setHandler(servletHandler);
+    context = new ServletContextHandler();
+    context.setContextPath("/");
+    server.setHandler(context);
     server.start();
 
     serverPort = ((ServerConnector) server.getConnectors()[0]).getLocalPort();
@@ -79,7 +80,7 @@ public class ParallelConnectionsTest {
 
     int parallelConnectionsToTest = 10;
 
-    ServletHolder servletHolder = servletHandler.addServletWithMapping(ProxyServlet.class, "/sampleBackendProxied/*");
+    ServletHolder servletHolder = context.addServlet(ProxyServlet.class, "/sampleBackendProxied/*");
     servletHolder.setInitParameter(ProxyServlet.P_LOG, "true");
     servletHolder.setInitParameter(ProxyServlet.P_MAXCONNECTIONS, Integer.toString(parallelConnectionsToTest));
     servletHolder.setInitParameter(ProxyServlet.P_TARGET_URI, String.format("http://localhost:%d/sampleBackend/", serverPort));
@@ -106,7 +107,7 @@ public class ParallelConnectionsTest {
         }
       }
     });
-    servletHandler.addServletWithMapping(dummyBackend, "/sampleBackend/*");
+    context.addServlet(dummyBackend, "/sampleBackend/*");
 
     URL url = new URL(String.format("http://localhost:%d/sampleBackendProxied/test", serverPort));
 

@@ -30,11 +30,10 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.servlet.ServletHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
+import org.eclipse.jetty.ee10.servlet.ServletHolder;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,15 +41,15 @@ import org.junit.Test;
 public class AcceptEncodingTest {
 
   private Server server;
-  private ServletHandler servletHandler;
+  private ServletContextHandler context;
   private int serverPort;
 
   @Before
   public void setUp() throws Exception {
     server = new Server(0);
-    servletHandler = new ServletHandler();
-    Handler serverHandler = servletHandler;
-    server.setHandler(serverHandler);
+    context = new ServletContextHandler();
+    context.setContextPath("/");
+    server.setHandler(context);
     server.start();
 
     serverPort = ((ServerConnector) server.getConnectors()[0]).getLocalPort();
@@ -78,12 +77,12 @@ public class AcceptEncodingTest {
      of the client needs to be passed through as is.
      */
 
-    ServletHolder servletHolder = servletHandler.addServletWithMapping(ProxyServlet.class, "/acceptEncodingProxyHandleCompression/*");
+    ServletHolder servletHolder = context.addServlet(ProxyServlet.class, "/acceptEncodingProxyHandleCompression/*");
     servletHolder.setInitParameter(ProxyServlet.P_LOG, "true");
     servletHolder.setInitParameter(ProxyServlet.P_TARGET_URI, String.format("http://localhost:%d/acceptEncoding/", serverPort));
     servletHolder.setInitParameter(ProxyServlet.P_HANDLECOMPRESSION, Boolean.TRUE.toString());
 
-    ServletHolder servletHolder2 = servletHandler.addServletWithMapping(ProxyServlet.class, "/acceptEncodingProxy/*");
+    ServletHolder servletHolder2 = context.addServlet(ProxyServlet.class, "/acceptEncodingProxy/*");
     servletHolder2.setInitParameter(ProxyServlet.P_LOG, "true");
     servletHolder2.setInitParameter(ProxyServlet.P_TARGET_URI, String.format("http://localhost:%d/acceptEncoding/", serverPort));
     servletHolder2.setInitParameter(ProxyServlet.P_HANDLECOMPRESSION, Boolean.FALSE.toString());
@@ -94,7 +93,7 @@ public class AcceptEncodingTest {
         resp.getOutputStream().write(req.getHeader("Accept-Encoding").getBytes(StandardCharsets.UTF_8));
       }
     });
-    servletHandler.addServletWithMapping(dummyBackend, "/acceptEncoding/*");
+    context.addServlet(dummyBackend, "/acceptEncoding/*");
 
     HttpGet queryHandleCompression = new HttpGet(String.format("http://localhost:%d/acceptEncodingProxyHandleCompression/test", serverPort));
     HttpGet query = new HttpGet(String.format("http://localhost:%d/acceptEncodingProxy/test", serverPort));

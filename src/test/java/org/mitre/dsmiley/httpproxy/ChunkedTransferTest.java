@@ -32,13 +32,13 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.eclipse.jetty.server.Handler;
+
 
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.gzip.GzipHandler;
-import org.eclipse.jetty.servlet.ServletHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
+import org.eclipse.jetty.ee10.servlet.ServletHolder;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -62,7 +62,7 @@ public class ChunkedTransferTest {
   }
 
   private Server server;
-  private ServletHandler servletHandler;
+  private ServletContextHandler context;
   private int serverPort;
   private boolean supportBackendCompression;
   private boolean handleCompressionApacheClient;
@@ -75,17 +75,16 @@ public class ChunkedTransferTest {
   @Before
   public void setUp() throws Exception {
     server = new Server(0);
-    servletHandler = new ServletHandler();
-    Handler serverHandler = servletHandler;
-    if(supportBackendCompression) {
+    context = new ServletContextHandler();
+    context.setContextPath("/");
+    if (supportBackendCompression) {
       GzipHandler gzipHandler = new GzipHandler();
-      gzipHandler.setHandler(serverHandler);
+      gzipHandler.setHandler(context);
       gzipHandler.setSyncFlush(true);
-      serverHandler = gzipHandler;
+      server.setHandler(gzipHandler);
     } else {
-      serverHandler = servletHandler;
+      server.setHandler(context);
     }
-    server.setHandler(serverHandler);
     server.start();
 
     serverPort = ((ServerConnector) server.getConnectors()[0]).getLocalPort();
@@ -119,7 +118,7 @@ public class ChunkedTransferTest {
     final byte[] data1 = "event: message\ndata: Dummy Data1\n\n".getBytes(StandardCharsets.UTF_8);
     final byte[] data2 = "event: message\ndata: Dummy Data2\n\n".getBytes(StandardCharsets.UTF_8);
 
-    ServletHolder servletHolder = servletHandler.addServletWithMapping(ProxyServlet.class, "/chatProxied/*");
+    ServletHolder servletHolder = context.addServlet(ProxyServlet.class, "/chatProxied/*");
     servletHolder.setInitParameter(ProxyServlet.P_LOG, "true");
     servletHolder.setInitParameter(ProxyServlet.P_TARGET_URI, String.format("http://localhost:%d/chat/", serverPort));
     servletHolder.setInitParameter(ProxyServlet.P_HANDLECOMPRESSION, Boolean.toString(handleCompressionApacheClient));
@@ -145,7 +144,7 @@ public class ChunkedTransferTest {
         }
       }
     });
-    servletHandler.addServletWithMapping(dummyBackend, "/chat/*");
+    context.addServlet(dummyBackend, "/chat/*");
 
     HttpGet url = new HttpGet(String.format("http://localhost:%d/chatProxied/test", serverPort));
 
@@ -179,7 +178,7 @@ public class ChunkedTransferTest {
     final byte[] data1 = "event: message\ndata: Dummy Data1\n\n".getBytes(StandardCharsets.UTF_8);
     final byte[] data2 = "event: message\ndata: Dummy Data2\n\n".getBytes(StandardCharsets.UTF_8);
 
-    ServletHolder servletHolder = servletHandler.addServletWithMapping(ProxyServlet.class, "/chatProxied/*");
+    ServletHolder servletHolder = context.addServlet(ProxyServlet.class, "/chatProxied/*");
     servletHolder.setInitParameter(ProxyServlet.P_LOG, "true");
     servletHolder.setInitParameter(ProxyServlet.P_TARGET_URI, String.format("http://localhost:%d/chat/", serverPort));
     servletHolder.setInitParameter(ProxyServlet.P_HANDLECOMPRESSION, Boolean.toString(handleCompressionApacheClient));
@@ -215,7 +214,7 @@ public class ChunkedTransferTest {
         }
       }
     });
-    servletHandler.addServletWithMapping(dummyBackend, "/chat/*");
+    context.addServlet(dummyBackend, "/chat/*");
 
     HttpGet url = new HttpGet(String.format("http://localhost:%d/chatProxied/test", serverPort));
 
