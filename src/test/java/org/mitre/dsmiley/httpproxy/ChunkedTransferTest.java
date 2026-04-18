@@ -16,6 +16,7 @@
 package org.mitre.dsmiley.httpproxy;
 
 import java.io.IOException;
+import java.util.zip.GZIPOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -23,37 +24,43 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.FilterConfig;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.WriteListener;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponseWrapper;
+import org.apache.catalina.Context;
+import org.apache.catalina.Wrapper;
+import org.apache.catalina.startup.Tomcat;
 import org.apache.http.MalformedChunkCodingException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-
-
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.handler.gzip.GzipHandler;
-import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
-import org.eclipse.jetty.ee10.servlet.ServletHolder;
+import org.apache.tomcat.util.descriptor.web.FilterDef;
+import org.apache.tomcat.util.descriptor.web.FilterMap;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertTrue;
-import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public class ChunkedTransferTest {
   @Parameters
   public static List<Object[]> data() {
-    return Arrays.asList(new Object[][] { 
+    return Arrays.asList(new Object[][] {
       {false, false},
       {false, true},
       {true, false},
@@ -61,11 +68,11 @@ public class ChunkedTransferTest {
     });
   }
 
-  private Server server;
-  private ServletContextHandler context;
+  private Tomcat tomcat;
+  private Context ctx;
   private int serverPort;
-  private boolean supportBackendCompression;
-  private boolean handleCompressionApacheClient;
+  private final boolean supportBackendCompression;
+  private final boolean handleCompressionApacheClient;
 
   public ChunkedTransferTest(boolean supportBackendCompression, boolean handleCompressionApacheClient) {
     this.supportBackendCompression = supportBackendCompression;
@@ -74,25 +81,32 @@ public class ChunkedTransferTest {
 
   @Before
   public void setUp() throws Exception {
-    server = new Server(0);
-    context = new ServletContextHandler();
-    context.setContextPath("/");
-    if (supportBackendCompression) {
-      GzipHandler gzipHandler = new GzipHandler();
-      gzipHandler.setHandler(context);
-      gzipHandler.setSyncFlush(true);
-      server.setHandler(gzipHandler);
-    } else {
-      server.setHandler(context);
-    }
-    server.start();
+    tomcat = new Tomcat();
+    tomcat.setPort(0);
+    String tempDir = System.getProperty("java.io.tmpdir");
+    tomcat.setBaseDir(tempDir);
+    tomcat.getConnector();
+    ctx = tomcat.addContext("", tempDir);
 
-    serverPort = ((ServerConnector) server.getConnectors()[0]).getLocalPort();
+    if (supportBackendCompression) {
+      FilterDef filterDef = new FilterDef();
+      filterDef.setFilterName("gzip");
+      filterDef.setFilter(new GzipFilter());
+      ctx.addFilterDef(filterDef);
+      FilterMap filterMap = new FilterMap();
+      filterMap.setFilterName("gzip");
+      filterMap.addURLPattern("/chat/*");
+      ctx.addFilterMap(filterMap);
+    }
+
+    tomcat.start();
+    serverPort = tomcat.getConnector().getLocalPort();
   }
 
   @After
   public void tearDown() throws Exception {
-    server.stop();
+    tomcat.stop();
+    tomcat.destroy();
     serverPort = -1;
   }
 
@@ -108,7 +122,7 @@ public class ChunkedTransferTest {
      received and further data must not be present.
 
      After the first message is consumed, the CountDownLatch is released and
-     the second messsage is expected. This in turn must be completely be read.
+     the second message is expected. This in turn must be completely be read.
 
      If the CountDownLatch is not released, it will timeout and the second
      message will not be send.
@@ -118,12 +132,13 @@ public class ChunkedTransferTest {
     final byte[] data1 = "event: message\ndata: Dummy Data1\n\n".getBytes(StandardCharsets.UTF_8);
     final byte[] data2 = "event: message\ndata: Dummy Data2\n\n".getBytes(StandardCharsets.UTF_8);
 
-    ServletHolder servletHolder = context.addServlet(ProxyServlet.class, "/chatProxied/*");
-    servletHolder.setInitParameter(ProxyServlet.P_LOG, "true");
-    servletHolder.setInitParameter(ProxyServlet.P_TARGET_URI, String.format("http://localhost:%d/chat/", serverPort));
-    servletHolder.setInitParameter(ProxyServlet.P_HANDLECOMPRESSION, Boolean.toString(handleCompressionApacheClient));
+    Wrapper proxyWrapper = Tomcat.addServlet(ctx, "proxy", ProxyServlet.class.getName());
+    proxyWrapper.addInitParameter(ProxyServlet.P_LOG, "true");
+    proxyWrapper.addInitParameter(ProxyServlet.P_TARGET_URI, String.format("http://localhost:%d/chat/", serverPort));
+    proxyWrapper.addInitParameter(ProxyServlet.P_HANDLECOMPRESSION, Boolean.toString(handleCompressionApacheClient));
+    ctx.addServletMappingDecoded("/chatProxied/*", "proxy");
 
-    ServletHolder dummyBackend = new ServletHolder(new HttpServlet() {
+    Tomcat.addServlet(ctx, "backend", new HttpServlet() {
       @Override
       protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         resp.setContentType("text/event-stream");
@@ -144,7 +159,7 @@ public class ChunkedTransferTest {
         }
       }
     });
-    context.addServlet(dummyBackend, "/chat/*");
+    ctx.addServletMappingDecoded("/chat/*", "backend");
 
     HttpGet url = new HttpGet(String.format("http://localhost:%d/chatProxied/test", serverPort));
 
@@ -178,12 +193,13 @@ public class ChunkedTransferTest {
     final byte[] data1 = "event: message\ndata: Dummy Data1\n\n".getBytes(StandardCharsets.UTF_8);
     final byte[] data2 = "event: message\ndata: Dummy Data2\n\n".getBytes(StandardCharsets.UTF_8);
 
-    ServletHolder servletHolder = context.addServlet(ProxyServlet.class, "/chatProxied/*");
-    servletHolder.setInitParameter(ProxyServlet.P_LOG, "true");
-    servletHolder.setInitParameter(ProxyServlet.P_TARGET_URI, String.format("http://localhost:%d/chat/", serverPort));
-    servletHolder.setInitParameter(ProxyServlet.P_HANDLECOMPRESSION, Boolean.toString(handleCompressionApacheClient));
+    Wrapper proxyWrapper = Tomcat.addServlet(ctx, "proxy", ProxyServlet.class.getName());
+    proxyWrapper.addInitParameter(ProxyServlet.P_LOG, "true");
+    proxyWrapper.addInitParameter(ProxyServlet.P_TARGET_URI, String.format("http://localhost:%d/chat/", serverPort));
+    proxyWrapper.addInitParameter(ProxyServlet.P_HANDLECOMPRESSION, Boolean.toString(handleCompressionApacheClient));
+    ctx.addServletMappingDecoded("/chatProxied/*", "proxy");
 
-    ServletHolder dummyBackend = new ServletHolder(new HttpServlet() {
+    Tomcat.addServlet(ctx, "backend", new HttpServlet() {
       @Override
       protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         resp.setContentType("text/event-stream");
@@ -195,11 +211,11 @@ public class ChunkedTransferTest {
           // Wait for client to request the second message by counting down the
           // latch - if the latch times out, the second message will not be
           // send and the corresponding assert will fail
-          if (! guardForSecondRead.await(10, TimeUnit.SECONDS)) {
+          if (!guardForSecondRead.await(10, TimeUnit.SECONDS)) {
             throw new IOException("Wait timed out");
           }
           try {
-            for(int i = 0; i < 100; i++) {
+            for (int i = 0; i < 100; i++) {
               os.write(data2);
               os.flush();
               Thread.sleep(100);
@@ -214,7 +230,7 @@ public class ChunkedTransferTest {
         }
       }
     });
-    context.addServlet(dummyBackend, "/chat/*");
+    ctx.addServletMappingDecoded("/chat/*", "backend");
 
     HttpGet url = new HttpGet(String.format("http://localhost:%d/chatProxied/test", serverPort));
 
@@ -245,5 +261,56 @@ public class ChunkedTransferTest {
     byte[] buffer = new byte[10 * 1024];
     int read = is.read(buffer);
     return Arrays.copyOfRange(buffer, 0, read);
+  }
+
+  // Wraps the backend response in GZIP encoding with sync-flush so chunked
+  // data is flushed to the client incrementally rather than buffered.
+  private static class GzipFilter implements Filter {
+    @Override
+    public void init(FilterConfig filterConfig) {}
+
+    @Override
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+            throws IOException, ServletException {
+      HttpServletResponse httpResponse = (HttpServletResponse) response;
+      httpResponse.setHeader("Content-Encoding", "gzip");
+      GzipResponseWrapper wrapper = new GzipResponseWrapper(httpResponse);
+      try {
+        chain.doFilter(request, wrapper);
+      } finally {
+        try { wrapper.finish(); } catch (IOException ignored) {}
+      }
+    }
+
+    @Override
+    public void destroy() {}
+  }
+
+  private static class GzipResponseWrapper extends HttpServletResponseWrapper {
+    private final GZIPOutputStream gzipOut;
+    private final ServletOutputStream servletOut;
+
+    GzipResponseWrapper(HttpServletResponse response) throws IOException {
+      super(response);
+      // true = syncFlush: each flush() also flushes the underlying gzip stream
+      gzipOut = new GZIPOutputStream(response.getOutputStream(), true);
+      servletOut = new ServletOutputStream() {
+        @Override
+        public void write(int b) throws IOException { gzipOut.write(b); }
+        @Override
+        public void write(byte[] b, int off, int len) throws IOException { gzipOut.write(b, off, len); }
+        @Override
+        public void flush() throws IOException { gzipOut.flush(); }
+        @Override
+        public boolean isReady() { return true; }
+        @Override
+        public void setWriteListener(WriteListener writeListener) {}
+      };
+    }
+
+    @Override
+    public ServletOutputStream getOutputStream() { return servletOut; }
+
+    void finish() throws IOException { gzipOut.finish(); }
   }
 }

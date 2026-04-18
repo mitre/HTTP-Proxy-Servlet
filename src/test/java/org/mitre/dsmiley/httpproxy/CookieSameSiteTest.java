@@ -21,56 +21,58 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import org.apache.catalina.Context;
+import org.apache.catalina.Wrapper;
+import org.apache.catalina.startup.Tomcat;
 import org.apache.http.Header;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
-import org.eclipse.jetty.ee10.servlet.ServletHolder;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 public class CookieSameSiteTest {
 
-  private Server server;
-  private ServletContextHandler context;
+  private Tomcat tomcat;
+  private Context ctx;
   private int serverPort;
 
   @Before
   public void setUp() throws Exception {
-    server = new Server(0);
-    context = new ServletContextHandler();
-    context.setContextPath("/");
-    server.setHandler(context);
-    server.start();
-    serverPort = ((ServerConnector) server.getConnectors()[0]).getLocalPort();
+    tomcat = new Tomcat();
+    tomcat.setPort(0);
+    String tempDir = System.getProperty("java.io.tmpdir");
+    tomcat.setBaseDir(tempDir);
+    tomcat.getConnector();
+    ctx = tomcat.addContext("", tempDir);
+    tomcat.start();
+    serverPort = tomcat.getConnector().getLocalPort();
   }
 
   @After
   public void tearDown() throws Exception {
-    server.stop();
+    tomcat.stop();
+    tomcat.destroy();
     serverPort = -1;
   }
 
   @Test
   public void testSameSiteAttributeIsPreserved() throws Exception {
-    // Backend returns a cookie with SameSite=Strict
-    ServletHolder backendHolder = new ServletHolder(new HttpServlet() {
+    Tomcat.addServlet(ctx, "backend", new HttpServlet() {
       @Override
       protected void doGet(HttpServletRequest req, HttpServletResponse resp)
           throws ServletException, IOException {
         resp.addHeader("Set-Cookie", "JSESSIONID=1234; Path=/backend; SameSite=Strict");
       }
     });
-    context.addServlet(backendHolder, "/backend/*");
+    ctx.addServletMappingDecoded("/backend/*", "backend");
 
-    ServletHolder proxyHolder = context.addServlet(ProxyServlet.class, "/proxy/*");
-    proxyHolder.setInitParameter(ProxyServlet.P_TARGET_URI,
+    Wrapper proxyWrapper = Tomcat.addServlet(ctx, "proxy", ProxyServlet.class.getName());
+    proxyWrapper.addInitParameter(ProxyServlet.P_TARGET_URI,
         String.format("http://localhost:%d/backend/", serverPort));
+    ctx.addServletMappingDecoded("/proxy/*", "proxy");
 
     HttpGet request = new HttpGet(String.format("http://localhost:%d/proxy/test", serverPort));
     try (CloseableHttpClient client = HttpClientBuilder.create().disableRedirectHandling().build();

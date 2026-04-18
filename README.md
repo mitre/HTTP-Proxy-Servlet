@@ -60,6 +60,8 @@ See [CHANGES.md](CHANGES.md) for a history of changes.
 Build & Installation
 ------------
 
+**Java version:** The compiled artifact requires Java 11 or later. The test suite also targets Java 11 — test dependencies must be compatible with Java 11.
+
 Simply build the jar using "mvn package" at the command line.
 The jar is built to "target/smiley-http-proxy-servlet-VERSION.jar".
 You don't have to build the jar if you aren't modifying the code, since released
