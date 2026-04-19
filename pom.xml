@@ -40,11 +40,6 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
-    <!-- works with v4.3 and forward; see .github/workflows/maven.yml -->
-    <httpclient.version>[4.5.14,5.0)</httpclient.version>
-    <!-- the last version to provide LocalTestServer.java -->
-    <httpclient.test.version>4.3.6</httpclient.test.version>
   </properties>
 
   <!-- To check for new plugins and dependencies:
@@ -62,23 +57,9 @@
     </dependency>
 
     <dependency>
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpclient</artifactId>
-      <version>${httpclient.version}</version>
-    </dependency>
-
-    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.13.2</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpclient</artifactId>
-      <version>${httpclient.test.version}</version>
-      <classifier>tests</classifier>
       <scope>test</scope>
     </dependency>
 
@@ -159,17 +140,10 @@
               <Bundle-Name>${project.artifactId}</Bundle-Name>
               <Bundle-SymbolicName>org.mitre.dsmiley.http-proxy-servlet</Bundle-SymbolicName>
               <Export-Package>org.mitre.dsmiley.httpproxy;version="0"</Export-Package>
-              <Import-Package>org.apache.http;version="0",
- org.apache.http.client;version="0",
- org.apache.http.entity;version="0",
- org.apache.http.impl.client;version="0",
- org.apache.http.message;version="0",
- org.apache.http.util; version="0",
- org.apache.http.client.utils;version="0",
- org.apache.http.client.methods;version="0",
- jakarta.servlet;version="0",
+              <Import-Package>jakarta.servlet;version="0",
  jakarta.servlet.http;version="0",
- javax.net.ssl;version="0", org.apache.http.client.config;version="0"</Import-Package>
+ javax.net.ssl;version="0",
+ java.net.http;version="0"</Import-Package>
             </manifestEntries>
           </archive>
         </configuration>

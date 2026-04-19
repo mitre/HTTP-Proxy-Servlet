@@ -23,13 +23,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashSet;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -47,6 +47,8 @@ public class AcceptEncodingTest {
 
   @Before
   public void setUp() throws Exception {
+    System.setProperty("jdk.httpclient.allowRestrictedHeaders", "host");
+
     server = new Server(0);
     servletHandler = new ServletHandler();
     Handler serverHandler = servletHandler;
@@ -80,12 +82,12 @@ public class AcceptEncodingTest {
 
     ServletHolder servletHolder = servletHandler.addServletWithMapping(ProxyServlet.class, "/acceptEncodingProxyHandleCompression/*");
     servletHolder.setInitParameter(ProxyServlet.P_LOG, "true");
-    servletHolder.setInitParameter(ProxyServlet.P_TARGET_URI, String.format("http://localhost:%d/acceptEncoding/", serverPort));
+    servletHolder.setInitParameter(ProxyServlet.P_TARGET_URI, String.format("http://localhost:%d/acceptEncoding", serverPort));
     servletHolder.setInitParameter(ProxyServlet.P_HANDLECOMPRESSION, Boolean.TRUE.toString());
 
     ServletHolder servletHolder2 = servletHandler.addServletWithMapping(ProxyServlet.class, "/acceptEncodingProxy/*");
     servletHolder2.setInitParameter(ProxyServlet.P_LOG, "true");
-    servletHolder2.setInitParameter(ProxyServlet.P_TARGET_URI, String.format("http://localhost:%d/acceptEncoding/", serverPort));
+    servletHolder2.setInitParameter(ProxyServlet.P_TARGET_URI, String.format("http://localhost:%d/acceptEncoding", serverPort));
     servletHolder2.setInitParameter(ProxyServlet.P_HANDLECOMPRESSION, Boolean.FALSE.toString());
 
     ServletHolder dummyBackend = new ServletHolder(new HttpServlet() {
@@ -96,30 +98,36 @@ public class AcceptEncodingTest {
     });
     servletHandler.addServletWithMapping(dummyBackend, "/acceptEncoding/*");
 
-    HttpGet queryHandleCompression = new HttpGet(String.format("http://localhost:%d/acceptEncodingProxyHandleCompression/test", serverPort));
-    HttpGet query = new HttpGet(String.format("http://localhost:%d/acceptEncodingProxy/test", serverPort));
+    HttpRequest queryHandleCompression = HttpRequest.newBuilder()
+        .uri(URI.create(String.format("http://localhost:%d/acceptEncodingProxyHandleCompression/test", serverPort)))
+        .header("Accept-Encoding", "DummyCompression")
+        .GET()
+        .build();
+        
+    HttpRequest query = HttpRequest.newBuilder()
+        .uri(URI.create(String.format("http://localhost:%d/acceptEncodingProxy/test", serverPort)))
+        .header("Accept-Encoding", "DummyCompression")
+        .GET()
+        .build();
 
     final String dummyCompression = "DummyCompression";
 
-    query.setHeader("Accept-Encoding", dummyCompression);
-    queryHandleCompression.setHeader("Accept-Encoding", dummyCompression);
-
-    try (CloseableHttpClient chc = HttpClientBuilder.create().disableContentCompression().build();
-            CloseableHttpResponse responseHandleCompression = chc.execute(queryHandleCompression);
-            CloseableHttpResponse response = chc.execute(query);
-    ) {
-      try (InputStream is = response.getEntity().getContent()) {
-        byte[] readData = readBlock(is);
-        assertEquals(dummyCompression, toString(readData));
-      }
-      try (InputStream is = responseHandleCompression.getEntity().getContent()) {
-        byte[] readData = readBlock(is);
-        // Apache http client supports gzip and deflate by default
-        assertEquals(
-                new HashSet<>(Arrays.asList("gzip", "deflate")),
-                new HashSet<>(Arrays.asList(toString(readData).split("\\s*,\\s*")))
-        );
-      }
+    HttpClient client = HttpClient.newHttpClient();
+    
+    HttpResponse<InputStream> responseHandleCompression = client.send(queryHandleCompression, HttpResponse.BodyHandlers.ofInputStream());
+    HttpResponse<InputStream> response = client.send(query, HttpResponse.BodyHandlers.ofInputStream());
+    
+    try (InputStream is = response.body()) {
+      byte[] readData = readBlock(is);
+      assertEquals(dummyCompression, toString(readData));
+    }
+    try (InputStream is = responseHandleCompression.body()) {
+      byte[] readData = readBlock(is);
+      // JDK http client supports gzip by default
+      assertEquals(
+              new HashSet<>(Arrays.asList("gzip")),
+              new HashSet<>(Arrays.asList(toString(readData).split("\\s*,\\s*")))
+      );
     }
   }
 

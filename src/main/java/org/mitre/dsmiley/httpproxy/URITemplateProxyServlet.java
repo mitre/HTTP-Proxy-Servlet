@@ -16,19 +16,15 @@
 
 package org.mitre.dsmiley.httpproxy;
 
-import org.apache.http.NameValuePair;
-import org.apache.http.client.utils.URIUtils;
-import org.apache.http.client.utils.URLEncodedUtils;
-
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -93,20 +89,11 @@ public class URITemplateProxyServlet extends ProxyServlet {
     if (hash >= 0) {
       queryString = queryString.substring(0, hash);
     }
-    List<NameValuePair> pairs;
-    try {
-      //note: HttpClient 4.2 lets you parse the string without building the URI
-      pairs = URLEncodedUtils.parse(new URI(queryString), "UTF-8");
-    } catch (URISyntaxException e) {
-      throw new ServletException("Unexpected URI parsing error on " + queryString, e);
-    }
-    LinkedHashMap<String, String> params = new LinkedHashMap<String, String>();
-    for (NameValuePair pair : pairs) {
-      params.put(pair.getName(), pair.getValue());
-    }
+    
+    LinkedHashMap<String, String> params = parseQueryParams(requestQueryString);
 
     //Now rewrite the URL
-    StringBuffer urlBuf = new StringBuffer();//note: StringBuilder isn't supported by Matcher
+    StringBuilder urlBuf = new StringBuilder();
     Matcher matcher = TEMPLATE_PATTERN.matcher(targetUriTemplate);
     while (matcher.find()) {
       String arg = matcher.group(1);
@@ -125,7 +112,7 @@ public class URITemplateProxyServlet extends ProxyServlet {
     } catch (Exception e) {
       throw new ServletException("Rewritten targetUri is invalid: " + newTargetUri,e);
     }
-    servletRequest.setAttribute(ATTR_TARGET_HOST, URIUtils.extractHost(targetUriObj));
+    servletRequest.setAttribute(ATTR_TARGET_HOST, extractHost(targetUriObj));
 
     //Determine the new query string based on removing the used names
     StringBuilder newQueryBuf = new StringBuilder(queryString.length());
@@ -134,7 +121,7 @@ public class URITemplateProxyServlet extends ProxyServlet {
         newQueryBuf.append('&');
       newQueryBuf.append(nameVal.getKey()).append('=');
       if (nameVal.getValue() != null)
-        newQueryBuf.append( URLEncoder.encode(nameVal.getValue(), "UTF-8"));
+        newQueryBuf.append( URLEncoder.encode(nameVal.getValue(), StandardCharsets.UTF_8));
     }
     servletRequest.setAttribute(ATTR_QUERY_STRING, newQueryBuf.toString());
 
@@ -144,5 +131,31 @@ public class URITemplateProxyServlet extends ProxyServlet {
   @Override
   protected String rewriteQueryStringFromRequest(HttpServletRequest servletRequest, String queryString) {
     return (String) servletRequest.getAttribute(ATTR_QUERY_STRING);
+  }
+  
+  /**
+   * Parse a query string into a map of key-value pairs.  NOTE: doesn't handle repeated keys
+   */
+  private LinkedHashMap<String, String> parseQueryParams(String requestQueryString) {
+    LinkedHashMap<String, String> params = new LinkedHashMap<>();
+    if (requestQueryString != null && !requestQueryString.isEmpty()) {
+      // Parse query string manually
+      String[] pairs = requestQueryString.split("&");
+      for (String pair : pairs) {
+        int idx = pair.indexOf("=");
+        if (idx > 0) {
+          String key = URLDecoder.decode(pair.substring(0, idx), StandardCharsets.UTF_8);
+          String value = URLDecoder.decode(pair.substring(idx + 1), StandardCharsets.UTF_8);
+          params.put(key, value);
+        } else if (idx == 0) {
+          // Ignore malformed parameter
+        } else {
+          // Parameter without value
+          String key = URLDecoder.decode(pair, StandardCharsets.UTF_8);
+          params.put(key, "");
+        }
+      }
+    }
+    return params;
   }
 }
