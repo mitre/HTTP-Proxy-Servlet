@@ -38,7 +38,9 @@ import org.apache.catalina.Context;
 import org.apache.catalina.Wrapper;
 import org.apache.catalina.startup.Tomcat;
 import org.junit.After;
+
 import static org.junit.Assert.assertEquals;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -81,32 +83,38 @@ public class ParallelConnectionsTest {
 
     Wrapper proxyWrapper = Tomcat.addServlet(ctx, "proxy", ProxyServlet.class.getName());
     proxyWrapper.addInitParameter(ProxyServlet.P_LOG, "true");
-    proxyWrapper.addInitParameter(ProxyServlet.P_MAXCONNECTIONS, Integer.toString(parallelConnectionsToTest));
-    proxyWrapper.addInitParameter(ProxyServlet.P_TARGET_URI, String.format("http://localhost:%d/sampleBackend/", serverPort));
+    proxyWrapper.addInitParameter(
+        ProxyServlet.P_MAXCONNECTIONS,
+        Integer.toString(parallelConnectionsToTest));
+    proxyWrapper.addInitParameter(
+        ProxyServlet.P_TARGET_URI,
+        String.format("http://localhost:%d/sampleBackend/", serverPort));
     ctx.addServletMappingDecoded("/sampleBackendProxied/*", "proxy");
 
     CountDownLatch requestsReceived = new CountDownLatch(parallelConnectionsToTest);
 
-    Tomcat.addServlet(ctx, "backend", new HttpServlet() {
-      @Override
-      protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        try {
-          // The latch ensures, that all servlets wait until all expected
-          // connections are made. Only after all clients have connected, the
-          // request is fulfilled.
-          requestsReceived.countDown();
-          if (requestsReceived.await(10, TimeUnit.SECONDS)) {
-            resp.setHeader("Content-Type", "text/plain; charset=utf-8");
-            OutputStream os = resp.getOutputStream();
-            OutputStreamWriter osw = new OutputStreamWriter(os, StandardCharsets.UTF_8);
-            osw.write("Works");
-            osw.flush();
+    Tomcat.addServlet(
+        ctx, "backend", new HttpServlet() {
+          @Override
+          protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+              throws IOException {
+            try {
+              // The latch ensures, that all servlets wait until all expected
+              // connections are made. Only after all clients have connected, the
+              // request is fulfilled.
+              requestsReceived.countDown();
+              if (requestsReceived.await(10, TimeUnit.SECONDS)) {
+                resp.setHeader("Content-Type", "text/plain; charset=utf-8");
+                OutputStream os = resp.getOutputStream();
+                OutputStreamWriter osw = new OutputStreamWriter(os, StandardCharsets.UTF_8);
+                osw.write("Works");
+                osw.flush();
+              }
+            } catch (InterruptedException ex) {
+              throw new IOException(ex);
+            }
           }
-        } catch (InterruptedException ex) {
-          throw new IOException(ex);
-        }
-      }
-    });
+        });
     ctx.addServletMappingDecoded("/sampleBackend/*", "backend");
 
     URL url = new URL(String.format("http://localhost:%d/sampleBackendProxied/test", serverPort));

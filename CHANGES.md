@@ -1,4 +1,4 @@
-# Version 3.0 (unreleased)
+# Version 2.1 (unreleased)
 
 Servlet API 6.0.0 is now the minimum servlet API supported. 
 
