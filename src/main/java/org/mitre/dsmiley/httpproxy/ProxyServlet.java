@@ -584,7 +584,11 @@ public class ProxyServlet extends HttpServlet {
       Cookie servletCookie = createProxyCookie(servletRequest, cookie);
       String sameSite = parseSameSite(headerValue);
       if (sameSite != null) {
-        servletCookie.setAttribute("SameSite", sameSite);
+        try {
+          servletCookie.setAttribute("SameSite", sameSite); // Servlet 6.0+
+        } catch (NoSuchMethodError ignored) {
+          // javax.servlet (pre-Jakarta) lacks Cookie.setAttribute(); SameSite not preserved
+        }
       }
       servletResponse.addCookie(servletCookie);
     }
