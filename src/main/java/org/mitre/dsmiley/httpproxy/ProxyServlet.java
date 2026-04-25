@@ -587,7 +587,7 @@ public class ProxyServlet extends HttpServlet {
         try {
           servletCookie.setAttribute("SameSite", sameSite); // Servlet 6.0+
         } catch (NoSuchMethodError ignored) {
-          // javax.servlet (pre-Jakarta) lacks Cookie.setAttribute(); SameSite not preserved
+          // SameSite not preserved on older versions (e.g. Servlet 5.0)
         }
       }
       servletResponse.addCookie(servletCookie);
