@@ -582,8 +582,26 @@ public class ProxyServlet extends HttpServlet {
                                  HttpServletResponse servletResponse, String headerValue) {
     for (HttpCookie cookie : HttpCookie.parse(headerValue)) {
       Cookie servletCookie = createProxyCookie(servletRequest, cookie);
+      String sameSite = parseSameSite(headerValue);
+      if (sameSite != null) {
+        try {
+          servletCookie.setAttribute("SameSite", sameSite); // Servlet 6.0+
+        } catch (NoSuchMethodError ignored) {
+          // SameSite not preserved on older versions (e.g. Servlet 5.0)
+        }
+      }
       servletResponse.addCookie(servletCookie);
     }
+  }
+
+  private static String parseSameSite(String headerValue) {
+    for (String part : headerValue.split(";")) {
+      String trimmed = part.trim();
+      if (trimmed.regionMatches(true, 0, "SameSite=", 0, 9)) {
+        return trimmed.substring(9).trim();
+      }
+    }
+    return null;
   }
 
   /**

@@ -57,6 +57,8 @@ See [CHANGES.md](CHANGES.md) for a history of changes.
 Build & Installation
 ------------
 
+**Java version:** The minimum Java version is 11.
+
 Simply build the jar using "mvn package" at the command line.
 The jar is built to "target/smiley-http-proxy-servlet-VERSION.jar".
 You don't have to build the jar if you aren't modifying the code, since released

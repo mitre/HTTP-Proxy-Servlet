@@ -15,7 +15,6 @@
  */
 package org.mitre.dsmiley.httpproxy;
 
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,42 +34,45 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.servlet.ServletHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
+import org.apache.catalina.Context;
+import org.apache.catalina.Wrapper;
+import org.apache.catalina.startup.Tomcat;
 import org.junit.After;
+
 import static org.junit.Assert.assertEquals;
+
 import org.junit.Before;
 import org.junit.Test;
 
 public class ParallelConnectionsTest {
 
-  private Server server;
-  private ServletHandler servletHandler;
+  private Tomcat tomcat;
+  private Context ctx;
   private int serverPort;
 
   @Before
   public void setUp() throws Exception {
-    server = new Server(0);
-    servletHandler = new ServletHandler();
-    server.setHandler(servletHandler);
-    server.start();
-
-    serverPort = ((ServerConnector) server.getConnectors()[0]).getLocalPort();
+    tomcat = new Tomcat();
+    tomcat.setPort(0);
+    String tempDir = System.getProperty("java.io.tmpdir");
+    tomcat.setBaseDir(tempDir);
+    tomcat.getConnector();
+    ctx = tomcat.addContext("", tempDir);
+    tomcat.start();
+    serverPort = tomcat.getConnector().getLocalPort();
   }
 
   @After
   public void tearDown() throws Exception {
-    server.stop();
+    tomcat.stop();
+    tomcat.destroy();
     serverPort = -1;
   }
 
   @Test
   public void testHandlingMultipleConnectionsSameRoute() throws Exception {
     /*
-     This test ensures, that a minimum nunmber of parallel connections can be
+     This test ensures, that a minimum number of parallel connections can be
      established. The test works by opening "parallelConnectionsToTest"
      connections, this is enforced by a countdownlatch, that ensures, that all
      connections to the backend are established before they are served by the
@@ -79,34 +81,41 @@ public class ParallelConnectionsTest {
 
     int parallelConnectionsToTest = 10;
 
-    ServletHolder servletHolder = servletHandler.addServletWithMapping(ProxyServlet.class, "/sampleBackendProxied/*");
-    servletHolder.setInitParameter(ProxyServlet.P_LOG, "true");
-    servletHolder.setInitParameter(ProxyServlet.P_MAXCONNECTIONS, Integer.toString(parallelConnectionsToTest));
-    servletHolder.setInitParameter(ProxyServlet.P_TARGET_URI, String.format("http://localhost:%d/sampleBackend/", serverPort));
+    Wrapper proxyWrapper = Tomcat.addServlet(ctx, "proxy", ProxyServlet.class.getName());
+    proxyWrapper.addInitParameter(ProxyServlet.P_LOG, "true");
+    proxyWrapper.addInitParameter(
+        ProxyServlet.P_MAXCONNECTIONS,
+        Integer.toString(parallelConnectionsToTest));
+    proxyWrapper.addInitParameter(
+        ProxyServlet.P_TARGET_URI,
+        String.format("http://localhost:%d/sampleBackend/", serverPort));
+    ctx.addServletMappingDecoded("/sampleBackendProxied/*", "proxy");
 
     CountDownLatch requestsReceived = new CountDownLatch(parallelConnectionsToTest);
 
-    ServletHolder dummyBackend = new ServletHolder(new HttpServlet() {
-      @Override
-      protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        try {
-          // The latch ensures, that all servlets wait until all expected
-          // connections are made. Only after all clients have connected, the
-          // request is fullfilled.
-          requestsReceived.countDown();
-          if (requestsReceived.await(10, TimeUnit.SECONDS)) {
-            resp.setHeader("Content-Type", "text/plain; charset=utf-8");
-            OutputStream os = resp.getOutputStream();
-            OutputStreamWriter osw = new OutputStreamWriter(os, StandardCharsets.UTF_8);
-            osw.write("Works");
-            osw.flush();
+    Tomcat.addServlet(
+        ctx, "backend", new HttpServlet() {
+          @Override
+          protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+              throws IOException {
+            try {
+              // The latch ensures, that all servlets wait until all expected
+              // connections are made. Only after all clients have connected, the
+              // request is fulfilled.
+              requestsReceived.countDown();
+              if (requestsReceived.await(10, TimeUnit.SECONDS)) {
+                resp.setHeader("Content-Type", "text/plain; charset=utf-8");
+                OutputStream os = resp.getOutputStream();
+                OutputStreamWriter osw = new OutputStreamWriter(os, StandardCharsets.UTF_8);
+                osw.write("Works");
+                osw.flush();
+              }
+            } catch (InterruptedException ex) {
+              throw new IOException(ex);
+            }
           }
-        } catch (InterruptedException ex) {
-          throw new IOException(ex);
-        }
-      }
-    });
-    servletHandler.addServletWithMapping(dummyBackend, "/sampleBackend/*");
+        });
+    ctx.addServletMappingDecoded("/sampleBackend/*", "backend");
 
     URL url = new URL(String.format("http://localhost:%d/sampleBackendProxied/test", serverPort));
 
@@ -119,7 +128,7 @@ public class ParallelConnectionsTest {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
           byte[] buffer = new byte[10 * 1024];
           int read;
-          while((read = is.read(buffer)) > 0) {
+          while ((read = is.read(buffer)) > 0) {
             baos.write(buffer, 0, read);
           }
           return baos.toString("UTF-8");
@@ -129,11 +138,11 @@ public class ParallelConnectionsTest {
 
     List<Future<String>> result = new ArrayList<>(parallelConnectionsToTest);
 
-    for(int i = 0; i < parallelConnectionsToTest; i++) {
+    for (int i = 0; i < parallelConnectionsToTest; i++) {
       result.add(es.submit(new Client()));
     }
 
-    for(Future<String> f: result) {
+    for (Future<String> f : result) {
       assertEquals("Works", f.get());
     }
   }
