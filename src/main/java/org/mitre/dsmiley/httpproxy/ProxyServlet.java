@@ -29,8 +29,10 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.AbortableHttpRequest;
 import org.apache.http.client.utils.URIUtils;
 import org.apache.http.config.SocketConfig;
+import org.apache.http.conn.routing.HttpRoutePlanner;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpEntityEnclosingRequest;
 import org.apache.http.message.BasicHttpRequest;
@@ -111,6 +113,11 @@ public class ProxyServlet extends HttpServlet {
   /** The parameter name for the target (destination) URI to proxy to. */
   public static final String P_TARGET_URI = "targetUri";
 
+  /**
+   * Parameter for an (optional) HTTP proxy that should be used for any request to the target. Format: <code>host:port</code>.
+   */
+  public static final String P_HTTP_PROXY_HOST_AND_PORT = "http.proxy.host-and-port";
+
   protected static final String ATTR_TARGET_URI =
           ProxyServlet.class.getSimpleName() + ".targetUri";
   protected static final String ATTR_TARGET_HOST =
@@ -139,6 +146,7 @@ public class ProxyServlet extends HttpServlet {
   protected String targetUri;
   protected URI targetUriObj;//new URI(targetUri)
   protected HttpHost targetHost;//URIUtils.extractHost(targetUriObj);
+  protected HttpHost httpProxyHost;
 
   private HttpClient proxyClient;
 
@@ -226,6 +234,15 @@ public class ProxyServlet extends HttpServlet {
       this.doHandleCompression = Boolean.parseBoolean(doHandleCompression);
     }
 
+    String proxyHostAndPortString = this.getConfigParam(P_HTTP_PROXY_HOST_AND_PORT);
+    if (proxyHostAndPortString != null) {
+      String[] proxyParams = proxyHostAndPortString.split(":");
+      if (proxyParams.length != 2) {
+        throw new ServletException("Invalid config parameter: " + P_HTTP_PROXY_HOST_AND_PORT + " - format must be: HOST:PORT");
+      }
+      this.httpProxyHost = new HttpHost(proxyParams[0], Integer.parseInt(proxyParams[1]));
+    }
+
     initTarget();//sets target*
 
     proxyClient = createHttpClient();
@@ -289,6 +306,12 @@ public class ProxyServlet extends HttpServlet {
 
     if (useSystemProperties)
       clientBuilder = clientBuilder.useSystemProperties();
+
+    if (httpProxyHost != null) {
+        HttpRoutePlanner proxyRoutePlanner = new DefaultProxyRoutePlanner(httpProxyHost);
+        clientBuilder.setRoutePlanner(proxyRoutePlanner);
+    }
+
     return buildHttpClient(clientBuilder);
   }
 
