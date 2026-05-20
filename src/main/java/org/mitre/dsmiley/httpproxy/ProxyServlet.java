@@ -67,7 +67,7 @@ import java.util.Formatter;
  *
  * @author David Smiley dsmiley@apache.org
  */
-@SuppressWarnings({"deprecation", "serial", "WeakerAccess"})
+@SuppressWarnings({"deprecation", "WeakerAccess"})
 public class ProxyServlet extends HttpServlet {
 
   /* INIT PARAMETER NAME CONSTANTS */
@@ -465,7 +465,7 @@ public class ProxyServlet extends HttpServlet {
   }
 
   /** These are the "hop-by-hop" headers that should not be copied.
-   * http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html
+   * <a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html">RFC2616</a>
    * I use an HttpClient HeaderGroup class instead of Set&lt;String&gt; because this
    * approach does case insensitive lookup faster.
    */
@@ -620,7 +620,7 @@ public class ProxyServlet extends HttpServlet {
     );
     servletCookie.setComment(cookie.getComment());
     servletCookie.setMaxAge((int) cookie.getMaxAge());
-    // don't set cookie domain
+    servletCookie.setDomain(cookie.getDomain());
     servletCookie.setSecure(servletRequest.isSecure() && cookie.getSecure());
     servletCookie.setVersion(cookie.getVersion());
     servletCookie.setHttpOnly(cookie.isHttpOnly());
